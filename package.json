@@ -4,7 +4,12 @@
   "main": "index.js",
   "type": "module",
   "license": "MIT",
-"dependencies": {
-  "@supabase/supabase-js": "^2.42.3"
+  "scripts": {
+    "build": "echo 'No build step needed'",
+    "dev": "node api/webhook.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.42.3"
+  }
 }
-}
+
