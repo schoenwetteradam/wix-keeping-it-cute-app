@@ -1,15 +1,11 @@
 {
   "name": "wix-keeping-it-cute-app",
   "version": "1.0.0",
-  "main": "index.js",
   "type": "module",
   "license": "MIT",
-  "scripts": {
-    "build": "echo 'No build step needed'",
-    "dev": "node api/webhook.js"
-  },
   "dependencies": {
     "@supabase/supabase-js": "^2.42.3"
   }
 }
+
 
