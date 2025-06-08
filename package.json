@@ -1,10 +1,39 @@
 {
   "name": "wix-keeping-it-cute-app",
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "description": "Comprehensive webhook system for Keeping It Cute Salon - captures bookings, customers, orders, and analytics from Wix into Supabase",
   "type": "module",
   "license": "MIT",
+  "keywords": [
+    "wix",
+    "webhooks", 
+    "salon",
+    "beauty",
+    "booking-system",
+    "customer-management",
+    "analytics",
+    "supabase",
+    "vercel"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "your-github-repo-url"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod",
+    "test": "node test/webhook-test.js",
+    "logs": "vercel logs",
+    "env": "vercel env ls"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.42.3"
+  },
+  "devDependencies": {
+    "vercel": "^34.2.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
 
