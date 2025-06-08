@@ -1,4 +1,3 @@
-// api/order-paid.js
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -21,15 +20,17 @@ export default async function handler(req, res) {
       wix_order_id: orderData.id || orderData.orderId,
       order_number: orderData.number || orderData.orderNumber,
       
-      // Customer information
+      // Customer information - multiple fallback options
       customer_email: orderData.buyerInfo?.email || 
                      orderData.billingInfo?.email || 
-                     orderData.contactDetails?.email,
+                     orderData.contactDetails?.email ||
+                     orderData.buyer?.email,
       
-      // Financial information
+      // Financial information - multiple fallback options
       total_amount: orderData.totals?.total || 
                    orderData.pricing?.total || 
-                   orderData.price?.total,
+                   orderData.price?.total ||
+                   orderData.total,
       currency: orderData.currency || 'USD',
       payment_status: orderData.paymentStatus || 'paid',
       fulfillment_status: orderData.fulfillmentStatus || 'pending',
