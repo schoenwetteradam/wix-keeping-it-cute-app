@@ -1,21 +1,10 @@
 {
   "version": 2,
-  "name": "wix-keeping-it-cute-app",
-  "description": "Keeping It Cute Salon webhook system for comprehensive business data capture",
   "functions": {
     "api/*.js": {
       "memory": 256,
       "maxDuration": 30
     }
   },
-  "regions": ["iad1"],
-  "env": {
-    "SUPABASE_URL": "@supabase_url",
-    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key"
-  },
-  "build": {
-    "env": {
-      "NODE_ENV": "production"
-    }
-  }
+  "regions": ["iad1"]
 }
