@@ -1,5 +1,4 @@
-// api/get-products.js
-// Get all active products for the usage form
+// api/get-products.js - Fixed version for your webhook app
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -8,11 +7,23 @@ const supabase = createClient(
 )
 
 export default async function handler(req, res) {
+  // Add CORS headers for cross-origin requests
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   try {
+    console.log('🔍 Fetching products from database...');
+
     const { category } = req.query;
 
     let query = supabase
@@ -26,29 +37,40 @@ export default async function handler(req, res) {
       query = query.eq('category', category);
     }
 
-    const { data, error } = await query;
+    const { data: products, error } = await query;
 
     if (error) {
       console.error('❌ Products Fetch Error:', error);
-      return res.status(500).json({ error: 'Failed to fetch products', details: error.message });
+      return res.status(500).json({ 
+        error: 'Failed to fetch products', 
+        details: error.message 
+      });
     }
 
     // Group by category for easier display
-    const productsByCategory = data.reduce((acc, product) => {
+    const productsByCategory = products.reduce((acc, product) => {
       const cat = product.category || 'Other';
       if (!acc[cat]) acc[cat] = [];
       acc[cat].push(product);
       return acc;
     }, {});
 
+    console.log(`✅ Fetched ${products.length} products in ${Object.keys(productsByCategory).length} categories`);
+
     res.status(200).json({ 
-      status: 'Products retrieved successfully',
-      products: data,
-      products_by_category: productsByCategory
+      status: 'success',
+      products: products,
+      products_by_category: productsByCategory,
+      total_count: products.length,
+      categories: Object.keys(productsByCategory)
     });
 
   } catch (err) {
     console.error('❌ Unexpected Error:', err);
-    res.status(500).json({ error: 'Unexpected error', details: err.message });
+    res.status(500).json({ 
+      error: 'Unexpected error', 
+      details: err.message,
+      timestamp: new Date().toISOString()
+    });
   }
 }
