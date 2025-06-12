@@ -27,7 +27,8 @@
     "env": "vercel env ls"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.42.3"
+    "@supabase/supabase-js": "^2.50.0",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "vercel": "^34.2.4"
