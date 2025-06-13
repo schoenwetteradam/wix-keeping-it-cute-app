@@ -1,37 +1,50 @@
 {
-  "name": "wix-keeping-it-cute-app",
-  "version": "2.0.0",
-  "description": "Comprehensive webhook system for Keeping It Cute Salon - captures bookings, customers, orders, and analytics from Wix into Supabase",
+  "name": "keeping-it-cute-salon-system",
+  "version": "3.0.0",
+  "description": "Complete business management system for Keeping It Cute Salon & Spa with Wix integration",
   "type": "module",
   "license": "MIT",
   "keywords": [
     "wix",
-    "webhooks", 
+    "webhooks",
     "salon",
     "beauty",
     "booking-system",
     "customer-management",
     "analytics",
     "supabase",
-    "vercel"
+    "vercel",
+    "nextjs",
+    "payments"
   ],
   "repository": {
     "type": "git",
     "url": "your-github-repo-url"
   },
   "scripts": {
-    "dev": "vercel dev",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "deploy": "vercel --prod",
     "test": "node test/webhook-test.js",
+    "test:webhooks": "node test/test-all-webhooks.js",
     "logs": "vercel logs",
-    "env": "vercel env ls"
+    "env": "vercel env ls",
+    "db:migrate": "node scripts/migrate.js",
+    "db:seed": "node scripts/seed-services.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.0",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "nodemailer": "^6.9.8",
+    "date-fns": "^2.30.0"
   },
   "devDependencies": {
-    "vercel": "^34.2.4"
+    "vercel": "^34.2.4",
+    "@types/node": "^20.10.0"
   },
   "engines": {
     "node": ">=18.0.0"
