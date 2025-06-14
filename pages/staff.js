@@ -1,8 +1,7 @@
-// pages/staff.js - Complete Staff Portal with Images
+// pages/staff.js - Complete Staff Portal with Working Appointments
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import Image from 'next/image'
 
 export default function StaffPortal() {
   const router = useRouter()
@@ -18,6 +17,12 @@ export default function StaffPortal() {
   // Product details modal
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [showProductDetails, setShowProductDetails] = useState(false)
+
+  // Appointment details modal
+  const [selectedAppointment, setSelectedAppointment] = useState(null)
+  const [showAppointmentDetails, setShowAppointmentDetails] = useState(false)
+  const [appointmentNotes, setAppointmentNotes] = useState('')
+  const [savingNotes, setSavingNotes] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -80,6 +85,73 @@ export default function StaffPortal() {
   const closeProductDetails = () => {
     setShowProductDetails(false)
     setSelectedProduct(null)
+  }
+
+  const handleAppointmentClick = async (appointment) => {
+    setSelectedAppointment(appointment)
+    setAppointmentNotes(appointment.notes || '')
+    setShowAppointmentDetails(true)
+    
+    // Check if product usage exists for this appointment
+    try {
+      const response = await fetch(`/api/get-booking/${appointment.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setSelectedAppointment({
+          ...appointment,
+          has_product_usage: data.has_existing_usage,
+          product_usage_completed: data.existing_usage_completed
+        })
+      }
+    } catch (error) {
+      console.error('Error checking product usage:', error)
+    }
+  }
+
+  const closeAppointmentDetails = () => {
+    setShowAppointmentDetails(false)
+    setSelectedAppointment(null)
+    setAppointmentNotes('')
+  }
+
+  const saveAppointmentNotes = async () => {
+    if (!selectedAppointment) return
+    
+    try {
+      setSavingNotes(true)
+      
+      const response = await fetch('/api/update-appointment-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appointment_id: selectedAppointment.id,
+          notes: appointmentNotes
+        })
+      })
+      
+      if (!response.ok) throw new Error('Failed to save notes')
+      
+      // Update local state
+      setSelectedAppointment({
+        ...selectedAppointment,
+        notes: appointmentNotes
+      })
+      
+      // Update appointments list
+      setAppointments(appointments.map(apt => 
+        apt.id === selectedAppointment.id 
+          ? { ...apt, notes: appointmentNotes }
+          : apt
+      ))
+      
+      alert('Notes saved successfully!')
+      
+    } catch (error) {
+      console.error('Error saving notes:', error)
+      alert('Failed to save notes. Please try again.')
+    } finally {
+      setSavingNotes(false)
+    }
   }
 
   const navigateToAudit = () => {
@@ -329,6 +401,224 @@ export default function StaffPortal() {
             </div>
           </div>
 
+          {/* Tab Content */}
+          {activeTab === 'alerts' && alerts.length > 0 && (
+            <div style={{ 
+              background: 'white', 
+              borderRadius: '12px', 
+              padding: '25px',
+              marginBottom: '25px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              border: '2px solid #ffcdd2'
+            }}>
+              <h2 style={{ color: '#d32f2f', margin: '0 0 20px 0', fontSize: '1.4em' }}>
+                🚨 Urgent: Low Stock Alerts ({alerts.length})
+              </h2>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
+                gap: '15px'
+              }}>
+                {alerts.slice(0, 12).map((product) => (
+                  <div 
+                    key={product.id} 
+                    onClick={() => handleProductClick(product)}
+                    style={{ 
+                      background: '#fff3e0', 
+                      padding: '20px', 
+                      borderRadius: '8px',
+                      border: '1px solid #ffcc02',
+                      position: 'relative',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s',
+                    }}
+                    onMouseEnter={(e) => e.target.style.transform = 'scale(1.02)'}
+                    onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                  >
+                    <div style={{ 
+                      position: 'absolute', 
+                      top: '10px', 
+                      right: '10px', 
+                      background: '#d32f2f', 
+                      color: 'white', 
+                      padding: '4px 8px', 
+                      borderRadius: '4px', 
+                      fontSize: '0.8em',
+                      fontWeight: 'bold'
+                    }}>
+                      LOW STOCK
+                    </div>
+                    <h4 style={{ margin: '0 0 8px 0', fontSize: '1.1em', color: '#333' }}>{product.product_name}</h4>
+                    <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '0.9em' }}>{product.brand}</p>
+                    <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', color: '#d32f2f' }}>
+                      Stock: {product.current_stock} / Min: {product.min_threshold}
+                    </p>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '0.9em', color: '#666' }}>
+                      📍 {product.location}
+                    </p>
+                    <p style={{ margin: '0', fontSize: '0.8em', color: '#888' }}>
+                      SKU: {product.sku}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Appointments Tab */}
+          {activeTab === 'appointments' && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, color: '#333' }}>📅 Recent Appointments</h2>
+                <p style={{ margin: 0, color: '#666', fontSize: '0.9em', fontStyle: 'italic' }}>
+                  Click on any appointment to view details and manage product usage
+                </p>
+              </div>
+              
+              {appointments.length === 0 ? (
+                <div style={{ 
+                  background: 'white',
+                  padding: '40px',
+                  borderRadius: '12px',
+                  textAlign: 'center',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }}>
+                  <div style={{ fontSize: '3em', marginBottom: '20px' }}>📅</div>
+                  <h3 style={{ color: '#666', marginBottom: '10px' }}>No Appointments Found</h3>
+                  <p style={{ color: '#888', fontSize: '0.9em' }}>
+                    Appointments will appear here once bookings are made through your Wix website.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
+                  gap: '20px'
+                }}>
+                  {appointments.slice(0, 20).map((appointment) => (
+                    <div 
+                      key={appointment.id} 
+                      onClick={() => handleAppointmentClick(appointment)}
+                      style={{ 
+                        background: 'white', 
+                        border: '1px solid #e9ecef', 
+                        borderRadius: '12px',
+                        padding: '20px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)'
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)'
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'flex-start',
+                        marginBottom: '15px'
+                      }}>
+                        <div style={{ flex: 1 }}>
+                          <h4 style={{ margin: '0 0 8px 0', color: '#333', fontSize: '1.2em' }}>
+                            {appointment.customer_name || 'Unknown Customer'}
+                          </h4>
+                          <p style={{ margin: '0 0 5px 0', color: '#666', fontSize: '1em' }}>
+                            📧 {appointment.customer_email || 'No email'}
+                          </p>
+                          <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '0.95em' }}>
+                            ✨ {appointment.service_name || 'Unknown Service'}
+                          </p>
+                          <p style={{ margin: '0 0 8px 0', color: '#888', fontSize: '0.9em' }}>
+                            📅 {appointment.appointment_date ? new Date(appointment.appointment_date).toLocaleString() : 'No date'}
+                          </p>
+                          {appointment.staff_member && (
+                            <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '0.85em' }}>
+                              👤 Staff: {appointment.staff_member}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                          <span style={{ 
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            fontSize: '0.8em',
+                            fontWeight: 'bold',
+                            backgroundColor: appointment.payment_status === 'paid' ? '#e8f5e8' : '#fff3e0',
+                            color: appointment.payment_status === 'paid' ? '#2e7d32' : '#f57c00'
+                          }}>
+                            {appointment.payment_status?.toUpperCase() || 'PENDING'}
+                          </span>
+                          
+                          {appointment.total_price && (
+                            <span style={{ 
+                              fontSize: '1.1em',
+                              fontWeight: 'bold',
+                              color: '#333'
+                            }}>
+                              ${parseFloat(appointment.total_price).toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Quick action indicators */}
+                      <div style={{ 
+                        display: 'flex', 
+                        gap: '10px', 
+                        justifyContent: 'flex-end',
+                        marginTop: '15px',
+                        borderTop: '1px solid #f0f0f0',
+                        paddingTop: '15px'
+                      }}>
+                        <span style={{
+                          background: '#e3f2fd',
+                          color: '#1976d2',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.75em',
+                          fontWeight: 'bold'
+                        }}>
+                          📝 View Details
+                        </span>
+                        
+                        <span style={{
+                          background: '#fff3e0',
+                          color: '#f57c00',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.75em',
+                          fontWeight: 'bold'
+                        }}>
+                          📦 Product Usage
+                        </span>
+                      </div>
+                      
+                      {appointment.notes && (
+                        <div style={{ 
+                          marginTop: '10px',
+                          padding: '8px',
+                          background: '#f8f9fa',
+                          borderRadius: '4px',
+                          fontSize: '0.85em',
+                          color: '#666',
+                          fontStyle: 'italic'
+                        }}>
+                          💬 "{appointment.notes.substring(0, 50)}{appointment.notes.length > 50 ? '...' : ''}"
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Inventory Tab with Images */}
           {activeTab === 'inventory' && (
             <div>
@@ -536,12 +826,9 @@ export default function StaffPortal() {
               ))}
             </div>
           )}
-
-          {/* Appointments and Alerts tabs remain the same */}
-          {/* ... (keeping existing appointment and alert code) ... */}
         </div>
 
-        {/* Enhanced Product Details Modal with Image */}
+        {/* Product Details Modal with Image */}
         {showProductDetails && selectedProduct && (
           <div style={{
             position: 'fixed',
@@ -628,8 +915,384 @@ export default function StaffPortal() {
                 </div>
               </div>
 
-              {/* Continue with existing modal content... */}
-              {/* Inventory Status, Financial Information, etc. */}
+              {/* Inventory Status */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '20px',
+                marginBottom: '20px'
+              }}>
+                <div>
+                  <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>Inventory Status</h4>
+                  <p style={{ 
+                    margin: '0 0 5px 0', 
+                    fontSize: '1.2em',
+                    fontWeight: 'bold',
+                    color: selectedProduct.current_stock <= selectedProduct.min_threshold ? '#d32f2f' : '#388e3c'
+                  }}>
+                    Current Stock: {selectedProduct.current_stock}
+                  </p>
+                  <p style={{ margin: '0 0 5px 0', color: '#666' }}>
+                    Minimum Threshold: {selectedProduct.min_threshold}
+                  </p>
+                  <p style={{ margin: '0', fontSize: '0.9em', color: '#666' }}>
+                    Low Stock Alert: {selectedProduct.current_stock <= selectedProduct.min_threshold ? 'YES' : 'NO'}
+                  </p>
+                </div>
+
+                <div>
+                  <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>Financial Information</h4>
+                  <p style={{ margin: '0 0 5px 0', color: '#666' }}>
+                    Cost per Unit: <strong>${selectedProduct.cost_per_unit}</strong>
+                  </p>
+                  <p style={{ margin: '0 0 5px 0', color: '#666' }}>
+                    Total Value: <strong>${(selectedProduct.current_stock * selectedProduct.cost_per_unit).toFixed(2)}</strong>
+                  </p>
+                  <p style={{ margin: '0', color: '#666' }}>
+                    Location: <strong>{selectedProduct.location}</strong>
+                  </p>
+                </div>
+              </div>
+
+              {selectedProduct.description && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>Description</h4>
+                  <p style={{ margin: 0, color: '#666', lineHeight: '1.5' }}>
+                    {selectedProduct.description}
+                  </p>
+                </div>
+              )}
+
+              <div style={{ 
+                display: 'flex', 
+                gap: '10px', 
+                justifyContent: 'flex-end' 
+              }}>
+                <button
+                  onClick={closeProductDetails}
+                  style={{
+                    background: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Appointment Details Modal */}
+        {showAppointmentDetails && selectedAppointment && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '30px',
+              maxWidth: '800px',
+              width: '100%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px' }}>
+                <h2 style={{ margin: 0, color: '#333', fontSize: '1.6em' }}>📅 Appointment Details</h2>
+                <button
+                  onClick={closeAppointmentDetails}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    color: '#666'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Customer Information */}
+              <div style={{ 
+                background: '#f8f9fa',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>👤 Customer Information</h3>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+                  gap: '15px'
+                }}>
+                  <div>
+                    <strong>Name:</strong> {selectedAppointment.customer_name || 'Unknown'}
+                  </div>
+                  <div>
+                    <strong>Email:</strong> {selectedAppointment.customer_email || 'Not provided'}
+                  </div>
+                  <div>
+                    <strong>Phone:</strong> {selectedAppointment.customer_phone || 'Not provided'}
+                  </div>
+                  <div>
+                    <strong>Wix Contact ID:</strong> {selectedAppointment.wix_contact_id || 'None'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Service Information */}
+              <div style={{ 
+                background: '#fff3e0',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>✨ Service Information</h3>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+                  gap: '15px'
+                }}>
+                  <div>
+                    <strong>Service:</strong> {selectedAppointment.service_name || 'Unknown Service'}
+                  </div>
+                  <div>
+                    <strong>Duration:</strong> {selectedAppointment.service_duration || 'Not specified'} minutes
+                  </div>
+                  <div>
+                    <strong>Staff Member:</strong> {selectedAppointment.staff_member || 'Not assigned'}
+                  </div>
+                  <div>
+                    <strong>Location:</strong> {selectedAppointment.location || 'Salon'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Appointment Details */}
+              <div style={{ 
+                background: '#e3f2fd',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>📅 Appointment Details</h3>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+                  gap: '15px'
+                }}>
+                  <div>
+                    <strong>Date & Time:</strong><br />
+                    {selectedAppointment.appointment_date ? new Date(selectedAppointment.appointment_date).toLocaleString() : 'Not scheduled'}
+                  </div>
+                  <div>
+                    <strong>End Time:</strong><br />
+                    {selectedAppointment.end_time ? new Date(selectedAppointment.end_time).toLocaleString() : 'Not specified'}
+                  </div>
+                  <div>
+                    <strong>Payment Status:</strong><br />
+                    <span style={{ 
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '0.9em',
+                      fontWeight: 'bold',
+                      backgroundColor: selectedAppointment.payment_status === 'paid' ? '#e8f5e8' : '#fff3e0',
+                      color: selectedAppointment.payment_status === 'paid' ? '#2e7d32' : '#f57c00'
+                    }}>
+                      {selectedAppointment.payment_status?.toUpperCase() || 'PENDING'}
+                    </span>
+                  </div>
+                  <div>
+                    <strong>Total Price:</strong><br />
+                    ${selectedAppointment.total_price ? parseFloat(selectedAppointment.total_price).toFixed(2) : '0.00'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes Section */}
+              <div style={{ 
+                background: '#f0f8ff',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>📝 Appointment Notes</h3>
+                <textarea
+                  value={appointmentNotes}
+                  onChange={(e) => setAppointmentNotes(e.target.value)}
+                  placeholder="Add notes about this appointment..."
+                  style={{
+                    width: '100%',
+                    minHeight: '100px',
+                    padding: '12px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    fontFamily: 'inherit',
+                    resize: 'vertical'
+                  }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                  <button
+                    onClick={saveAppointmentNotes}
+                    disabled={savingNotes}
+                    style={{
+                      background: savingNotes ? '#ccc' : '#4CAF50',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '4px',
+                      cursor: savingNotes ? 'not-allowed' : 'pointer',
+                      fontSize: '14px'
+                    }}
+                  >
+                    {savingNotes ? 'Saving...' : 'Save Notes'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Product Usage Section */}
+              <div style={{ 
+                background: selectedAppointment.has_product_usage ? '#e8f5e8' : '#fff5f5',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>📦 Product Usage</h3>
+                
+                {selectedAppointment.has_product_usage ? (
+                  <div>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '10px',
+                      marginBottom: '15px'
+                    }}>
+                      <span style={{ fontSize: '1.5em' }}>✅</span>
+                      <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                        Product usage has been logged for this appointment
+                      </span>
+                    </div>
+                    <p style={{ margin: '0', color: '#666', fontSize: '0.9em' }}>
+                      Status: {selectedAppointment.product_usage_completed ? 'Completed' : 'In Progress'}
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '10px',
+                      marginBottom: '15px'
+                    }}>
+                      <span style={{ fontSize: '1.5em' }}>⚠️</span>
+                      <span style={{ color: '#d32f2f', fontWeight: 'bold' }}>
+                        Product usage not yet recorded
+                      </span>
+                    </div>
+                    <p style={{ margin: '0 0 15px 0', color: '#666', fontSize: '0.9em' }}>
+                      Record which products were used during this service for accurate inventory tracking.
+                    </p>
+                    <button
+                      onClick={() => {
+                        window.open(`/product-usage/${selectedAppointment.id}`, '_blank')
+                      }}
+                      style={{
+                        background: '#ff9a9e',
+                        color: 'white',
+                        border: 'none',
+                        padding: '12px 20px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      📦 Log Product Usage
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* System Information */}
+              <div style={{ 
+                background: '#f8f9fa',
+                padding: '15px',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <h4 style={{ margin: '0 0 10px 0', color: '#666', fontSize: '1em' }}>🔧 System Information</h4>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                  gap: '10px',
+                  fontSize: '0.8em',
+                  color: '#666'
+                }}>
+                  <div><strong>Booking ID:</strong> {selectedAppointment.wix_booking_id || 'None'}</div>
+                  <div><strong>Order ID:</strong> {selectedAppointment.wix_order_id || 'None'}</div>
+                  <div><strong>Created:</strong> {selectedAppointment.created_at ? new Date(selectedAppointment.created_at).toLocaleDateString() : 'Unknown'}</div>
+                  <div><strong>Updated:</strong> {selectedAppointment.updated_at ? new Date(selectedAppointment.updated_at).toLocaleDateString() : 'Unknown'}</div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ 
+                display: 'flex', 
+                gap: '15px', 
+                justifyContent: 'flex-end' 
+              }}>
+                <button
+                  onClick={closeAppointmentDetails}
+                  style={{
+                    background: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 20px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  Close
+                </button>
+                
+                {!selectedAppointment.has_product_usage && (
+                  <button
+                    onClick={() => {
+                      window.open(`/product-usage/${selectedAppointment.id}`, '_blank')
+                    }}
+                    style={{
+                      background: '#ff9a9e',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 20px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    📦 Log Product Usage
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
