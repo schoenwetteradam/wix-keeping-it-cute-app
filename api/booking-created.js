@@ -1,4 +1,4 @@
-// api/booking-created.js - Updated for new database schema
+// api/booking-created.js - CORRECTED for your exact table structure
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -23,175 +23,144 @@ export default async function handler(req, res) {
   
   try {
     console.log('📅 Processing booking created webhook...');
+    console.log('Raw request body:', JSON.stringify(req.body, null, 2));
     
     const bookingData = req.body;
-    console.log('Raw booking data:', JSON.stringify(bookingData, null, 2));
     
-    // Handle customer data first (upsert to customers table)
-    let customer = null;
-    if (bookingData.contact || bookingData.contactDetails) {
-      const contactInfo = bookingData.contact || bookingData.contactDetails;
-      
-      const customerData = {
-        email: contactInfo.email || bookingData.booking_contact_email,
-        first_name: contactInfo.firstName || contactInfo.name?.first || bookingData.booking_contact_first_name,
-        last_name: contactInfo.lastName || contactInfo.name?.last || bookingData.booking_contact_last_name,
-        phone: contactInfo.phone || bookingData.booking_contact_phone,
-        business_type: 'salon'
-      };
-
-      const { data: customerResult, error: customerError } = await supabase
-        .from('customers')
-        .upsert(customerData, { 
-          onConflict: 'email',
-          ignoreDuplicates: false 
-        })
-        .select()
-        .single();
-
-      if (customerError) {
-        console.error('❌ Customer upsert error:', customerError);
-        // Continue with booking creation even if customer fails
-      } else {
-        customer = customerResult;
-        console.log('✅ Customer upserted:', customer.id);
-      }
+    // Test database connection first
+    const { data: testData, error: testError } = await supabase
+      .from('bookings')
+      .select('count(*)')
+      .limit(1);
+    
+    if (testError) {
+      console.error('❌ Database connection failed:', testError);
+      return res.status(500).json({ 
+        error: 'Database connection failed', 
+        details: testError.message 
+      });
     }
-
-    // Find the service in our database using Wix Service ID
-    let serviceId = null;
-    if (bookingData.service_id) {
-      const { data: serviceData } = await supabase
-        .from('salon_services')
-        .select('id, name, price, duration_minutes')
-        .eq('wix_service_id', bookingData.service_id)
-        .single();
+    
+    console.log('✅ Database connection successful');
+    
+    // Map booking data to your EXACT table structure (only columns that exist)
+    const bookingRecord = {
+      // Required/main fields
+      wix_booking_id: bookingData.id || bookingData.booking_id || bookingData.bookingId || `booking-${Date.now()}`,
       
-      if (serviceData) {
-        serviceId = serviceData.id;
-        console.log('✅ Found service:', serviceData.name);
-      }
-    }
-
-    // Find staff member by email or name
-    let staffId = null;
-    if (bookingData.staff_member_email || bookingData.staff_member_name) {
-      let staffQuery = supabase.from('staff').select('id, first_name, last_name');
+      // Customer information
+      customer_email: bookingData.contactDetails?.email || 
+                     bookingData.contact?.email || 
+                     bookingData.formInfo?.email || 
+                     null,
+      customer_name: extractCustomerName(bookingData),
+      customer_phone: bookingData.contactDetails?.phone || 
+                      bookingData.contact?.phone || 
+                      null,
       
-      if (bookingData.staff_member_email) {
-        staffQuery = staffQuery.eq('email', bookingData.staff_member_email);
-      } else if (bookingData.staff_member_name) {
-        // Search by name (this might need adjustment based on your staff data)
-        staffQuery = staffQuery.or(`first_name.ilike.%${bookingData.staff_member_name}%,last_name.ilike.%${bookingData.staff_member_name}%`);
-      }
+      // Service information
+      service_name: bookingData.service?.name || 
+                    bookingData.serviceInfo?.name || 
+                    bookingData.bookedEntity?.title ||
+                    'Unknown Service',
+      service_duration: parseInt(bookingData.service?.duration || 
+                                bookingData.serviceInfo?.duration || 
+                                bookingData.duration || 60),
       
-      const { data: staffData } = await staffQuery.single();
-      if (staffData) {
-        staffId = staffData.id;
-        console.log('✅ Found staff:', `${staffData.first_name} ${staffData.last_name}`);
-      }
-    }
-
-    // Create appointment record
-    const appointmentData = {
-      customer_id: customer?.id,
-      service_id: serviceId,
-      staff_id: staffId,
-      wix_booking_id: bookingData.booking_id || bookingData.id,
-      wix_order_id: bookingData.order_id,
-      appointment_date: bookingData.start_date || bookingData.startDate,
-      duration_minutes: bookingData.duration || 60, // Default 60 minutes
-      status: 'confirmed',
-      payment_status: bookingData.payment_status === 'PAID' ? 'paid' : 'pending',
-      payment_method: 'wix',
-      total_amount: bookingData.price?.value || bookingData.total_price,
-      notes: bookingData.notes || extractNotes(bookingData.additional_fields),
-      created_at: new Date().toISOString()
+      // Timing
+      appointment_date: bookingData.startDate || 
+                       bookingData.start_date || 
+                       bookingData.slot?.startDate ||
+                       new Date().toISOString(),
+      end_time: bookingData.endDate || 
+                bookingData.end_date ||
+                calculateEndTime(bookingData),
+      
+      // Pricing and payment  
+      total_price: parseFloat(bookingData.totalPrice || 
+                             bookingData.total_price || 
+                             bookingData.price?.value || 0),
+      payment_status: (bookingData.paymentStatus || 
+                      bookingData.payment_status || 
+                      'NOT_PAID').toLowerCase(),
+      
+      // Additional details
+      staff_member: bookingData.staffMember?.name || 
+                   bookingData.staff_member?.name || 
+                   null,
+      notes: extractNotes(bookingData),
+      location: bookingData.location || 'Keeping It Cute Salon & Spa',
+      number_of_participants: parseInt(bookingData.numberOfParticipants || 1),
+      
+      // Wix specific
+      wix_contact_id: bookingData.contactDetails?.contactId || 
+                     bookingData.contactId ||
+                     null,
+      
+      // System fields
+      business_id: null,
+      cancelled_date: null,
+      revision: 1,
+      
+      // Raw data storage
+      payload: bookingData,
+      raw_data: bookingData,
+      
+      // Timestamps
+      created_at: new Date().toISOString(),
+      created_date: bookingData.createdDate || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      updated_date: new Date().toISOString()
     };
-
-    const { data: appointment, error: appointmentError } = await supabase
-      .from('salon_appointments')
-      .insert([appointmentData])
-      .select(`
-        *,
-        customers(*),
-        salon_services(*),
-        staff(*)
-      `)
+    
+    // Remove undefined/null values to prevent database errors
+    Object.keys(bookingRecord).forEach(key => {
+      if (bookingRecord[key] === undefined) {
+        delete bookingRecord[key];
+      }
+    });
+    
+    console.log('📝 Booking record to insert:', JSON.stringify(bookingRecord, null, 2));
+    
+    // Insert into bookings table
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .insert([bookingRecord])
+      .select()
       .single();
-
-    if (appointmentError) {
-      console.error('❌ Appointment creation error:', appointmentError);
-      throw appointmentError;
+    
+    if (bookingError) {
+      console.error('❌ Booking insert error:', bookingError);
+      return res.status(500).json({ 
+        error: 'Failed to create booking', 
+        details: bookingError.message,
+        hint: bookingError.hint,
+        attempted_data: bookingRecord
+      });
     }
-
-    console.log('✅ Appointment created:', appointment.id);
-
-    // Record business metric
-    await supabase
-      .from('business_metrics')
-      .insert({
-        business_type: 'salon',
-        metric_name: 'appointment_created',
-        metric_value: 1,
-        metric_date: new Date().toISOString().split('T')[0],
-        metadata: {
-          appointment_id: appointment.id,
-          service_name: bookingData.service_name,
-          wix_booking_id: bookingData.booking_id
-        }
-      });
-
-    // Log webhook for debugging
-    await supabase
-      .from('system_metrics')
-      .insert({
-        metric_type: 'webhook_booking_created',
-        metric_data: {
-          success: true,
-          appointment_id: appointment.id,
-          wix_booking_id: bookingData.booking_id,
-          customer_email: customer?.email,
-          service_name: bookingData.service_name,
-          processed_at: new Date().toISOString()
-        }
-      });
-
+    
+    console.log('✅ Booking created successfully:', booking.id);
+    
     res.status(200).json({ 
-      status: 'success',
+      success: true,
       message: 'Booking created successfully',
-      appointment: {
-        id: appointment.id,
-        wix_booking_id: appointment.wix_booking_id,
-        customer_name: customer ? `${customer.first_name} ${customer.last_name}` : 'Unknown',
-        service_name: appointment.salon_services?.name || bookingData.service_name,
-        appointment_date: appointment.appointment_date,
-        staff_member: appointment.staff ? `${appointment.staff.first_name} ${appointment.staff.last_name}` : bookingData.staff_member_name
+      booking: {
+        id: booking.id,
+        wix_booking_id: booking.wix_booking_id,
+        customer_email: booking.customer_email,
+        customer_name: booking.customer_name,
+        service_name: booking.service_name,
+        appointment_date: booking.appointment_date
       },
       timestamp: new Date().toISOString()
     });
     
   } catch (err) {
     console.error('❌ Webhook Processing Error:', err);
-    
-    // Log failed webhook
-    try {
-      await supabase
-        .from('system_metrics')
-        .insert({
-          metric_type: 'webhook_booking_created_failed',
-          metric_data: {
-            success: false,
-            error_message: err.message,
-            payload: req.body,
-            processed_at: new Date().toISOString()
-          }
-        });
-    } catch (logError) {
-      console.error('❌ Failed to log webhook error:', logError);
-    }
+    console.error('❌ Error stack:', err.stack);
     
     res.status(500).json({ 
+      success: false,
       error: 'Failed to process booking webhook', 
       details: err.message,
       timestamp: new Date().toISOString()
@@ -199,20 +168,38 @@ export default async function handler(req, res) {
   }
 }
 
-// Helper function to extract notes from additional fields
-function extractNotes(additionalFields) {
-  if (!additionalFields || !Array.isArray(additionalFields)) return null;
-  
-  try {
-    const notesField = additionalFields.find(field => 
-      field.label?.toLowerCase().includes('request') || 
-      field.label?.toLowerCase().includes('notes') ||
-      field.label?.toLowerCase().includes('special')
-    );
-    
-    return notesField?.value || null;
-  } catch (error) {
-    console.error('❌ Error extracting notes:', error);
-    return null;
+// Helper functions
+function extractCustomerName(data) {
+  if (data.contactDetails?.firstName || data.contactDetails?.lastName) {
+    return `${data.contactDetails.firstName || ''} ${data.contactDetails.lastName || ''}`.trim();
   }
+  if (data.contact?.firstName || data.contact?.lastName) {
+    return `${data.contact.firstName || ''} ${data.contact.lastName || ''}`.trim();
+  }
+  return data.customerName || 'Unknown Customer';
+}
+
+function calculateEndTime(data) {
+  const startDate = data.startDate || data.start_date || new Date().toISOString();
+  const duration = parseInt(data.duration || data.service_duration || 60);
+  const endTime = new Date(new Date(startDate).getTime() + duration * 60000);
+  return endTime.toISOString();
+}
+
+function extractNotes(data) {
+  let notes = [];
+  
+  if (data.notes) notes.push(data.notes);
+  if (data.additionalFields && Array.isArray(data.additionalFields)) {
+    data.additionalFields.forEach(field => {
+      if (field.value) {
+        notes.push(`${field.label || 'Note'}: ${field.value}`);
+      }
+    });
+  }
+  if (data.formInfo?.additionalFields) {
+    notes.push(data.formInfo.additionalFields);
+  }
+  
+  return notes.length > 0 ? notes.join(' | ') : null;
 }
