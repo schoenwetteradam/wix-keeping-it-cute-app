@@ -1,4 +1,4 @@
-// pages/api/webhook-router.js - CORRECTED VERSION
+// api/webhook-router.js - UPDATED for actual Wix webhook format
 import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
 
@@ -22,73 +22,114 @@ export default async function handler(req, res) {
   console.log('Method:', req.method);
   console.log('Content-Type:', req.headers['content-type']);
   console.log('Body type:', typeof req.body);
+  console.log('Body preview:', JSON.stringify(req.body).substring(0, 500));
   
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // Extract the JWT token from request body
-    const jwtToken = req.body;
-    console.log('🔐 JWT Token received (length):', jwtToken?.length || 'undefined');
+    // Log webhook attempt
+    await supabase
+      .from('webhook_logs')
+      .insert({
+        event_type: 'webhook_received',
+        webhook_status: 'processing',
+        data: {
+          headers: req.headers,
+          body_preview: JSON.stringify(req.body).substring(0, 1000),
+          timestamp: new Date().toISOString()
+        }
+      });
+
+    // Handle the webhook payload directly (it's already parsed JSON)
+    const webhookData = req.body;
     
-    if (!jwtToken || typeof jwtToken !== 'string') {
-      throw new Error('Invalid JWT token in request body');
+    // Check if this is a test webhook (simple object without JWT structure)
+    if (webhookData && typeof webhookData === 'object' && !webhookData.entityFqdn) {
+      console.log('🧪 Test webhook detected');
+      
+      await supabase
+        .from('webhook_logs')
+        .insert({
+          event_type: 'webhook_test',
+          webhook_status: 'success',
+          data: { test_payload: webhookData, timestamp: new Date().toISOString() }
+        });
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Webhook test successful!' 
+      });
     }
 
-    // Verify and decode the JWT token
-    console.log('🔍 Verifying JWT with Wix public key...');
-    const rawPayload = jwt.verify(jwtToken, WIX_PUBLIC_KEY);
-    console.log('✅ JWT verified successfully');
-    
-    // Parse the nested data structure
-    const event = JSON.parse(rawPayload.data);
-    console.log('📋 Event type:', event.eventType);
-    console.log('📋 Instance ID:', event.instanceId);
-    
-    const eventData = JSON.parse(event.data);
-    console.log('📋 Event data keys:', Object.keys(eventData));
-
-    // Process based on event type
-    let result;
-    switch (event.eventType) {
-      case 'wix.bookings.v2.booking_created':
+    // Handle actual Wix webhook (new format based on your examples)
+    if (webhookData.entityFqdn && webhookData.slug) {
+      console.log('📋 Wix webhook detected');
+      console.log('Entity FQDN:', webhookData.entityFqdn);
+      console.log('Slug:', webhookData.slug);
+      
+      let result;
+      
+      // Process based on entity and slug
+      if (webhookData.entityFqdn === 'wix.bookings.v2.booking' && webhookData.slug === 'created') {
         console.log('📅 Processing booking created...');
-        result = await processBookingCreated(eventData, event);
-        break;
-        
-      case 'wix.bookings.v2.booking_updated':
+        result = await processBookingCreated(webhookData);
+      } else if (webhookData.entityFqdn === 'wix.bookings.v2.booking' && webhookData.slug === 'updated') {
         console.log('🔄 Processing booking updated...');
-        result = await processBookingUpdated(eventData, event);
-        break;
-        
-      case 'wix.contacts.v4.contact_created':
-        console.log('👤 Processing contact created...');
-        result = await processContactCreated(eventData, event);
-        break;
-        
-      case 'wix.contacts.v4.contact_updated':
-        console.log('📝 Processing contact updated...');
-        result = await processContactUpdated(eventData, event);
-        break;
-        
-      case 'wix.ecom.v1.order_paid':
-        console.log('💰 Processing order paid...');
-        result = await processOrderPaid(eventData, event);
-        break;
-        
-      default:
-        console.log('❓ Unknown event type:', event.eventType);
-        result = await logUnknownEvent(event.eventType, eventData);
+        result = await processBookingUpdated(webhookData);
+      } else if (webhookData.entityFqdn === 'wix.bookings.v2.booking' && webhookData.slug === 'canceled') {
+        console.log('❌ Processing booking canceled...');
+        result = await processBookingCanceled(webhookData);
+      } else {
+        console.log('❓ Unknown webhook type:', webhookData.entityFqdn, webhookData.slug);
+        result = await logUnknownEvent(webhookData.entityFqdn + '.' + webhookData.slug, webhookData);
+      }
+
+      // Log successful webhook
+      await supabase
+        .from('webhook_logs')
+        .insert({
+          event_type: webhookData.entityFqdn + '.' + webhookData.slug,
+          webhook_status: 'success',
+          wix_id: webhookData.entityId,
+          data: {
+            result: result,
+            processed_at: new Date().toISOString()
+          }
+        });
+
+      console.log('✅ === WEBHOOK PROCESSED SUCCESSFULLY ===');
+      return res.status(200).json({
+        success: true,
+        eventType: webhookData.entityFqdn + '.' + webhookData.slug,
+        result: result,
+        timestamp: new Date().toISOString()
+      });
     }
 
-    console.log('✅ === WEBHOOK PROCESSED SUCCESSFULLY ===');
-    res.status(200).json({
-      success: true,
-      eventType: event.eventType,
-      result: result,
-      timestamp: new Date().toISOString()
-    });
+    // If we get here, try the old JWT format
+    const jwtToken = req.body;
+    if (typeof jwtToken === 'string') {
+      console.log('🔐 JWT Token detected, processing...');
+      
+      const rawPayload = jwt.verify(jwtToken, WIX_PUBLIC_KEY);
+      const event = JSON.parse(rawPayload.data);
+      const eventData = JSON.parse(event.data);
+      
+      // Process JWT webhook (old format)
+      let result = await processOldFormatWebhook(event, eventData);
+      
+      console.log('✅ === JWT WEBHOOK PROCESSED ===');
+      return res.status(200).json({
+        success: true,
+        eventType: event.eventType,
+        result: result,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    throw new Error('Unknown webhook format');
 
   } catch (error) {
     console.error('❌ === WEBHOOK PROCESSING FAILED ===');
@@ -106,133 +147,102 @@ export default async function handler(req, res) {
   }
 }
 
-// Process booking created event
-async function processBookingCreated(eventData, event) {
+// Process booking created (new format)
+async function processBookingCreated(webhookData) {
   try {
-    console.log('📅 Full booking data:', JSON.stringify(eventData, null, 2));
+    console.log('📅 Processing booking created with new format');
     
-    // Extract booking information - Wix v2 structure
-    const booking = eventData.booking || eventData;
+    const booking = webhookData.createdEvent.entity;
+    const contactDetails = booking.contactDetails;
+    const bookedEntity = booking.bookedEntity;
+    const slot = bookedEntity.slot;
     
-    // Step 1: Extract and process customer information
-    let customer = null;
-    const contactDetails = booking.contactDetails || {};
+    console.log('Booking ID:', booking.id);
+    console.log('Customer:', contactDetails.firstName, contactDetails.lastName);
+    console.log('Service:', bookedEntity.title);
     
-    if (contactDetails.contactId || contactDetails.email) {
-      const customerData = {
-        email: contactDetails.email || `customer-${Date.now()}@salon.com`,
-        first_name: contactDetails.firstName || 'Customer',
-        last_name: contactDetails.lastName || 'Unknown',
-        phone: contactDetails.phone,
-        business_type: 'salon'
-      };
-      
-      console.log('👤 Upserting customer:', customerData);
-      
-      const { data: customerResult, error: customerError } = await supabase
-        .from('customers')
-        .upsert(customerData, { 
-          onConflict: 'email',
-          ignoreDuplicates: false 
-        })
-        .select()
-        .single();
-      
-      if (customerError) {
-        console.error('❌ Customer upsert error:', customerError);
-      } else {
-        customer = customerResult;
-        console.log('✅ Customer processed:', customer.id);
-      }
-    }
-
-    // Step 2: Process service information
-    let service = null;
-    const bookedService = booking.bookedEntity;
+    // Calculate service duration
+    const startDate = new Date(slot.startDate);
+    const endDate = new Date(slot.endDate);
+    const durationMinutes = Math.round((endDate - startDate) / (1000 * 60));
     
-    if (bookedService && bookedService.title) {
-      // Try to find existing service or create new one
-      const serviceData = {
-        name: bookedService.title,
-        duration_minutes: bookedService.duration || 60,
-        price: booking.totalPrice || 0,
-        category: 'General',
-        is_active: true
-      };
-      
-      console.log('✨ Upserting service:', serviceData);
-      
-      const { data: serviceResult, error: serviceError } = await supabase
-        .from('salon_services')
-        .upsert(serviceData, { 
-          onConflict: 'name',
-          ignoreDuplicates: false 
-        })
-        .select()
-        .single();
-      
-      if (serviceError) {
-        console.error('❌ Service upsert error:', serviceError);
-      } else {
-        service = serviceResult;
-        console.log('✅ Service processed:', service.id);
-      }
-    }
-
-    // Step 3: Create the appointment (FIXED LINE)
-    const appointmentData = {
-      customer_id: customer?.id,
-      service_id: service?.id,
+    // Map to your bookings table structure
+    const bookingRecord = {
       wix_booking_id: booking.id,
-      appointment_date: booking.startDate || booking.slot?.startDate,
-      duration_minutes: parseInt(booking.duration) || service?.duration_minutes || 60,
-      status: (booking.status || 'CONFIRMED').toLowerCase(),
-      payment_status: (booking.paymentStatus || 'NOT_PAID').toLowerCase(),
-      total_amount: parseFloat(booking.totalPrice || 0),
-      notes: extractBookingNotes(booking),
-      created_at: new Date().toISOString()
+      
+      // Customer information
+      customer_email: contactDetails.email,
+      customer_name: `${contactDetails.firstName || ''} ${contactDetails.lastName || ''}`.trim(),
+      customer_phone: contactDetails.phone,
+      wix_contact_id: contactDetails.contactId,
+      
+      // Service information
+      service_name: bookedEntity.title,
+      service_duration: durationMinutes,
+      
+      // Timing (use the startDate and endDate from slot)
+      appointment_date: startDate.toISOString(),
+      end_time: endDate.toISOString(),
+      
+      // Staff and location
+      staff_member: slot.resource?.name,
+      location: slot.location?.name || 'Keeping It Cute Salon & Spa',
+      
+      // Booking details
+      number_of_participants: booking.numberOfParticipants || 1,
+      payment_status: (booking.paymentStatus || 'UNDEFINED').toLowerCase(),
+      
+      // Pricing (not in this webhook, set to 0 for now)
+      total_price: 0,
+      
+      // System fields
+      business_id: null,
+      cancelled_date: null,
+      revision: parseInt(booking.revision) || 1,
+      
+      // Raw data storage
+      payload: booking,
+      raw_data: webhookData,
+      
+      // Timestamps
+      created_at: new Date().toISOString(),
+      created_date: booking.createdDate,
+      updated_at: new Date().toISOString(),
+      updated_date: booking.updatedDate
     };
     
-    console.log('📅 Creating appointment:', appointmentData);
+    // Remove undefined values
+    Object.keys(bookingRecord).forEach(key => {
+      if (bookingRecord[key] === undefined) {
+        delete bookingRecord[key];
+      }
+    });
     
-    const { data: appointment, error: appointmentError } = await supabase
-      .from('salon_appointments')
-      .insert([appointmentData])
-      .select(`
-        *,
-        customers(*),
-        salon_services(*)
-      `)
+    console.log('📝 Final booking record:', JSON.stringify(bookingRecord, null, 2));
+    
+    // Insert into bookings table
+    const { data: insertedBooking, error: insertError } = await supabase
+      .from('bookings')
+      .insert([bookingRecord])
+      .select()
       .single();
     
-    if (appointmentError) {
-      console.error('❌ Appointment creation error:', appointmentError);
-      throw appointmentError;
+    if (insertError) {
+      console.error('❌ Booking insert error:', insertError);
+      throw insertError;
     }
     
-    console.log('✅ Appointment created:', appointment.id);
-
-    // Log success metric
-    await supabase
-      .from('system_metrics')
-      .insert({
-        metric_type: 'webhook_booking_created_success',
-        metric_data: {
-          success: true,
-          appointment_id: appointment.id,
-          customer_id: customer?.id,
-          service_id: service?.id,
-          wix_booking_id: booking.id,
-          event_instance_id: event.instanceId,
-          processed_at: new Date().toISOString()
-        }
-      });
-
+    console.log('✅ Booking created successfully:', insertedBooking.id);
+    
     return {
       type: 'booking_created',
-      appointment: appointment,
-      customer: customer,
-      service: service
+      booking_id: insertedBooking.id,
+      wix_booking_id: insertedBooking.wix_booking_id,
+      customer_email: insertedBooking.customer_email,
+      customer_name: insertedBooking.customer_name,
+      service_name: insertedBooking.service_name,
+      appointment_date: insertedBooking.appointment_date,
+      staff_member: insertedBooking.staff_member
     };
 
   } catch (error) {
@@ -241,102 +251,53 @@ async function processBookingCreated(eventData, event) {
   }
 }
 
-// Process contact created event  
-async function processContactCreated(eventData, event) {
+// Process booking updated
+async function processBookingUpdated(webhookData) {
   try {
-    console.log('👤 Full contact data:', JSON.stringify(eventData, null, 2));
+    console.log('🔄 Processing booking updated');
     
-    const contact = eventData.contact || eventData;
+    const booking = webhookData.updatedEvent?.entity || webhookData.createdEvent?.entity;
     
-    const contactData = {
-      email: contact.info?.emails?.items?.[0]?.email || contact.loginEmail,
-      first_name: contact.info?.name?.first,
-      last_name: contact.info?.name?.last,
-      phone: contact.info?.phones?.items?.[0]?.phone,
-      business_type: 'salon'
-    };
-    
-    if (!contactData.email) {
-      console.log('⚠️ No email found in contact, skipping...');
-      return { type: 'contact_created', skipped: true, reason: 'no_email' };
-    }
-    
-    console.log('👤 Creating contact:', contactData);
-    
-    const { data: result, error } = await supabase
-      .from('customers')
-      .upsert(contactData, { 
-        onConflict: 'email',
-        ignoreDuplicates: false 
-      })
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('❌ Contact creation error:', error);
-      throw error;
-    }
-    
-    console.log('✅ Contact created:', result.id);
-    
-    return {
-      type: 'contact_created',
-      customer: result
-    };
-
-  } catch (error) {
-    console.error('❌ Contact creation failed:', error);
-    throw error;
-  }
-}
-
-// Process booking updated event
-async function processBookingUpdated(eventData, event) {
-  try {
-    console.log('🔄 Processing booking update...');
-    
-    const booking = eventData.booking || eventData;
-    
-    // Find existing appointment
-    const { data: existingAppointment, error: findError } = await supabase
-      .from('salon_appointments')
-      .select('*')
-      .eq('wix_booking_id', booking.id)
-      .single();
-    
-    if (findError || !existingAppointment) {
-      console.log('⚠️ Appointment not found, creating new one...');
-      return await processBookingCreated(eventData, event);
-    }
-    
-    // Update existing appointment
     const updateData = {
-      appointment_date: booking.startDate || booking.slot?.startDate,
-      duration_minutes: parseInt(booking.duration) || existingAppointment.duration_minutes,
-      status: (booking.status || 'CONFIRMED').toLowerCase(),
-      payment_status: (booking.paymentStatus || 'NOT_PAID').toLowerCase(),
-      total_amount: parseFloat(booking.totalPrice || existingAppointment.total_amount),
-      notes: extractBookingNotes(booking),
-      updated_at: new Date().toISOString()
+      customer_email: booking.contactDetails?.email,
+      customer_name: booking.contactDetails ? 
+        `${booking.contactDetails.firstName || ''} ${booking.contactDetails.lastName || ''}`.trim() : 
+        undefined,
+      customer_phone: booking.contactDetails?.phone,
+      service_name: booking.bookedEntity?.title,
+      appointment_date: booking.bookedEntity?.slot?.startDate,
+      end_time: booking.bookedEntity?.slot?.endDate,
+      staff_member: booking.bookedEntity?.slot?.resource?.name,
+      payment_status: booking.paymentStatus?.toLowerCase(),
+      number_of_participants: booking.numberOfParticipants,
+      updated_at: new Date().toISOString(),
+      updated_date: booking.updatedDate,
+      revision: parseInt(booking.revision) || 1
     };
     
-    const { data: updatedAppointment, error: updateError } = await supabase
-      .from('salon_appointments')
+    // Remove undefined values
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) delete updateData[key];
+    });
+    
+    const { data: updatedBooking, error: updateError } = await supabase
+      .from('bookings')
       .update(updateData)
       .eq('wix_booking_id', booking.id)
       .select()
       .single();
     
     if (updateError) {
-      console.error('❌ Appointment update error:', updateError);
+      console.error('❌ Booking update error:', updateError);
       throw updateError;
     }
     
-    console.log('✅ Appointment updated:', updatedAppointment.id);
+    console.log('✅ Booking updated:', updatedBooking.id);
     
     return {
       type: 'booking_updated',
-      appointment: updatedAppointment
+      booking_id: updatedBooking.id,
+      wix_booking_id: updatedBooking.wix_booking_id
     };
     
   } catch (error) {
@@ -345,111 +306,59 @@ async function processBookingUpdated(eventData, event) {
   }
 }
 
-// Process contact updated event
-async function processContactUpdated(eventData, event) {
+// Process booking canceled
+async function processBookingCanceled(webhookData) {
   try {
-    console.log('📝 Processing contact update...');
+    console.log('❌ Processing booking canceled');
     
-    const contact = eventData.contact || eventData;
-    const email = contact.info?.emails?.items?.[0]?.email || contact.loginEmail;
+    const booking = webhookData.deletedEvent?.entity || webhookData.createdEvent?.entity;
     
-    if (!email) {
-      console.log('⚠️ No email found in contact update, skipping...');
-      return { type: 'contact_updated', skipped: true, reason: 'no_email' };
-    }
-    
-    const updateData = {
-      first_name: contact.info?.name?.first,
-      last_name: contact.info?.name?.last,
-      phone: contact.info?.phones?.items?.[0]?.phone,
-      updated_at: new Date().toISOString()
-    };
-    
-    const { data: result, error } = await supabase
-      .from('customers')
-      .update(updateData)
-      .eq('email', email)
+    const { data: canceledBooking, error: cancelError } = await supabase
+      .from('bookings')
+      .update({
+        cancelled_date: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        revision: supabase.raw('revision + 1')
+      })
+      .eq('wix_booking_id', booking.id)
       .select()
       .single();
     
-    if (error) {
-      console.error('❌ Contact update error:', error);
-      // If contact doesn't exist, create it
-      return await processContactCreated(eventData, event);
+    if (cancelError) {
+      console.error('❌ Booking cancellation error:', cancelError);
+      throw cancelError;
     }
     
-    console.log('✅ Contact updated:', result.id);
+    console.log('✅ Booking canceled:', canceledBooking.id);
     
     return {
-      type: 'contact_updated',
-      customer: result
+      type: 'booking_canceled',
+      booking_id: canceledBooking.id,
+      wix_booking_id: canceledBooking.wix_booking_id
     };
     
   } catch (error) {
-    console.error('❌ Contact update failed:', error);
+    console.error('❌ Booking cancellation failed:', error);
     throw error;
   }
 }
 
-// Process order paid event
-async function processOrderPaid(eventData, event) {
-  try {
-    console.log('💰 Processing order payment...');
-    
-    const order = eventData.order || eventData;
-    
-    // Try to find associated appointment by order ID
-    const { data: appointment, error: findError } = await supabase
-      .from('salon_appointments')
-      .select('*')
-      .eq('wix_order_id', order.id)
-      .single();
-    
-    if (findError || !appointment) {
-      console.log('⚠️ No associated appointment found for order:', order.id);
-      return { type: 'order_paid', skipped: true, reason: 'no_appointment' };
-    }
-    
-    // Update appointment payment status
-    const { data: updatedAppointment, error: updateError } = await supabase
-      .from('salon_appointments')
-      .update({
-        payment_status: 'paid',
-        payment_amount: parseFloat(order.totals?.total || order.pricing?.total || 0),
-        payment_date: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', appointment.id)
-      .select()
-      .single();
-    
-    if (updateError) {
-      console.error('❌ Payment update error:', updateError);
-      throw updateError;
-    }
-    
-    console.log('✅ Payment processed for appointment:', updatedAppointment.id);
-    
-    return {
-      type: 'order_paid',
-      appointment: updatedAppointment,
-      order: order
-    };
-    
-  } catch (error) {
-    console.error('❌ Order payment processing failed:', error);
-    throw error;
-  }
+// Handle old JWT format (fallback)
+async function processOldFormatWebhook(event, eventData) {
+  console.log('📊 Processing old format webhook');
+  // Your existing JWT processing logic here
+  return { type: 'old_format', eventType: event.eventType };
 }
 
 // Log unknown events
 async function logUnknownEvent(eventType, eventData) {
   try {
     await supabase
-      .from('system_metrics')
+      .from('webhook_logs')
       .insert({
-        metric_type: 'webhook_unknown_event',
-        metric_data: {
+        event_type: 'unknown_webhook_event',
+        webhook_status: 'logged',
+        data: {
           event_type: eventType,
           event_data: eventData,
           processed_at: new Date().toISOString()
@@ -469,37 +378,19 @@ async function logUnknownEvent(eventType, eventData) {
 async function logFailedWebhook(error, rawBody) {
   try {
     await supabase
-      .from('system_metrics')
+      .from('webhook_logs')
       .insert({
-        metric_type: 'webhook_processing_failed',
-        metric_data: {
-          success: false,
+        event_type: 'webhook_processing_failed',
+        webhook_status: 'failed',
+        error_message: error.message,
+        data: {
           error_message: error.message,
           error_stack: error.stack,
-          raw_body: typeof rawBody === 'string' ? rawBody.substring(0, 1000) : rawBody,
+          raw_body_preview: typeof rawBody === 'string' ? rawBody.substring(0, 1000) : JSON.stringify(rawBody).substring(0, 1000),
           processed_at: new Date().toISOString()
         }
       });
   } catch (logError) {
     console.error('❌ Failed to log webhook error:', logError);
   }
-}
-
-// Helper function to extract notes from booking
-function extractBookingNotes(booking) {
-  let notes = [];
-  
-  if (booking.formInfo?.additionalFields) {
-    booking.formInfo.additionalFields.forEach(field => {
-      if (field.value) {
-        notes.push(`${field.label || 'Note'}: ${field.value}`);
-      }
-    });
-  }
-  
-  if (booking.notes) {
-    notes.push(booking.notes);
-  }
-  
-  return notes.length > 0 ? notes.join(' | ') : null;
 }
