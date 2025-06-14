@@ -1,4 +1,4 @@
-// pages/product-usage/[bookingId].js - Complete form with appointment details
+// pages/product-usage/[bookingId].js - Complete form with appointment details (FIXED)
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
@@ -628,9 +628,6 @@ export default function ProductUsageForm() {
           </form>
         )}
       </div>
-    </>
-  )
-}
     </>
   )
 }
