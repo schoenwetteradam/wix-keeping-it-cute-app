@@ -17,6 +17,37 @@ HvGQo36RHMxgvmVTkZo/TysaUAlvV4kzuezHvpw7alKQl/TwctVNTpCIVlpBjJN2
 oYciq9XsE/4PlRsA7kdl1aXlL6ZpwW3pti02ewIDAQAB
 -----END PUBLIC KEY-----`;
 
+// ADD THIS FUNCTION HERE - Product usage tracking
+async function checkForProductUsagePrompt(bookingId, customerEmail) {
+  try {
+    // Check if this booking already has product usage logged
+    const { data: existingUsage } = await supabase
+      .from('product_usage_sessions')
+      .select('id')
+      .eq('booking_id', bookingId)
+      .single();
+    
+    if (!existingUsage) {
+      // Log that this booking needs product usage tracking
+      await supabase
+        .from('system_metrics')
+        .insert({
+          metric_type: 'product_usage_needed',
+          metric_data: {
+            booking_id: bookingId,
+            customer_email: customerEmail,
+            needs_product_usage: true,
+            created_at: new Date().toISOString()
+          }
+        });
+      
+      console.log('📦 Product usage needed for booking:', bookingId);
+    }
+  } catch (error) {
+    console.error('❌ Error checking product usage:', error);
+  }
+}
+
 export default async function handler(req, res) {
   console.log('🎯 === WIX WEBHOOK RECEIVED ===');
   console.log('Method:', req.method);
@@ -233,6 +264,9 @@ async function processBookingCreated(webhookData) {
     }
     
     console.log('✅ Booking created successfully:', insertedBooking.id);
+    
+    // ADD PRODUCT USAGE TRACKING HERE
+    await checkForProductUsagePrompt(insertedBooking.id, insertedBooking.customer_email);
     
     return {
       type: 'booking_created',
