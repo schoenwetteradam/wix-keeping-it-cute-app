@@ -1,10 +1,11 @@
-// pages/staff.js - Fixed Staff Portal for Keeping It Cute Salon
+// pages/staff.js - Updated Staff Portal for Keeping It Cute Salon
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 
 export default function StaffPortal() {
   const [products, setProducts] = useState([])
   const [services, setServices] = useState([])
+  const [appointments, setAppointments] = useState([])
   const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -35,8 +36,17 @@ export default function StaffPortal() {
       const servicesData = await servicesResponse.json()
       console.log('Services loaded:', servicesData.stats?.total_services)
       
+      // Load appointments
+      const appointmentsResponse = await fetch('/api/get-appointments')
+      if (!appointmentsResponse.ok) {
+        throw new Error(`Appointments API Error: ${appointmentsResponse.status}`)
+      }
+      const appointmentsData = await appointmentsResponse.json()
+      console.log('Appointments loaded:', appointmentsData.count)
+      
       setProducts(productsData.products || [])
       setServices(servicesData.services || [])
+      setAppointments(appointmentsData.appointments || [])
       setAlerts(productsData.low_stock_alerts || [])
       setLoading(false)
       
@@ -136,7 +146,7 @@ export default function StaffPortal() {
         {/* Navigation Tabs */}
         <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e9ecef', padding: '0 20px' }}>
           <div style={{ display: 'flex', gap: '0' }}>
-            {['inventory', 'services', 'alerts'].map(tab => (
+            {['inventory', 'services', 'appointments', 'alerts'].map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -152,7 +162,7 @@ export default function StaffPortal() {
                   textTransform: 'capitalize'
                 }}
               >
-                {tab === 'inventory' && '📦'} {tab === 'services' && '✨'} {tab === 'alerts' && '🚨'} {tab}
+                {tab === 'inventory' && '📦'} {tab === 'services' && '✨'} {tab === 'appointments' && '📅'} {tab === 'alerts' && '🚨'} {tab}
               </button>
             ))}
           </div>
@@ -209,6 +219,21 @@ export default function StaffPortal() {
               </p>
               <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '0.9em' }}>Hair, Nails, Skincare</p>
             </div>
+            
+            <div style={{ 
+              background: 'white', 
+              padding: '25px', 
+              borderRadius: '12px',
+              textAlign: 'center',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              border: '1px solid #e9ecef'
+            }}>
+              <h3 style={{ margin: '0 0 10px 0', color: '#9c27b0', fontSize: '1.1em' }}>📅 Appointments</h3>
+              <p style={{ fontSize: '2.5em', margin: 0, fontWeight: 'bold', color: '#333' }}>
+                {appointments.length}
+              </p>
+              <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '0.9em' }}>Recent Bookings</p>
+            </div>
           </div>
 
           {/* Tab Content */}
@@ -261,6 +286,93 @@ export default function StaffPortal() {
                     <p style={{ margin: '0', fontSize: '0.8em', color: '#888' }}>
                       SKU: {product.sku}
                     </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Appointments Tab */}
+          {activeTab === 'appointments' && (
+            <div>
+              <h2 style={{ marginBottom: '20px', color: '#333' }}>📅 Recent Appointments</h2>
+              
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
+                gap: '20px'
+              }}>
+                {appointments.slice(0, 20).map((appointment) => (
+                  <div key={appointment.id} style={{ 
+                    background: 'white', 
+                    border: '1px solid #e9ecef', 
+                    borderRadius: '12px',
+                    padding: '20px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'flex-start',
+                      marginBottom: '15px'
+                    }}>
+                      <div>
+                        <h4 style={{ margin: '0 0 5px 0', color: '#333', fontSize: '1.1em' }}>
+                          {appointment.customer_name}
+                        </h4>
+                        <p style={{ margin: '0 0 5px 0', color: '#666', fontSize: '0.9em' }}>
+                          {appointment.service_name}
+                        </p>
+                        <p style={{ margin: '0', color: '#888', fontSize: '0.8em' }}>
+                          {new Date(appointment.appointment_date).toLocaleString()}
+                        </p>
+                      </div>
+                      
+                      <span style={{ 
+                        padding: '4px 12px',
+                        borderRadius: '20px',
+                        fontSize: '0.8em',
+                        fontWeight: 'bold',
+                        backgroundColor: appointment.payment_status === 'paid' ? '#e8f5e8' : '#fff3e0',
+                        color: appointment.payment_status === 'paid' ? '#2e7d32' : '#f57c00'
+                      }}>
+                        {appointment.payment_status?.toUpperCase() || 'PENDING'}
+                      </span>
+                    </div>
+                    
+                    <div style={{ 
+                      display: 'flex', 
+                      gap: '10px', 
+                      justifyContent: 'flex-end',
+                      marginTop: '15px'
+                    }}>
+                      <button
+                        onClick={() => window.open(`/product-usage/${appointment.id}`, '_blank')}
+                        style={{
+                          background: '#ff9a9e',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '0.9em',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        📦 Log Product Usage
+                      </button>
+                    </div>
+                    
+                    {appointment.staff_member && (
+                      <p style={{ 
+                        margin: '10px 0 0 0', 
+                        color: '#666', 
+                        fontSize: '0.8em',
+                        fontStyle: 'italic'
+                      }}>
+                        Staff: {appointment.staff_member}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
