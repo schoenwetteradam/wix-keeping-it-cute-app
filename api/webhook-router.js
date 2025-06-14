@@ -1,3 +1,4 @@
+// pages/api/webhook-router.js - CORRECTED VERSION
 import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
 
@@ -178,7 +179,7 @@ async function processBookingCreated(eventData, event) {
       }
     }
 
-    // Step 3: Create the appointment
+    // Step 3: Create the appointment (FIXED LINE)
     const appointmentData = {
       customer_id: customer?.id,
       service_id: service?.id,
@@ -289,37 +290,179 @@ async function processContactCreated(eventData, event) {
   }
 }
 
-// Process other event types
+// Process booking updated event
 async function processBookingUpdated(eventData, event) {
-  // Similar to processBookingCreated but update existing record
-  console.log('🔄 Booking updated - implementing update logic...');
-  return { type: 'booking_updated', status: 'processed' };
+  try {
+    console.log('🔄 Processing booking update...');
+    
+    const booking = eventData.booking || eventData;
+    
+    // Find existing appointment
+    const { data: existingAppointment, error: findError } = await supabase
+      .from('salon_appointments')
+      .select('*')
+      .eq('wix_booking_id', booking.id)
+      .single();
+    
+    if (findError || !existingAppointment) {
+      console.log('⚠️ Appointment not found, creating new one...');
+      return await processBookingCreated(eventData, event);
+    }
+    
+    // Update existing appointment
+    const updateData = {
+      appointment_date: booking.startDate || booking.slot?.startDate,
+      duration_minutes: parseInt(booking.duration) || existingAppointment.duration_minutes,
+      status: (booking.status || 'CONFIRMED').toLowerCase(),
+      payment_status: (booking.paymentStatus || 'NOT_PAID').toLowerCase(),
+      total_amount: parseFloat(booking.totalPrice || existingAppointment.total_amount),
+      notes: extractBookingNotes(booking),
+      updated_at: new Date().toISOString()
+    };
+    
+    const { data: updatedAppointment, error: updateError } = await supabase
+      .from('salon_appointments')
+      .update(updateData)
+      .eq('wix_booking_id', booking.id)
+      .select()
+      .single();
+    
+    if (updateError) {
+      console.error('❌ Appointment update error:', updateError);
+      throw updateError;
+    }
+    
+    console.log('✅ Appointment updated:', updatedAppointment.id);
+    
+    return {
+      type: 'booking_updated',
+      appointment: updatedAppointment
+    };
+    
+  } catch (error) {
+    console.error('❌ Booking update failed:', error);
+    throw error;
+  }
 }
 
+// Process contact updated event
 async function processContactUpdated(eventData, event) {
-  console.log('📝 Contact updated - implementing update logic...');
-  return { type: 'contact_updated', status: 'processed' };
+  try {
+    console.log('📝 Processing contact update...');
+    
+    const contact = eventData.contact || eventData;
+    const email = contact.info?.emails?.items?.[0]?.email || contact.loginEmail;
+    
+    if (!email) {
+      console.log('⚠️ No email found in contact update, skipping...');
+      return { type: 'contact_updated', skipped: true, reason: 'no_email' };
+    }
+    
+    const updateData = {
+      first_name: contact.info?.name?.first,
+      last_name: contact.info?.name?.last,
+      phone: contact.info?.phones?.items?.[0]?.phone,
+      updated_at: new Date().toISOString()
+    };
+    
+    const { data: result, error } = await supabase
+      .from('customers')
+      .update(updateData)
+      .eq('email', email)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('❌ Contact update error:', error);
+      // If contact doesn't exist, create it
+      return await processContactCreated(eventData, event);
+    }
+    
+    console.log('✅ Contact updated:', result.id);
+    
+    return {
+      type: 'contact_updated',
+      customer: result
+    };
+    
+  } catch (error) {
+    console.error('❌ Contact update failed:', error);
+    throw error;
+  }
 }
 
+// Process order paid event
 async function processOrderPaid(eventData, event) {
-  console.log('💰 Order paid - implementing payment logic...');
-  return { type: 'order_paid', status: 'processed' };
+  try {
+    console.log('💰 Processing order payment...');
+    
+    const order = eventData.order || eventData;
+    
+    // Try to find associated appointment by order ID
+    const { data: appointment, error: findError } = await supabase
+      .from('salon_appointments')
+      .select('*')
+      .eq('wix_order_id', order.id)
+      .single();
+    
+    if (findError || !appointment) {
+      console.log('⚠️ No associated appointment found for order:', order.id);
+      return { type: 'order_paid', skipped: true, reason: 'no_appointment' };
+    }
+    
+    // Update appointment payment status
+    const { data: updatedAppointment, error: updateError } = await supabase
+      .from('salon_appointments')
+      .update({
+        payment_status: 'paid',
+        payment_amount: parseFloat(order.totals?.total || order.pricing?.total || 0),
+        payment_date: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', appointment.id)
+      .select()
+      .single();
+    
+    if (updateError) {
+      console.error('❌ Payment update error:', updateError);
+      throw updateError;
+    }
+    
+    console.log('✅ Payment processed for appointment:', updatedAppointment.id);
+    
+    return {
+      type: 'order_paid',
+      appointment: updatedAppointment,
+      order: order
+    };
+    
+  } catch (error) {
+    console.error('❌ Order payment processing failed:', error);
+    throw error;
+  }
 }
 
 // Log unknown events
 async function logUnknownEvent(eventType, eventData) {
-  await supabase
-    .from('system_metrics')
-    .insert({
-      metric_type: 'webhook_unknown_event',
-      metric_data: {
-        event_type: eventType,
-        event_data: eventData,
-        processed_at: new Date().toISOString()
-      }
-    });
-  
-  return { type: 'unknown', eventType, logged: true };
+  try {
+    await supabase
+      .from('system_metrics')
+      .insert({
+        metric_type: 'webhook_unknown_event',
+        metric_data: {
+          event_type: eventType,
+          event_data: eventData,
+          processed_at: new Date().toISOString()
+        }
+      });
+    
+    console.log('📊 Unknown event logged:', eventType);
+    
+    return { type: 'unknown', eventType, logged: true };
+  } catch (error) {
+    console.error('❌ Failed to log unknown event:', error);
+    return { type: 'unknown', eventType, logged: false };
+  }
 }
 
 // Log failed webhooks
