@@ -1,8 +1,10 @@
-// pages/staff.js - Updated Staff Portal for Keeping It Cute Salon
+// pages/staff.js - Complete Staff Portal with Product Details & Audit
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
+import { useRouter } from 'next/router'
 
 export default function StaffPortal() {
+  const router = useRouter()
   const [products, setProducts] = useState([])
   const [services, setServices] = useState([])
   const [appointments, setAppointments] = useState([])
@@ -10,6 +12,10 @@ export default function StaffPortal() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('inventory')
+  
+  // Product details modal
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  const [showProductDetails, setShowProductDetails] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -55,6 +61,20 @@ export default function StaffPortal() {
       setError(error.message)
       setLoading(false)
     }
+  }
+
+  const handleProductClick = (product) => {
+    setSelectedProduct(product)
+    setShowProductDetails(true)
+  }
+
+  const closeProductDetails = () => {
+    setShowProductDetails(false)
+    setSelectedProduct(null)
+  }
+
+  const navigateToAudit = () => {
+    router.push('/inventory-audit')
   }
 
   if (loading) {
@@ -145,26 +165,48 @@ export default function StaffPortal() {
 
         {/* Navigation Tabs */}
         <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e9ecef', padding: '0 20px' }}>
-          <div style={{ display: 'flex', gap: '0' }}>
-            {['inventory', 'services', 'appointments', 'alerts'].map(tab => (
+          <div style={{ display: 'flex', gap: '0', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '0' }}>
+              {['inventory', 'services', 'appointments', 'alerts'].map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  style={{
+                    padding: '15px 25px',
+                    border: 'none',
+                    backgroundColor: activeTab === tab ? '#ff9a9e' : 'transparent',
+                    color: activeTab === tab ? 'white' : '#666',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: activeTab === tab ? 'bold' : 'normal',
+                    borderBottom: activeTab === tab ? '3px solid #ff9a9e' : 'none',
+                    textTransform: 'capitalize'
+                  }}
+                >
+                  {tab === 'inventory' && '📦'} {tab === 'services' && '✨'} {tab === 'appointments' && '📅'} {tab === 'alerts' && '🚨'} {tab}
+                </button>
+              ))}
+            </div>
+            
+            {/* Audit Button */}
+            {activeTab === 'inventory' && (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={navigateToAudit}
                 style={{
-                  padding: '15px 25px',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
                   border: 'none',
-                  backgroundColor: activeTab === tab ? '#ff9a9e' : 'transparent',
-                  color: activeTab === tab ? 'white' : '#666',
+                  padding: '12px 20px',
+                  borderRadius: '6px',
                   cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: activeTab === tab ? 'bold' : 'normal',
-                  borderBottom: activeTab === tab ? '3px solid #ff9a9e' : 'none',
-                  textTransform: 'capitalize'
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                 }}
               >
-                {tab === 'inventory' && '📦'} {tab === 'services' && '✨'} {tab === 'appointments' && '📅'} {tab === 'alerts' && '🚨'} {tab}
+                📊 Start Inventory Audit
               </button>
-            ))}
+            )}
           </div>
         </div>
 
@@ -255,13 +297,21 @@ export default function StaffPortal() {
                 gap: '15px'
               }}>
                 {alerts.slice(0, 12).map((product) => (
-                  <div key={product.id} style={{ 
-                    background: '#fff3e0', 
-                    padding: '20px', 
-                    borderRadius: '8px',
-                    border: '1px solid #ffcc02',
-                    position: 'relative'
-                  }}>
+                  <div 
+                    key={product.id} 
+                    onClick={() => handleProductClick(product)}
+                    style={{ 
+                      background: '#fff3e0', 
+                      padding: '20px', 
+                      borderRadius: '8px',
+                      border: '1px solid #ffcc02',
+                      position: 'relative',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s',
+                    }}
+                    onMouseEnter={(e) => e.target.style.transform = 'scale(1.02)'}
+                    onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                  >
                     <div style={{ 
                       position: 'absolute', 
                       top: '10px', 
@@ -382,7 +432,13 @@ export default function StaffPortal() {
           {/* Inventory Tab */}
           {activeTab === 'inventory' && (
             <div>
-              <h2 style={{ marginBottom: '20px', color: '#333' }}>📦 Inventory by Category</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, color: '#333' }}>📦 Inventory by Category</h2>
+                <p style={{ margin: 0, color: '#666', fontSize: '0.9em', fontStyle: 'italic' }}>
+                  Click on any product to view detailed information
+                </p>
+              </div>
+              
               {Object.entries(productsByCategory).map(([category, categoryProducts]) => (
                 <div key={category} style={{ marginBottom: '25px' }}>
                   <h3 style={{ 
@@ -402,13 +458,27 @@ export default function StaffPortal() {
                     gap: '15px'
                   }}>
                     {categoryProducts.slice(0, 20).map((product) => (
-                      <div key={product.id} style={{ 
-                        background: 'white', 
-                        border: '1px solid #e9ecef', 
-                        borderRadius: '8px',
-                        padding: '20px',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                      }}>
+                      <div 
+                        key={product.id} 
+                        onClick={() => handleProductClick(product)}
+                        style={{ 
+                          background: 'white', 
+                          border: '1px solid #e9ecef', 
+                          borderRadius: '8px',
+                          padding: '20px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)'
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)'
+                          e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)'
+                        }}
+                      >
                         <h4 style={{ margin: '0 0 8px 0', fontSize: '1em', color: '#333' }}>
                           {product.product_name}
                         </h4>
@@ -513,6 +583,207 @@ export default function StaffPortal() {
             </div>
           )}
         </div>
+
+        {/* Product Details Modal */}
+        {showProductDetails && selectedProduct && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '30px',
+              maxWidth: '600px',
+              width: '100%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, color: '#333', fontSize: '1.5em' }}>Product Details</h2>
+                <button
+                  onClick={closeProductDetails}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    color: '#666'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '20px',
+                marginBottom: '20px'
+              }}>
+                <div>
+                  <h3 style={{ margin: '0 0 10px 0', color: '#ff9a9e', fontSize: '1.3em' }}>
+                    {selectedProduct.product_name}
+                  </h3>
+                  <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '1.1em' }}>
+                    <strong>Brand:</strong> {selectedProduct.brand}
+                  </p>
+                  <p style={{ margin: '0 0 8px 0', color: '#666' }}>
+                    <strong>Category:</strong> {selectedProduct.category}
+                  </p>
+                  <p style={{ margin: '0 0 8px 0', color: '#666' }}>
+                    <strong>Size:</strong> {selectedProduct.size} {selectedProduct.unit_type}
+                  </p>
+                  <p style={{ margin: '0 0 8px 0', color: '#666' }}>
+                    <strong>SKU:</strong> {selectedProduct.sku}
+                  </p>
+                </div>
+
+                <div>
+                  <div style={{ marginBottom: '15px' }}>
+                    <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>Inventory Status</h4>
+                    <p style={{ 
+                      margin: '0 0 5px 0', 
+                      fontSize: '1.2em',
+                      fontWeight: 'bold',
+                      color: selectedProduct.current_stock <= selectedProduct.min_threshold ? '#d32f2f' : '#388e3c'
+                    }}>
+                      Current Stock: {selectedProduct.current_stock}
+                    </p>
+                    <p style={{ margin: '0 0 5px 0', color: '#666' }}>
+                      Minimum Threshold: {selectedProduct.min_threshold}
+                    </p>
+                    <p style={{ margin: '0', fontSize: '0.9em', color: '#666' }}>
+                      Low Stock Alert: {selectedProduct.current_stock <= selectedProduct.min_threshold ? 'YES' : 'NO'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>Financial Information</h4>
+                    <p style={{ margin: '0 0 5px 0', color: '#666' }}>
+                      Cost per Unit: <strong>${selectedProduct.cost_per_unit}</strong>
+                    </p>
+                    <p style={{ margin: '0 0 5px 0', color: '#666' }}>
+                      Total Value: <strong>${(selectedProduct.current_stock * selectedProduct.cost_per_unit).toFixed(2)}</strong>
+                    </p>
+                    <p style={{ margin: '0', color: '#666' }}>
+                      Location: <strong>{selectedProduct.location}</strong>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {selectedProduct.description && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>Description</h4>
+                  <p style={{ margin: 0, color: '#666', lineHeight: '1.5' }}>
+                    {selectedProduct.description}
+                  </p>
+                </div>
+              )}
+
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '20px',
+                marginBottom: '20px'
+              }}>
+                <div style={{ 
+                  background: '#f8f9fa', 
+                  padding: '15px', 
+                  borderRadius: '8px' 
+                }}>
+                  <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>Stock History</h4>
+                  <p style={{ margin: '0 0 5px 0', color: '#666', fontSize: '0.9em' }}>
+                    Created: {new Date(selectedProduct.created_at).toLocaleDateString()}
+                  </p>
+                  <p style={{ margin: '0', color: '#666', fontSize: '0.9em' }}>
+                    Last Updated: {new Date(selectedProduct.updated_at).toLocaleDateString()}
+                  </p>
+                </div>
+
+                <div style={{ 
+                  background: '#f8f9fa', 
+                  padding: '15px', 
+                  borderRadius: '8px' 
+                }}>
+                  <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>Product Status</h4>
+                  <p style={{ margin: '0 0 5px 0', color: '#666', fontSize: '0.9em' }}>
+                    Active: {selectedProduct.is_active ? 'Yes' : 'No'}
+                  </p>
+                  <p style={{ margin: '0', color: '#666', fontSize: '0.9em' }}>
+                    Vendor: {selectedProduct.vendor || 'Not specified'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Stock Level Indicator */}
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>Stock Level Indicator</h4>
+                <div style={{ 
+                  background: '#f8f9fa', 
+                  borderRadius: '8px', 
+                  padding: '3px',
+                  position: 'relative'
+                }}>
+                  <div
+                    style={{
+                      height: '20px',
+                      borderRadius: '6px',
+                      background: selectedProduct.current_stock <= selectedProduct.min_threshold 
+                        ? 'linear-gradient(90deg, #dc3545 0%, #ffc107 100%)'
+                        : 'linear-gradient(90deg, #28a745 0%, #20c997 100%)',
+                      width: `${Math.min(100, (selectedProduct.current_stock / (selectedProduct.min_threshold * 2)) * 100)}%`,
+                      transition: 'width 0.3s ease'
+                    }}
+                  />
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: '50%', 
+                    left: '10px', 
+                    transform: 'translateY(-50%)',
+                    color: 'white',
+                    fontSize: '0.8em',
+                    fontWeight: 'bold'
+                  }}>
+                    {selectedProduct.current_stock} / {selectedProduct.min_threshold * 2} units
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ 
+                display: 'flex', 
+                gap: '10px', 
+                justifyContent: 'flex-end' 
+              }}>
+                <button
+                  onClick={closeProductDetails}
+                  style={{
+                    background: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <footer style={{ 
