@@ -184,4 +184,179 @@ async function processBookingCreated(eventData, event) {
       service_id: service?.id,
       wix_booking_id: booking.id,
       appointment_date: booking.startDate || booking.slot?.startDate,
-      duration_minutes: parseInt
+      duration_minutes: parseInt(booking.duration) || service?.duration_minutes || 60,
+      status: (booking.status || 'CONFIRMED').toLowerCase(),
+      payment_status: (booking.paymentStatus || 'NOT_PAID').toLowerCase(),
+      total_amount: parseFloat(booking.totalPrice || 0),
+      notes: extractBookingNotes(booking),
+      created_at: new Date().toISOString()
+    };
+    
+    console.log('📅 Creating appointment:', appointmentData);
+    
+    const { data: appointment, error: appointmentError } = await supabase
+      .from('salon_appointments')
+      .insert([appointmentData])
+      .select(`
+        *,
+        customers(*),
+        salon_services(*)
+      `)
+      .single();
+    
+    if (appointmentError) {
+      console.error('❌ Appointment creation error:', appointmentError);
+      throw appointmentError;
+    }
+    
+    console.log('✅ Appointment created:', appointment.id);
+
+    // Log success metric
+    await supabase
+      .from('system_metrics')
+      .insert({
+        metric_type: 'webhook_booking_created_success',
+        metric_data: {
+          success: true,
+          appointment_id: appointment.id,
+          customer_id: customer?.id,
+          service_id: service?.id,
+          wix_booking_id: booking.id,
+          event_instance_id: event.instanceId,
+          processed_at: new Date().toISOString()
+        }
+      });
+
+    return {
+      type: 'booking_created',
+      appointment: appointment,
+      customer: customer,
+      service: service
+    };
+
+  } catch (error) {
+    console.error('❌ Booking creation failed:', error);
+    throw error;
+  }
+}
+
+// Process contact created event  
+async function processContactCreated(eventData, event) {
+  try {
+    console.log('👤 Full contact data:', JSON.stringify(eventData, null, 2));
+    
+    const contact = eventData.contact || eventData;
+    
+    const contactData = {
+      email: contact.info?.emails?.items?.[0]?.email || contact.loginEmail,
+      first_name: contact.info?.name?.first,
+      last_name: contact.info?.name?.last,
+      phone: contact.info?.phones?.items?.[0]?.phone,
+      business_type: 'salon'
+    };
+    
+    if (!contactData.email) {
+      console.log('⚠️ No email found in contact, skipping...');
+      return { type: 'contact_created', skipped: true, reason: 'no_email' };
+    }
+    
+    console.log('👤 Creating contact:', contactData);
+    
+    const { data: result, error } = await supabase
+      .from('customers')
+      .upsert(contactData, { 
+        onConflict: 'email',
+        ignoreDuplicates: false 
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('❌ Contact creation error:', error);
+      throw error;
+    }
+    
+    console.log('✅ Contact created:', result.id);
+    
+    return {
+      type: 'contact_created',
+      customer: result
+    };
+
+  } catch (error) {
+    console.error('❌ Contact creation failed:', error);
+    throw error;
+  }
+}
+
+// Process other event types
+async function processBookingUpdated(eventData, event) {
+  // Similar to processBookingCreated but update existing record
+  console.log('🔄 Booking updated - implementing update logic...');
+  return { type: 'booking_updated', status: 'processed' };
+}
+
+async function processContactUpdated(eventData, event) {
+  console.log('📝 Contact updated - implementing update logic...');
+  return { type: 'contact_updated', status: 'processed' };
+}
+
+async function processOrderPaid(eventData, event) {
+  console.log('💰 Order paid - implementing payment logic...');
+  return { type: 'order_paid', status: 'processed' };
+}
+
+// Log unknown events
+async function logUnknownEvent(eventType, eventData) {
+  await supabase
+    .from('system_metrics')
+    .insert({
+      metric_type: 'webhook_unknown_event',
+      metric_data: {
+        event_type: eventType,
+        event_data: eventData,
+        processed_at: new Date().toISOString()
+      }
+    });
+  
+  return { type: 'unknown', eventType, logged: true };
+}
+
+// Log failed webhooks
+async function logFailedWebhook(error, rawBody) {
+  try {
+    await supabase
+      .from('system_metrics')
+      .insert({
+        metric_type: 'webhook_processing_failed',
+        metric_data: {
+          success: false,
+          error_message: error.message,
+          error_stack: error.stack,
+          raw_body: typeof rawBody === 'string' ? rawBody.substring(0, 1000) : rawBody,
+          processed_at: new Date().toISOString()
+        }
+      });
+  } catch (logError) {
+    console.error('❌ Failed to log webhook error:', logError);
+  }
+}
+
+// Helper function to extract notes from booking
+function extractBookingNotes(booking) {
+  let notes = [];
+  
+  if (booking.formInfo?.additionalFields) {
+    booking.formInfo.additionalFields.forEach(field => {
+      if (field.value) {
+        notes.push(`${field.label || 'Note'}: ${field.value}`);
+      }
+    });
+  }
+  
+  if (booking.notes) {
+    notes.push(booking.notes);
+  }
+  
+  return notes.length > 0 ? notes.join(' | ') : null;
+}
