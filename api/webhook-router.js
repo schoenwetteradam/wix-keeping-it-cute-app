@@ -17,7 +17,7 @@ HvGQo36RHMxgvmVTkZo/TysaUAlvV4kzuezHvpw7alKQl/TwctVNTpCIVlpBjJN2
 oYciq9XsE/4PlRsA7kdl1aXlL6ZpwW3pti02ewIDAQAB
 -----END PUBLIC KEY-----`;
 
-// ADD THIS FUNCTION HERE - Product usage tracking
+// Product usage tracking function
 async function checkForProductUsagePrompt(bookingId, customerEmail) {
   try {
     // Check if this booking already has product usage logged
