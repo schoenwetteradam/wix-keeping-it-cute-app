@@ -1,4 +1,4 @@
-// api/upload-product-image.js - Single product image upload
+// api/upload-product-image.js - FIXED VERSION
 import formidable from 'formidable'
 import fs from 'fs'
 import path from 'path'
@@ -9,6 +9,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
+// CRITICAL: Disable Next.js body parser for file uploads
 export const config = {
   api: {
     bodyParser: false,
@@ -16,96 +17,176 @@ export const config = {
 }
 
 export default async function handler(req, res) {
-  // CORS headers
+  // Add comprehensive CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
   }
   
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
+    return res.status(405).json({ 
+      success: false,
+      error: 'Method not allowed. Use POST.' 
+    })
   }
 
+  console.log('🔍 === UPLOAD REQUEST START ===')
+  console.log('Content-Type:', req.headers['content-type'])
+  console.log('Content-Length:', req.headers['content-length'])
+
   try {
-    console.log('📸 Processing image upload...')
-    
     // Ensure upload directory exists
-    const baseUploadDir = './public/images/products'
+    const baseUploadDir = path.join(process.cwd(), 'public', 'images', 'products')
+    console.log('📁 Base upload directory:', baseUploadDir)
+    
     if (!fs.existsSync(baseUploadDir)) {
       fs.mkdirSync(baseUploadDir, { recursive: true })
-      console.log('Created upload directory:', baseUploadDir)
+      console.log('✅ Created base upload directory')
     }
 
+    // Configure formidable with enhanced error handling
     const form = formidable({
       uploadDir: baseUploadDir,
       keepExtensions: true,
       maxFileSize: 10 * 1024 * 1024, // 10MB limit
-      filter: ({ name, originalFilename, mimetype }) => {
-        console.log('File filter check:', { name, originalFilename, mimetype })
-        return mimetype && mimetype.includes('image')
+      maxFiles: 1,
+      allowEmptyFiles: false,
+      filter: function ({ name, originalFilename, mimetype }) {
+        console.log('🔍 File filter check:', { name, originalFilename, mimetype })
+        
+        // Check if it's an image
+        const isImage = mimetype && mimetype.startsWith('image/')
+        if (!isImage) {
+          console.log('❌ Not an image file:', mimetype)
+        }
+        return isImage
       }
     })
 
-    form.parse(req, async (err, fields, files) => {
-      if (err) {
-        console.error('❌ Upload parsing error:', err)
-        return res.status(500).json({ error: 'Upload parsing failed: ' + err.message })
+    // Parse the form with promise wrapper for better error handling
+    const parseForm = () => {
+      return new Promise((resolve, reject) => {
+        form.parse(req, (err, fields, files) => {
+          if (err) {
+            console.error('❌ Form parsing error:', err)
+            reject(err)
+            return
+          }
+          resolve({ fields, files })
+        })
+      })
+    }
+
+    const { fields, files } = await parseForm()
+    
+    console.log('📋 Parsed fields:', Object.keys(fields))
+    console.log('📁 Parsed files:', Object.keys(files))
+
+    // Extract the uploaded file
+    const file = files.image || files.file || files[Object.keys(files)[0]]
+    
+    if (!file) {
+      console.log('❌ No file found in upload')
+      return res.status(400).json({ 
+        success: false,
+        error: 'No image file found in upload. Please select an image file.' 
+      })
+    }
+
+    console.log('📸 File details:', {
+      originalFilename: file.originalFilename,
+      size: file.size,
+      mimetype: file.mimetype,
+      filepath: file.filepath
+    })
+
+    // Extract form data safely
+    const getFieldValue = (field) => Array.isArray(field) ? field[0] : field
+    
+    const productId = getFieldValue(fields.product_id)
+    const category = getFieldValue(fields.category) || 'other'
+    
+    console.log('📦 Product ID:', productId)
+    console.log('🏷️ Category:', category)
+    
+    // Validate required fields
+    if (!productId) {
+      console.log('❌ Missing product ID')
+      return res.status(400).json({ 
+        success: false,
+        error: 'Product ID is required' 
+      })
+    }
+
+    // Create category subdirectory
+    const categoryDir = path.join(baseUploadDir, category.toLowerCase().replace(/[^a-z0-9]/g, '-'))
+    if (!fs.existsSync(categoryDir)) {
+      fs.mkdirSync(categoryDir, { recursive: true })
+      console.log('✅ Created category directory:', categoryDir)
+    }
+
+    // Generate safe, unique filename
+    const timestamp = Date.now()
+    const randomSuffix = Math.random().toString(36).substring(2, 8)
+    const originalExt = path.extname(file.originalFilename || '').toLowerCase()
+    const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(originalExt) ? originalExt : '.jpg'
+    
+    const newFilename = `product-${productId}-${timestamp}-${randomSuffix}${safeExt}`
+    const finalPath = path.join(categoryDir, newFilename)
+
+    console.log('📁 Moving file to:', finalPath)
+
+    // Move file to final location with error handling
+    try {
+      // Check if temp file exists
+      if (!fs.existsSync(file.filepath)) {
+        throw new Error('Temporary file not found')
       }
 
-      console.log('📋 Form fields:', fields)
-      console.log('📁 Form files:', Object.keys(files))
+      // Move the file
+      fs.renameSync(file.filepath, finalPath)
+      console.log('✅ File moved successfully')
 
-      const file = files.image || files.file
-      if (!file) {
-        return res.status(400).json({ error: 'No image file provided' })
+      // Verify file was moved correctly
+      if (!fs.existsSync(finalPath)) {
+        throw new Error('File was not saved correctly')
       }
 
-      // Extract form data
-      const productId = Array.isArray(fields.product_id) ? fields.product_id[0] : fields.product_id
-      const category = Array.isArray(fields.category) ? fields.category[0] : (fields.category || 'other')
+      const stats = fs.statSync(finalPath)
+      console.log('📊 Final file size:', stats.size, 'bytes')
+
+    } catch (moveError) {
+      console.error('❌ File move error:', moveError)
       
-      console.log('📦 Product ID:', productId)
-      console.log('🏷️ Category:', category)
-      
-      // Create category directory if it doesn't exist
-      const categoryDir = path.join(baseUploadDir, category.toLowerCase())
-      if (!fs.existsSync(categoryDir)) {
-        fs.mkdirSync(categoryDir, { recursive: true })
-        console.log('Created category directory:', categoryDir)
-      }
-
-      // Generate unique filename
-      const timestamp = Date.now()
-      const originalName = file.originalFilename || 'image'
-      const ext = path.extname(originalName).toLowerCase() || '.jpg'
-      const baseName = productId ? `product-${productId}` : `upload-${timestamp}`
-      const newFilename = `${baseName}-${timestamp}${ext}`
-      const finalPath = path.join(categoryDir, newFilename)
-
-      console.log('📁 Moving file from:', file.filepath)
-      console.log('📁 Moving file to:', finalPath)
-
-      // Move file to final location
+      // Clean up temporary file if it exists
       try {
-        fs.renameSync(file.filepath, finalPath)
-        console.log('✅ File moved successfully')
-      } catch (moveError) {
-        console.error('❌ File move error:', moveError)
-        return res.status(500).json({ error: 'Failed to save file: ' + moveError.message })
+        if (fs.existsSync(file.filepath)) {
+          fs.unlinkSync(file.filepath)
+        }
+      } catch (cleanupError) {
+        console.error('⚠️ Cleanup error:', cleanupError)
       }
+      
+      return res.status(500).json({ 
+        success: false,
+        error: 'Failed to save file: ' + moveError.message 
+      })
+    }
 
-      // Construct public URL
-      const imageUrl = `/images/products/${category.toLowerCase()}/${newFilename}`
-      console.log('🔗 Image URL:', imageUrl)
+    // Construct public URL
+    const imageUrl = `/images/products/${category.toLowerCase().replace(/[^a-z0-9]/g, '-')}/${newFilename}`
+    console.log('🔗 Public image URL:', imageUrl)
 
-      // Update product in database if product_id provided
-      if (productId) {
-        console.log('💾 Updating product in database...')
-        
-        const { data: updatedProduct, error: updateError } = await supabase
+    // Update database
+    let updatedProduct = null
+    if (productId) {
+      console.log('💾 Updating database...')
+      
+      try {
+        const { data, error: updateError } = await supabase
           .from('products')
           .update({ 
             image_url: imageUrl,
@@ -113,41 +194,54 @@ export default async function handler(req, res) {
             updated_at: new Date().toISOString()
           })
           .eq('id', productId)
-          .select()
+          .select('id, product_name, brand, category')
           .single()
 
         if (updateError) {
           console.error('❌ Database update error:', updateError)
-          return res.status(500).json({ 
-            error: 'Image uploaded but database update failed',
-            details: updateError.message,
-            image_url: imageUrl 
-          })
+          // Don't fail the upload, just log the error
+          console.log('⚠️ Image uploaded but database update failed')
+        } else {
+          updatedProduct = data
+          console.log('✅ Database updated successfully:', data.product_name)
         }
-
-        console.log('✅ Product updated in database:', updatedProduct.product_name)
+      } catch (dbError) {
+        console.error('❌ Database operation failed:', dbError)
+        // Continue anyway - image is uploaded
       }
+    }
 
-      // Success response
-      const response = {
-        success: true,
-        image_url: imageUrl,
-        filename: newFilename,
-        category: category,
-        file_size: file.size,
-        original_name: originalName,
-        message: 'Image uploaded successfully'
-      }
+    // Success response
+    const response = {
+      success: true,
+      message: 'Image uploaded successfully',
+      image_url: imageUrl,
+      filename: newFilename,
+      category: category,
+      file_size: file.size,
+      original_name: file.originalFilename,
+      product_updated: !!updatedProduct,
+      product_info: updatedProduct,
+      upload_timestamp: new Date().toISOString()
+    }
 
-      console.log('🎉 Upload completed successfully')
-      res.status(200).json(response)
-    })
+    console.log('🎉 === UPLOAD SUCCESS ===')
+    console.log('Response:', JSON.stringify(response, null, 2))
+
+    res.status(200).json(response)
 
   } catch (error) {
-    console.error('❌ Upload handler error:', error)
+    console.error('❌ === UPLOAD FAILED ===')
+    console.error('Error type:', error.constructor.name)
+    console.error('Error message:', error.message)
+    console.error('Error stack:', error.stack)
+    
+    // Always return JSON, never HTML
     res.status(500).json({ 
-      error: 'Failed to upload image',
-      details: error.message 
+      success: false,
+      error: 'Upload failed: ' + error.message,
+      error_type: error.constructor.name,
+      timestamp: new Date().toISOString()
     })
   }
 }
