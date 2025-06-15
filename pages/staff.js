@@ -325,28 +325,6 @@ export default function StaffPortal() {
               ))}
             </div>
             
-{/* Action Buttons */}
-<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-  {/* Audit Button - Only show on inventory tab */}
-  {activeTab === 'inventory' && (
-    <button
-      onClick={navigateToAudit}
-      style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white',
-        border: 'none',
-        padding: '12px 20px',
-        borderRadius: '6px',
-        cursor: 'pointer',
-        fontSize: '14px',
-        fontWeight: 'bold',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-      }}
-    >
-      📊 Start Inventory Audit
-    </button>
-  )}
-
   {/* Logo Management Button - Show on all tabs */}
   <button
     onClick={() => router.push('/logo-management')}
