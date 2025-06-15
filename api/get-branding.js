@@ -1,4 +1,4 @@
-// api/get-branding.js - Get salon branding info
+// api/get-branding.js - UPDATED VERSION (replace your existing file)
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -24,11 +24,11 @@ export default async function handler(req, res) {
   try {
     console.log('🎨 Fetching salon branding...')
 
-    // Get branding info
-    const { data: branding, error } = await supabase
+    // FIXED: Get branding records and handle duplicates properly
+    const { data: brandingRecords, error } = await supabase
       .from('salon_branding')
       .select('*')
-      .single()
+      .order('id', { ascending: true })
 
     if (error && error.code !== 'PGRST116') {
       console.error('❌ Branding fetch error:', error)
@@ -38,8 +38,74 @@ export default async function handler(req, res) {
       })
     }
 
-    // If no branding found, return defaults
-    const defaultBranding = {
+    let branding = null
+
+    if (brandingRecords && brandingRecords.length > 0) {
+      // FIXED: Prefer record with logo_url that's not null
+      branding = brandingRecords.find(record => record.logo_url && record.logo_url !== null) || brandingRecords[0]
+      
+      console.log(`✅ Using branding record ID: ${branding.id}`)
+      console.log(`🖼️ Logo URL: ${branding.logo_url}`)
+
+      // Clean up duplicates automatically
+      if (brandingRecords.length > 1) {
+        console.log(`⚠️ Found ${brandingRecords.length} branding records - cleaning up...`)
+        
+        // Keep the best record, delete others
+        const recordsToDelete = brandingRecords.filter(record => record.id !== branding.id)
+        for (const record of recordsToDelete) {
+          await supabase.from('salon_branding').delete().eq('id', record.id)
+          console.log(`🗑️ Deleted duplicate record ID: ${record.id}`)
+        }
+      }
+    }
+
+    // If no branding found, create default record
+    if (!branding) {
+      console.log('📝 Creating default branding record...')
+      
+      const defaultBranding = {
+        logo_url: '/images/logo/salon-logo.png',
+        primary_color: '#ff9a9e',
+        secondary_color: '#fecfef',
+        salon_name: 'Keeping It Cute Salon & Spa',
+        address: '144 E Oak St, Juneau, WI',
+        phone: null,
+        email: null,
+        website: null
+      }
+
+      const { data: newBranding, error: insertError } = await supabase
+        .from('salon_branding')
+        .insert([defaultBranding])
+        .select()
+        .single()
+
+      if (insertError) {
+        console.error('❌ Failed to create default branding:', insertError)
+        branding = defaultBranding // Use defaults without database
+      } else {
+        branding = newBranding
+        console.log('✅ Created default branding record')
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      branding: branding,
+      debug: {
+        records_found: brandingRecords?.length || 0,
+        logo_url: branding?.logo_url,
+        cleaned_duplicates: brandingRecords?.length > 1
+      },
+      timestamp: new Date().toISOString()
+    })
+
+  } catch (err) {
+    console.error('❌ Branding Error:', err)
+    
+    // Return defaults if everything fails
+    const fallbackBranding = {
       logo_url: '/images/logo/salon-logo.png',
       primary_color: '#ff9a9e',
       secondary_color: '#fecfef',
@@ -52,15 +118,11 @@ export default async function handler(req, res) {
 
     res.status(200).json({
       success: true,
-      branding: branding || defaultBranding,
-      timestamp: new Date().toISOString()
-    })
-
-  } catch (err) {
-    console.error('❌ Branding Error:', err)
-    res.status(500).json({
-      error: 'Unexpected error',
-      details: err.message,
+      branding: fallbackBranding,
+      debug: {
+        error: err.message,
+        using_fallback: true
+      },
       timestamp: new Date().toISOString()
     })
   }
