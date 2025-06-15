@@ -1,4 +1,4 @@
-// api/webhook-router.js - FIXED VERSION with corrected JWT parsing
+// api/webhook-router.js - FINAL VERSION with fixed labels and upserts
 import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
 
@@ -303,14 +303,28 @@ async function processContactEventJWT(event, eventData = null) {
       throw new Error('No valid contact data found in webhook');
     }
     
+    // FIXED: Properly handle labels field
+    let labels = null;
+    if (contactData.info?.labelKeys) {
+      if (Array.isArray(contactData.info.labelKeys)) {
+        labels = contactData.info.labelKeys;
+      } else if (typeof contactData.info.labelKeys === 'string') {
+        try {
+          labels = JSON.parse(contactData.info.labelKeys);
+        } catch (e) {
+          labels = [contactData.info.labelKeys]; // Make it an array
+        }
+      }
+    }
+    
     const contactRecord = {
       wix_contact_id: contactData.id,
-      email: contactData.info?.emails?.items?.[0]?.email || contactData.loginEmail,
-      first_name: contactData.info?.name?.first,
-      last_name: contactData.info?.name?.last,
-      phone: contactData.info?.phones?.items?.[0]?.phone,
+      email: contactData.info?.emails?.items?.[0]?.email || contactData.loginEmail || contactData.primaryEmail,
+      first_name: contactData.info?.name?.first || contactData.primaryInfo?.name?.first,
+      last_name: contactData.info?.name?.last || contactData.primaryInfo?.name?.last,
+      phone: contactData.info?.phones?.items?.[0]?.phone || contactData.primaryInfo?.phone,
       birth_date: contactData.info?.birthdate,
-      labels: contactData.info?.labelKeys,
+      labels: labels, // Now properly formatted as array or null
       subscriber_status: contactData.info?.extendedFields?.emailSubscriptions?.deliverabilityStatus,
       payload: contactData,
       created_at: new Date().toISOString(),
@@ -327,7 +341,8 @@ async function processContactEventJWT(event, eventData = null) {
       email: contactRecord.email,
       first_name: contactRecord.first_name,
       last_name: contactRecord.last_name,
-      phone: contactRecord.phone
+      phone: contactRecord.phone,
+      labels: contactRecord.labels
     });
 
     const { data, error } = await supabase
@@ -387,9 +402,9 @@ async function processBookingEventJWT(event, eventData) {
   }
 }
 
-// === YOUR EXISTING BOOKING FUNCTIONS (UNCHANGED) ===
+// === BOOKING FUNCTIONS (FIXED WITH UPSERTS) ===
 
-// Process booking created (works for both formats)
+// Process booking created (FIXED: Use UPSERT instead of INSERT)
 async function processBookingCreated(webhookData) {
   try {
     console.log('📅 Processing booking created');
@@ -397,15 +412,19 @@ async function processBookingCreated(webhookData) {
     const booking = webhookData.createdEvent?.entity || webhookData;
     const contactDetails = booking.contactDetails;
     const bookedEntity = booking.bookedEntity;
-    const slot = bookedEntity?.slot;
+    const slot = bookedEntity?.slot || booking; // Handle different structures
     
     console.log('Booking ID:', booking.id);
     console.log('Customer:', contactDetails?.firstName, contactDetails?.lastName);
-    console.log('Service:', bookedEntity?.title);
+    console.log('Service:', bookedEntity?.title || bookedEntity?.name);
     
     // Calculate service duration
     let durationMinutes = 60; // default
-    if (slot?.startDate && slot?.endDate) {
+    if (booking.startDate && booking.endDate) {
+      const startDate = new Date(booking.startDate);
+      const endDate = new Date(booking.endDate);
+      durationMinutes = Math.round((endDate - startDate) / (1000 * 60));
+    } else if (slot?.startDate && slot?.endDate) {
       const startDate = new Date(slot.startDate);
       const endDate = new Date(slot.endDate);
       durationMinutes = Math.round((endDate - startDate) / (1000 * 60));
@@ -419,22 +438,22 @@ async function processBookingCreated(webhookData) {
       customer_email: contactDetails?.email,
       customer_name: contactDetails ? `${contactDetails.firstName || ''} ${contactDetails.lastName || ''}`.trim() : 'Unknown Customer',
       customer_phone: contactDetails?.phone,
-      wix_contact_id: contactDetails?.contactId,
+      wix_contact_id: contactDetails?.contactId || contactDetails?.id,
       
       // Service information
-      service_name: bookedEntity?.title || 'Unknown Service',
+      service_name: bookedEntity?.title || bookedEntity?.name || 'Unknown Service',
       service_duration: durationMinutes,
       
       // Timing
-      appointment_date: slot?.startDate || new Date().toISOString(),
-      end_time: slot?.endDate,
+      appointment_date: booking.startDate || slot?.startDate || new Date().toISOString(),
+      end_time: booking.endDate || slot?.endDate,
       
       // Staff and location
-      staff_member: slot?.resource?.name,
-      location: slot?.location?.name || 'Keeping It Cute Salon & Spa',
+      staff_member: slot?.resource?.name || booking.resource?.name,
+      location: slot?.location?.name || booking.location?.name || 'Keeping It Cute Salon & Spa',
       
       // Booking details
-      number_of_participants: booking.numberOfParticipants || 1,
+      number_of_participants: booking.numberOfParticipants || booking.totalParticipants || 1,
       payment_status: (booking.paymentStatus || 'UNDEFINED').toLowerCase(),
       
       // Pricing (not in this webhook, set to 0 for now)
@@ -444,6 +463,7 @@ async function processBookingCreated(webhookData) {
       business_id: null,
       cancelled_date: null,
       revision: parseInt(booking.revision) || 1,
+      status: booking.status || 'confirmed',
       
       // Raw data storage
       payload: booking,
@@ -465,32 +485,32 @@ async function processBookingCreated(webhookData) {
     
     console.log('📝 Final booking record keys:', Object.keys(bookingRecord));
     
-    // Insert into bookings table
-    const { data: insertedBooking, error: insertError } = await supabase
+    // FIXED: Use UPSERT instead of INSERT to handle duplicates
+    const { data: upsertedBooking, error: upsertError } = await supabase
       .from('bookings')
-      .insert([bookingRecord])
+      .upsert(bookingRecord, { onConflict: 'wix_booking_id', ignoreDuplicates: false })
       .select()
       .single();
     
-    if (insertError) {
-      console.error('❌ Booking insert error:', insertError);
-      throw insertError;
+    if (upsertError) {
+      console.error('❌ Booking upsert error:', upsertError);
+      throw upsertError;
     }
     
-    console.log('✅ Booking created successfully:', insertedBooking.id);
+    console.log('✅ Booking created/updated successfully:', upsertedBooking.id);
     
     // Product usage tracking
-    await checkForProductUsagePrompt(insertedBooking.id, insertedBooking.customer_email);
+    await checkForProductUsagePrompt(upsertedBooking.id, upsertedBooking.customer_email);
     
     return {
       type: 'booking_created',
-      booking_id: insertedBooking.id,
-      wix_booking_id: insertedBooking.wix_booking_id,
-      customer_email: insertedBooking.customer_email,
-      customer_name: insertedBooking.customer_name,
-      service_name: insertedBooking.service_name,
-      appointment_date: insertedBooking.appointment_date,
-      staff_member: insertedBooking.staff_member
+      booking_id: upsertedBooking.id,
+      wix_booking_id: upsertedBooking.wix_booking_id,
+      customer_email: upsertedBooking.customer_email,
+      customer_name: upsertedBooking.customer_name,
+      service_name: upsertedBooking.service_name,
+      appointment_date: upsertedBooking.appointment_date,
+      staff_member: upsertedBooking.staff_member
     };
 
   } catch (error) {
@@ -499,7 +519,7 @@ async function processBookingCreated(webhookData) {
   }
 }
 
-// Process booking updated
+// Process booking updated (unchanged)
 async function processBookingUpdated(webhookData) {
   try {
     console.log('🔄 Processing booking updated');
@@ -512,12 +532,13 @@ async function processBookingUpdated(webhookData) {
         `${booking.contactDetails.firstName || ''} ${booking.contactDetails.lastName || ''}`.trim() : 
         undefined,
       customer_phone: booking.contactDetails?.phone,
-      service_name: booking.bookedEntity?.title,
-      appointment_date: booking.bookedEntity?.slot?.startDate,
-      end_time: booking.bookedEntity?.slot?.endDate,
-      staff_member: booking.bookedEntity?.slot?.resource?.name,
+      service_name: booking.bookedEntity?.title || booking.bookedEntity?.name,
+      appointment_date: booking.startDate || booking.bookedEntity?.slot?.startDate,
+      end_time: booking.endDate || booking.bookedEntity?.slot?.endDate,
+      staff_member: booking.bookedEntity?.slot?.resource?.name || booking.resource?.name,
       payment_status: booking.paymentStatus?.toLowerCase(),
-      number_of_participants: booking.numberOfParticipants,
+      number_of_participants: booking.numberOfParticipants || booking.totalParticipants,
+      status: booking.status,
       updated_at: new Date().toISOString(),
       updated_date: booking.updatedDate,
       revision: parseInt(booking.revision) || 1
@@ -554,7 +575,7 @@ async function processBookingUpdated(webhookData) {
   }
 }
 
-// Process booking canceled
+// Process booking canceled (unchanged)
 async function processBookingCanceled(webhookData) {
   try {
     console.log('❌ Processing booking canceled');
@@ -565,8 +586,8 @@ async function processBookingCanceled(webhookData) {
       .from('bookings')
       .update({
         cancelled_date: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        revision: supabase.raw('revision + 1')
+        status: 'canceled',
+        updated_at: new Date().toISOString()
       })
       .eq('wix_booking_id', booking.id)
       .select()
