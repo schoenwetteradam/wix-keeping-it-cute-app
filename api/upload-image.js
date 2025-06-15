@@ -21,8 +21,15 @@ export default async function handler(req, res) {
   }
 
   try {
+    const uploadDir = path.join(process.cwd(), 'public', 'images', 'products')
+
+    // Ensure the upload directory exists
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true })
+    }
+
     const form = formidable({
-      uploadDir: './public/images/products',
+      uploadDir,
       keepExtensions: true,
       maxFileSize: 5 * 1024 * 1024,
     })
@@ -42,7 +49,7 @@ export default async function handler(req, res) {
       const timestamp = Date.now()
       const ext = path.extname(file.originalFilename || '.jpg')
       const newFilename = `product-${timestamp}${ext}`
-      const newPath = path.join('./public/images/products', newFilename)
+      const newPath = path.join(uploadDir, newFilename)
 
       // Move file to final location
       fs.renameSync(file.filepath, newPath)
