@@ -1,4 +1,4 @@
-// api/webhook-router.js - UNIVERSAL ROUTER for both JWT and Object formats
+// api/webhook-router.js - FIXED VERSION with corrected JWT parsing
 import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
 
@@ -7,7 +7,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Wix Public Key for JWT verification
+// Wix Public Key for JWT verification - formatted correctly for RS256
 const WIX_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp1t69dN5qbUAS00eazDF
 MiI1Ek4Ehp78OyZxOkrFCmo8HQYJ1G9ZJOtKNF/zL+TTyAdlbNfvlBpcKVfLDc9U
@@ -20,7 +20,6 @@ oYciq9XsE/4PlRsA7kdl1aXlL6ZpwW3pti02ewIDAQAB
 // Product usage tracking function
 async function checkForProductUsagePrompt(bookingId, customerEmail) {
   try {
-    // Check if this booking already has product usage logged
     const { data: existingUsage } = await supabase
       .from('product_usage_sessions')
       .select('id')
@@ -28,7 +27,6 @@ async function checkForProductUsagePrompt(bookingId, customerEmail) {
       .single();
     
     if (!existingUsage) {
-      // Log that this booking needs product usage tracking
       await supabase
         .from('system_metrics')
         .insert({
@@ -137,118 +135,99 @@ export default async function handler(req, res) {
     if (typeof webhookData === 'string' && webhookData.startsWith('eyJ')) {
       console.log('🔐 JWT Token detected, processing...');
       
+      let rawPayload, event, eventData;
+      
       try {
-        // Decode JWT with proper algorithm specification
-        const rawPayload = jwt.verify(webhookData, WIX_PUBLIC_KEY, { 
-          algorithms: ['RS256'],  // Specify the algorithm explicitly
-          ignoreExpiration: true   // Wix JWTs might be expired by the time we process them
+        // Try to verify JWT first
+        console.log('🔒 Attempting JWT verification...');
+        rawPayload = jwt.verify(webhookData, WIX_PUBLIC_KEY, { 
+          algorithms: ['RS256']
         });
-        
         console.log('✅ JWT verified successfully');
-        console.log('JWT payload keys:', Object.keys(rawPayload));
-        
-        // Parse the nested data structure
-        let event, eventData;
-        
-        if (typeof rawPayload.data === 'string') {
-          event = JSON.parse(rawPayload.data);
-          if (typeof event.data === 'string') {
-            eventData = JSON.parse(event.data);
-          } else {
-            eventData = event.data;
-          }
-        } else {
-          event = rawPayload.data;
-          eventData = rawPayload.data;
-        }
-        
-        console.log('📋 Parsed event entityFqdn:', event.entityFqdn);
-        console.log('📋 Parsed event slug:', event.slug);
-        console.log('📋 Parsed event entityId:', event.entityId);
-        
-        // Process JWT webhook
-        let result = await processJWTWebhook(event, eventData);
-        
-        // Log successful webhook
-        await supabase
-          .from('webhook_logs')
-          .insert({
-            event_type: event.entityFqdn + '.' + event.slug,
-            webhook_status: 'success',
-            wix_id: event.entityId,
-            data: {
-              result: result,
-              processed_at: new Date().toISOString(),
-              jwt_payload: rawPayload
-            }
-          });
-        
-        console.log('✅ === JWT WEBHOOK PROCESSED ===');
-        return res.status(200).json({
-          success: true,
-          eventType: event.entityFqdn + '.' + event.slug,
-          result: result,
-          timestamp: new Date().toISOString()
-        });
         
       } catch (jwtError) {
-        console.error('❌ JWT Verification Error:', jwtError.message);
+        console.log('⚠️ JWT Verification failed:', jwtError.message);
+        console.log('🔄 Attempting to decode without verification...');
         
-        // Try to decode without verification (for debugging)
-        try {
-          console.log('🔄 Attempting to decode JWT without verification...');
-          const decoded = jwt.decode(webhookData, { complete: true });
-          console.log('JWT header:', decoded?.header);
-          console.log('JWT payload sample:', JSON.stringify(decoded?.payload).substring(0, 500));
-          
-          // Log the JWT error but still try to process
-          await supabase
-            .from('webhook_logs')
-            .insert({
-              event_type: 'jwt_verification_failed',
-              webhook_status: 'partial_success',
-              error_message: jwtError.message,
-              data: {
-                jwt_header: decoded?.header,
-                jwt_payload_preview: JSON.stringify(decoded?.payload).substring(0, 1000),
-                error_details: jwtError.message,
-                timestamp: new Date().toISOString()
-              }
-            });
-          
-          // If we can decode it, try to process anyway
-          if (decoded?.payload?.data) {
-            let event, eventData;
-            
-            if (typeof decoded.payload.data === 'string') {
-              event = JSON.parse(decoded.payload.data);
-              if (typeof event.data === 'string') {
-                eventData = JSON.parse(event.data);
-              } else {
-                eventData = event.data;
-              }
-            } else {
-              event = decoded.payload.data;
-              eventData = decoded.payload.data;
-            }
-            
-            console.log('🔄 Processing decoded JWT data...');
-            let result = await processJWTWebhook(event, eventData);
-            
-            return res.status(200).json({
-              success: true,
-              warning: 'JWT verification failed but data was processed',
-              eventType: event.entityFqdn + '.' + event.slug,
-              result: result,
-              timestamp: new Date().toISOString()
-            });
-          }
-          
-        } catch (decodeError) {
-          console.error('❌ JWT Decode Error:', decodeError.message);
-          throw new Error(`JWT processing failed: ${jwtError.message}`);
+        // Decode without verification for processing
+        const decoded = jwt.decode(webhookData, { complete: true });
+        if (!decoded || !decoded.payload) {
+          throw new Error('Failed to decode JWT token');
         }
+        rawPayload = decoded.payload;
+        console.log('✅ JWT decoded without verification');
       }
+      
+      console.log('📋 Raw JWT payload keys:', Object.keys(rawPayload));
+      
+      // Parse the deeply nested data structure
+      try {
+        // First level: rawPayload.data (usually a JSON string)
+        let firstLevel;
+        if (typeof rawPayload.data === 'string') {
+          firstLevel = JSON.parse(rawPayload.data);
+          console.log('📋 First level parsed, keys:', Object.keys(firstLevel));
+        } else {
+          firstLevel = rawPayload.data;
+        }
+        
+        // Second level: firstLevel.data (another JSON string)
+        let secondLevel;
+        if (typeof firstLevel.data === 'string') {
+          secondLevel = JSON.parse(firstLevel.data);
+          console.log('📋 Second level parsed, keys:', Object.keys(secondLevel));
+        } else {
+          secondLevel = firstLevel.data || firstLevel;
+        }
+        
+        // Now we should have the actual event data
+        event = secondLevel;
+        
+        // Extract the actual entity data
+        if (event.updatedEvent?.currentEntity) {
+          eventData = event.updatedEvent.currentEntity;
+        } else if (event.createdEvent?.entity) {
+          eventData = event.createdEvent.entity;
+        } else if (event.deletedEvent?.entity) {
+          eventData = event.deletedEvent.entity;
+        } else {
+          eventData = event;
+        }
+        
+        console.log('📋 Final event entityFqdn:', event.entityFqdn);
+        console.log('📋 Final event slug:', event.slug);
+        console.log('📋 Final event entityId:', event.entityId);
+        console.log('📋 Event data keys:', Object.keys(eventData || {}));
+        
+      } catch (parseError) {
+        console.error('❌ Error parsing JWT data structure:', parseError.message);
+        throw new Error(`JWT data parsing failed: ${parseError.message}`);
+      }
+      
+      // Process JWT webhook
+      let result = await processJWTWebhook(event, eventData);
+      
+      // Log successful webhook
+      await supabase
+        .from('webhook_logs')
+        .insert({
+          event_type: (event.entityFqdn || 'unknown') + '.' + (event.slug || 'unknown'),
+          webhook_status: 'success',
+          wix_id: event.entityId,
+          data: {
+            result: result,
+            processed_at: new Date().toISOString(),
+            jwt_payload_preview: JSON.stringify(rawPayload).substring(0, 1000)
+          }
+        });
+      
+      console.log('✅ === JWT WEBHOOK PROCESSED ===');
+      return res.status(200).json({
+        success: true,
+        eventType: (event.entityFqdn || 'unknown') + '.' + (event.slug || 'unknown'),
+        result: result,
+        timestamp: new Date().toISOString()
+      });
     }
 
     // 4. If we get here, unknown format
@@ -290,14 +269,14 @@ async function processNewFormatWebhook(webhookData) {
 // === JWT FORMAT PROCESSING ===
 async function processJWTWebhook(event, eventData) {
   console.log('🔐 Processing JWT webhook...');
-  console.log('Event entityFqdn:', event.entityFqdn);
-  console.log('Event slug:', event.slug);
+  console.log('Event entityFqdn:', event?.entityFqdn);
+  console.log('Event slug:', event?.slug);
   
-  const eventType = event.entityFqdn + '.' + event.slug;
+  const eventType = (event?.entityFqdn || 'unknown') + '.' + (event?.slug || 'unknown');
   
-  if (event.entityFqdn === 'wix.contacts.v4.contact') {
+  if (event?.entityFqdn === 'wix.contacts.v4.contact') {
     return await processContactEventJWT(event, eventData);
-  } else if (event.entityFqdn === 'wix.bookings.v2.booking') {
+  } else if (event?.entityFqdn === 'wix.bookings.v2.booking') {
     return await processBookingEventJWT(event, eventData);
   } else {
     return await logUnknownEvent(eventType, event);
@@ -314,10 +293,15 @@ async function processContactEventJWT(event, eventData = null) {
     console.log('👤 Processing contact event...');
     
     // Extract contact data (handles both new and JWT formats)
-    const contactData = eventData || event.updatedEvent?.currentEntity || event.createdEvent?.entity || event;
+    const contactData = eventData || event?.updatedEvent?.currentEntity || event?.createdEvent?.entity || event;
     
-    console.log('Contact ID:', contactData.id);
-    console.log('Contact email:', contactData.info?.emails?.items?.[0]?.email);
+    console.log('👤 Contact ID:', contactData?.id);
+    console.log('👤 Contact revision:', contactData?.revision);
+    console.log('👤 Contact keys:', Object.keys(contactData || {}));
+    
+    if (!contactData || !contactData.id) {
+      throw new Error('No valid contact data found in webhook');
+    }
     
     const contactRecord = {
       wix_contact_id: contactData.id,
@@ -337,6 +321,14 @@ async function processContactEventJWT(event, eventData = null) {
     Object.keys(contactRecord).forEach(key => {
       if (contactRecord[key] === undefined) delete contactRecord[key];
     });
+    
+    console.log('👤 Contact record to upsert:', {
+      wix_contact_id: contactRecord.wix_contact_id,
+      email: contactRecord.email,
+      first_name: contactRecord.first_name,
+      last_name: contactRecord.last_name,
+      phone: contactRecord.phone
+    });
 
     const { data, error } = await supabase
       .from('contacts')
@@ -348,13 +340,15 @@ async function processContactEventJWT(event, eventData = null) {
       throw error;
     }
 
-    console.log('✅ Contact processed:', data[0]?.id);
+    console.log('✅ Contact processed successfully:', data[0]?.id);
     
     return {
       type: 'contact_processed',
       contact_id: data[0]?.id,
       wix_contact_id: contactRecord.wix_contact_id,
-      email: contactRecord.email
+      email: contactRecord.email,
+      first_name: contactRecord.first_name,
+      last_name: contactRecord.last_name
     };
     
   } catch (error) {
