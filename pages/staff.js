@@ -1,4 +1,4 @@
-// pages/staff.js - Complete Staff Portal with Working Appointments
+// pages/staff.js - Complete Staff Portal with Fixed Image Handling
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
@@ -158,24 +158,24 @@ export default function StaffPortal() {
     router.push('/inventory-audit')
   }
 
-// NEW CODE (use this instead):
-const handleImageError = (e) => {
-  if (e.target.dataset.fallbackSet === 'true') return;
-  
-  const width = e.target.offsetWidth || 200;
-  const height = e.target.offsetHeight || 200;
-  
-  const svgContent = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-    <rect width="${width}" height="${height}" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
-    <circle cx="${width/2}" cy="${height*0.35}" r="${Math.min(width, height)*0.12}" fill="#ff9a9e" opacity="0.6"/>
-    <rect x="${width*0.3}" y="${height*0.55}" width="${width*0.4}" height="${height*0.3}" rx="8" fill="#fecfef" opacity="0.6"/>
-    <text x="${width/2}" y="${height*0.7}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.06}" fill="#666">💅 Product</text>
-    <text x="${width/2}" y="${height*0.77}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.05}" fill="#999">Image Coming Soon</text>
-  </svg>`;
-  
-  e.target.src = `data:image/svg+xml;base64,${btoa(svgContent)}`;
-  e.target.dataset.fallbackSet = 'true';
-}
+  // FIXED IMAGE ERROR HANDLER - No more 404 errors!
+  const handleImageError = (e) => {
+    if (e.target.dataset.fallbackSet === 'true') return;
+    
+    const width = e.target.offsetWidth || 200;
+    const height = e.target.offsetHeight || 200;
+    
+    const svgContent = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${width}" height="${height}" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
+      <circle cx="${width/2}" cy="${height*0.35}" r="${Math.min(width, height)*0.12}" fill="#ff9a9e" opacity="0.6"/>
+      <rect x="${width*0.3}" y="${height*0.55}" width="${width*0.4}" height="${height*0.3}" rx="8" fill="#fecfef" opacity="0.6"/>
+      <text x="${width/2}" y="${height*0.7}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.06}" fill="#666">💅 Product</text>
+      <text x="${width/2}" y="${height*0.77}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.05}" fill="#999">Image Coming Soon</text>
+    </svg>`;
+    
+    e.target.src = `data:image/svg+xml;base64,${btoa(svgContent)}`;
+    e.target.dataset.fallbackSet = 'true';
+  }
 
   if (loading) {
     return (
@@ -695,7 +695,7 @@ const handleImageError = (e) => {
                           backgroundColor: '#f8f9fa'
                         }}>
                           <img
-                            src={product.image_url || '/images/products/placeholder.jpg'}
+                            src={product.image_url || ''}
                             alt={product.product_name}
                             style={{
                               width: '100%',
@@ -797,16 +797,14 @@ const handleImageError = (e) => {
                           backgroundColor: '#f8f9fa'
                         }}>
                           <img
-                            src={service.image_url || '/images/services/placeholder.jpg'}
+                            src={service.image_url || ''}
                             alt={service.name}
                             style={{
                               width: '100%',
                               height: '100%',
                               objectFit: 'cover'
                             }}
-                            onError={(e) => {
-                              e.target.src = '/images/services/placeholder.jpg'
-                            }}
+                            onError={handleImageError}
                           />
                         </div>
 
@@ -895,7 +893,7 @@ const handleImageError = (e) => {
                   border: '1px solid #e9ecef'
                 }}>
                   <img
-                    src={selectedProduct.image_url || '/images/products/placeholder.jpg'}
+                    src={selectedProduct.image_url || ''}
                     alt={selectedProduct.product_name}
                     style={{
                       width: '100%',
