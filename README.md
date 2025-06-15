@@ -34,7 +34,7 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 - `POST /api/booking-updated` - Appointment changes
 - `POST /api/booking-canceled` - Cancellations
 
-### Customer Webhooks  
+### Customer Webhooks
 - `POST /api/contact-created` - New customer registrations
 - `POST /api/contact-updated` - Profile updates
 
@@ -54,3 +54,50 @@ Run this SQL in your Supabase dashboard:
 ```sql
 -- Complete database schema available in setup documentation
 -- Creates: bookings, contacts, orders (enhanced), sessions, webhook_logs tables
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- bookings table
+CREATE TABLE bookings (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  customer_id uuid,
+  service text,
+  start_time timestamptz,
+  end_time timestamptz,
+  status text,
+  raw jsonb
+);
+
+-- contacts table
+CREATE TABLE contacts (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email text,
+  phone text,
+  metadata jsonb
+);
+
+-- orders table
+CREATE TABLE orders (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_number text,
+  total numeric,
+  payment_status text,
+  raw jsonb
+);
+
+-- sessions table
+CREATE TABLE sessions (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  visitor_id text,
+  started_at timestamptz,
+  ended_at timestamptz,
+  raw jsonb
+);
+
+-- webhook_logs table
+CREATE TABLE webhook_logs (
+  id serial PRIMARY KEY,
+  event_type text,
+  payload jsonb,
+  logged_at timestamptz DEFAULT now()
+);
+
