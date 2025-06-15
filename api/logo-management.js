@@ -374,4 +374,124 @@ export default function LogoManagement() {
                     <div style={{ 
                       width: '100%', 
                       height: '100%', 
-                      backgroundColor: '#ff9a9e
+                      backgroundColor: '#ff9a9e',
+                      animation: 'loading 1.5s ease-in-out infinite'
+                    }}></div>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontSize: '3em', marginBottom: '15px' }}>🎨</div>
+                  <p style={{ fontSize: '1.1em', marginBottom: '15px', color: '#333' }}>
+                    Drag and drop your logo here, or click to select
+                  </p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileInputChange}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: '#ff9a9e',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      fontWeight: 'bold'
+                    }}
+                  />
+                  <p style={{ fontSize: '0.9em', color: '#666', marginTop: '15px', margin: '15px 0 0 0' }}>
+                    Supported formats: JPG, PNG, WebP, SVG • Max size: 5MB<br/>
+                    Recommended: 300x150px or similar 2:1 ratio
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Logo Guidelines */}
+          <div style={{ 
+            background: 'white',
+            padding: '25px',
+            borderRadius: '12px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{ margin: '0 0 20px 0', color: '#333' }}>📋 Logo Guidelines</h3>
+            
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+              gap: '20px'
+            }}>
+              <div style={{ 
+                padding: '20px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                border: '1px solid #e9ecef'
+              }}>
+                <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>📐 Dimensions</h4>
+                <ul style={{ margin: '0', paddingLeft: '20px', color: '#666' }}>
+                  <li>Recommended: 300x150px</li>
+                  <li>Aspect ratio: 2:1 (width:height)</li>
+                  <li>Minimum: 200x100px</li>
+                  <li>Maximum: 600x300px</li>
+                </ul>
+              </div>
+
+              <div style={{ 
+                padding: '20px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                border: '1px solid #e9ecef'
+              }}>
+                <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>🎨 File Format</h4>
+                <ul style={{ margin: '0', paddingLeft: '20px', color: '#666' }}>
+                  <li>PNG (best for logos with transparency)</li>
+                  <li>JPG (good for photos)</li>
+                  <li>SVG (vector, scales perfectly)</li>
+                  <li>WebP (modern, smaller files)</li>
+                </ul>
+              </div>
+
+              <div style={{ 
+                padding: '20px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                border: '1px solid #e9ecef'
+              }}>
+                <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>✨ Design Tips</h4>
+                <ul style={{ margin: '0', paddingLeft: '20px', color: '#666' }}>
+                  <li>Use high contrast for readability</li>
+                  <li>Ensure it looks good on white backgrounds</li>
+                  <li>Keep text legible at small sizes</li>
+                  <li>Consider your brand colors</li>
+                </ul>
+              </div>
+            </div>
+
+            <div style={{ 
+              marginTop: '20px',
+              padding: '15px',
+              backgroundColor: '#e3f2fd',
+              borderRadius: '6px',
+              border: '1px solid #bbdefb'
+            }}>
+              <p style={{ margin: '0', color: '#1565c0', fontSize: '0.9em' }}>
+                💡 <strong>Pro Tip:</strong> Your logo will appear in the staff portal header, on receipts, 
+                and in customer communications. Make sure it represents your salon's brand perfectly!
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <style jsx>{`
+          @keyframes loading {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(0%); }
+            100% { transform: translateX(100%); }
+          }
+        `}</style>
+      </div>
+    </>
+  )
+}
