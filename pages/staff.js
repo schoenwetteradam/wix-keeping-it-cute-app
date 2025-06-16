@@ -158,24 +158,31 @@ export default function StaffPortal() {
     router.push('/inventory-audit')
   }
 
-  // FIXED IMAGE ERROR HANDLER - No more 404 errors!
-  const handleImageError = (e) => {
-    if (e.target.dataset.fallbackSet === 'true') return;
-    
-    const width = e.target.offsetWidth || 200;
-    const height = e.target.offsetHeight || 200;
-    
-    const svgContent = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${width}" height="${height}" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
-      <circle cx="${width/2}" cy="${height*0.35}" r="${Math.min(width, height)*0.12}" fill="#ff9a9e" opacity="0.6"/>
-      <rect x="${width*0.3}" y="${height*0.55}" width="${width*0.4}" height="${height*0.3}" rx="8" fill="#fecfef" opacity="0.6"/>
-      <text x="${width/2}" y="${height*0.7}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.06}" fill="#666">💅 Product</text>
-      <text x="${width/2}" y="${height*0.77}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.05}" fill="#999">Image Coming Soon</text>
-    </svg>`;
-    
+// FIXED IMAGE ERROR HANDLER - Replace the existing one in your staff.js
+const handleImageError = (e) => {
+  if (e.target.dataset.fallbackSet === 'true') return;
+  
+  const width = e.target.offsetWidth || 200;
+  const height = e.target.offsetHeight || 200;
+  
+  // FIXED: Remove emoji characters to prevent btoa() encoding errors
+  const svgContent = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${width}" height="${height}" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
+    <circle cx="${width/2}" cy="${height*0.35}" r="${Math.min(width, height)*0.12}" fill="#ff9a9e" opacity="0.6"/>
+    <rect x="${width*0.3}" y="${height*0.55}" width="${width*0.4}" height="${height*0.3}" rx="8" fill="#fecfef" opacity="0.6"/>
+    <text x="${width/2}" y="${height*0.7}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.06}" fill="#666">Product</text>
+    <text x="${width/2}" y="${height*0.77}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.05}" fill="#999">Image Coming Soon</text>
+  </svg>`;
+  
+  try {
     e.target.src = `data:image/svg+xml;base64,${btoa(svgContent)}`;
     e.target.dataset.fallbackSet = 'true';
+  } catch (encodingError) {
+    // Fallback if btoa still fails
+    e.target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
+    e.target.dataset.fallbackSet = 'true';
   }
+}
 
   if (loading) {
     return (
