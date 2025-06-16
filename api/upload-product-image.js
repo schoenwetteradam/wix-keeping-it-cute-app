@@ -1,4 +1,4 @@
-// api/upload-product-image.js - FIXED VERSION
+// api/upload-product-image.js - COMPLETELY FIXED VERSION
 import formidable from 'formidable'
 import fs from 'fs'
 import path from 'path'
@@ -54,6 +54,7 @@ export default async function handler(req, res) {
       maxFileSize: 10 * 1024 * 1024, // 10MB limit
       maxFiles: 1,
       allowEmptyFiles: false,
+      multiples: false,
       filter: function ({ name, originalFilename, mimetype }) {
         console.log('🔍 File filter check:', { name, originalFilename, mimetype })
         
@@ -75,6 +76,7 @@ export default async function handler(req, res) {
             reject(err)
             return
           }
+          console.log('✅ Form parsed successfully')
           resolve({ fields, files })
         })
       })
@@ -85,14 +87,30 @@ export default async function handler(req, res) {
     console.log('📋 Parsed fields:', Object.keys(fields))
     console.log('📁 Parsed files:', Object.keys(files))
 
-    // Extract the uploaded file
-    const file = files.image || files.file || files[Object.keys(files)[0]]
+    // Extract the uploaded file - handle both single file and array
+    let file = null
+    if (files.image) {
+      file = Array.isArray(files.image) ? files.image[0] : files.image
+    } else if (files.file) {
+      file = Array.isArray(files.file) ? files.file[0] : files.file
+    } else {
+      // Get first file regardless of field name
+      const fileKeys = Object.keys(files)
+      if (fileKeys.length > 0) {
+        const firstFile = files[fileKeys[0]]
+        file = Array.isArray(firstFile) ? firstFile[0] : firstFile
+      }
+    }
     
     if (!file) {
       console.log('❌ No file found in upload')
       return res.status(400).json({ 
         success: false,
-        error: 'No image file found in upload. Please select an image file.' 
+        error: 'No image file found in upload. Please select an image file.',
+        debug: {
+          fields: Object.keys(fields),
+          files: Object.keys(files)
+        }
       })
     }
 
@@ -104,7 +122,10 @@ export default async function handler(req, res) {
     })
 
     // Extract form data safely
-    const getFieldValue = (field) => Array.isArray(field) ? field[0] : field
+    const getFieldValue = (field) => {
+      if (!field) return null
+      return Array.isArray(field) ? field[0] : field
+    }
     
     const productId = getFieldValue(fields.product_id)
     const category = getFieldValue(fields.category) || 'other'
@@ -117,7 +138,8 @@ export default async function handler(req, res) {
       console.log('❌ Missing product ID')
       return res.status(400).json({ 
         success: false,
-        error: 'Product ID is required' 
+        error: 'Product ID is required',
+        debug: { fields: fields }
       })
     }
 
@@ -132,7 +154,7 @@ export default async function handler(req, res) {
     const timestamp = Date.now()
     const randomSuffix = Math.random().toString(36).substring(2, 8)
     const originalExt = path.extname(file.originalFilename || '').toLowerCase()
-    const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(originalExt) ? originalExt : '.jpg'
+    const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'].includes(originalExt) ? originalExt : '.jpg'
     
     const newFilename = `product-${productId}-${timestamp}-${randomSuffix}${safeExt}`
     const finalPath = path.join(categoryDir, newFilename)
@@ -146,6 +168,10 @@ export default async function handler(req, res) {
         throw new Error('Temporary file not found')
       }
 
+      // Check temp file size
+      const tempStats = fs.statSync(file.filepath)
+      console.log('📊 Temp file size:', tempStats.size, 'bytes')
+
       // Move the file
       fs.renameSync(file.filepath, finalPath)
       console.log('✅ File moved successfully')
@@ -155,8 +181,8 @@ export default async function handler(req, res) {
         throw new Error('File was not saved correctly')
       }
 
-      const stats = fs.statSync(finalPath)
-      console.log('📊 Final file size:', stats.size, 'bytes')
+      const finalStats = fs.statSync(finalPath)
+      console.log('📊 Final file size:', finalStats.size, 'bytes')
 
     } catch (moveError) {
       console.error('❌ File move error:', moveError)
@@ -165,6 +191,7 @@ export default async function handler(req, res) {
       try {
         if (fs.existsSync(file.filepath)) {
           fs.unlinkSync(file.filepath)
+          console.log('🧹 Cleaned up temp file')
         }
       } catch (cleanupError) {
         console.error('⚠️ Cleanup error:', cleanupError)
