@@ -49,6 +49,9 @@ export default async function handler(req, res) {
       console.log('✅ Moved salon-logo.png to correct location')
     }
 
+    let logoExistsPng = fs.existsSync(correctPngPath)
+    let logoExistsSvg = fs.existsSync(correctSvgPath)
+
     // 3. Create a fallback logo if none exists
     if (!logoExistsPng && !logoExistsSvg) {
       const fallbackSVG = `<svg width="200" height="100" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
