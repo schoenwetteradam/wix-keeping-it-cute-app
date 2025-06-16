@@ -65,7 +65,7 @@ export default async function handler(req, res) {
       console.log('📝 Creating default branding record...')
       
       const defaultBranding = {
-        logo_url: 'public/images/logo/salon-logo.svg',
+        logo_url: '/images/logo/salon-logo.svg',
         primary_color: '#ff9a9e',
         secondary_color: '#fecfef',
         salon_name: 'Keeping It Cute Salon & Spa',
