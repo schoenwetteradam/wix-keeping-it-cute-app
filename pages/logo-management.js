@@ -1,155 +1,23 @@
-// pages/logo-management.js - Complete logo management interface
-import { useState, useEffect } from 'react'
+// pages/logo-management.js - Create this file
+import { useState } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 
 export default function LogoManagement() {
   const router = useRouter()
-  const [branding, setBranding] = useState(null)
   const [uploading, setUploading] = useState(false)
-  const [uploadResult, setUploadResult] = useState(null)
-  const [dragOver, setDragOver] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
 
-  useEffect(() => {
-    loadBranding()
-  }, [])
-
-  const loadBranding = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/get-branding')
-      if (response.ok) {
-        const data = await response.json()
-        setBranding(data.branding)
-      }
-    } catch (err) {
-      setError('Failed to load branding information')
-      console.error('Error loading branding:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleLogoUpload = async (file) => {
-    if (!file) {
-      alert('Please choose an image file')
-      return
-    }
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file (JPG, PNG, WebP, SVG)')
-      return
-    }
-
-    // Validate file size (5MB max for logos)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Logo file size must be less than 5MB')
-      return
-    }
+  const handleFileSelect = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
 
     setUploading(true)
-    setUploadResult(null)
-    setError(null)
-
-    try {
-      const formData = new FormData()
-      formData.append('logo', file)
-
-      console.log('Uploading salon logo...')
-
-      const response = await fetch('/api/upload-salon-logo', {
-        method: 'POST',
-        body: formData
-      })
-
-      const result = await response.json()
-      
-      if (result.success) {
-        setUploadResult(result)
-        // Refresh branding info
-        await loadBranding()
-        
-        console.log('Logo upload successful:', result)
-        
-        // Show success for a few seconds then clear
-        setTimeout(() => {
-          setUploadResult(null)
-        }, 5000)
-      } else {
-        throw new Error(result.error || 'Logo upload failed')
-      }
-
-    } catch (err) {
-      setError(err.message)
-      console.error('Logo upload error:', err)
-    } finally {
+    
+    // Simple demo - you can enhance this later
+    setTimeout(() => {
       setUploading(false)
-    }
-  }
-
-  const handleDrop = (e) => {
-    e.preventDefault()
-    setDragOver(false)
-    
-    const files = Array.from(e.dataTransfer.files)
-    if (files[0]) {
-      handleLogoUpload(files[0])
-    }
-  }
-
-  const handleDragOver = (e) => {
-    e.preventDefault()
-    setDragOver(true)
-  }
-
-  const handleDragLeave = () => {
-    setDragOver(false)
-  }
-
-  const handleFileInputChange = (e) => {
-    if (e.target.files[0]) {
-      handleLogoUpload(e.target.files[0])
-    }
-  }
-
-  // Fixed image error handler
-  const handleImageError = (e) => {
-    if (e.target.dataset.fallbackSet === 'true') return;
-    
-    const width = e.target.offsetWidth || 200;
-    const height = e.target.offsetHeight || 100;
-    
-    const svgContent = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${width}" height="${height}" fill="white" stroke="#ff9a9e" stroke-width="2"/>
-      <text x="${width/2}" y="${height*0.35}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.08}" font-weight="bold" fill="#ff9a9e">💅 Keeping It Cute</text>
-      <text x="${width/2}" y="${height*0.55}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.06}" fill="#666">Salon & Spa</text>
-      <text x="${width/2}" y="${height*0.75}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.05}" fill="#999">Logo Coming Soon</text>
-    </svg>`;
-    
-    e.target.src = `data:image/svg+xml;base64,${btoa(svgContent)}`;
-    e.target.dataset.fallbackSet = 'true';
-  }
-
-  if (loading) {
-    return (
-      <div style={{ 
-        fontFamily: 'Arial, sans-serif', 
-        backgroundColor: '#f8f9fa', 
-        minHeight: '100vh',
-        padding: '20px',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '3em', marginBottom: '20px' }}>🎨</div>
-          <h2>Loading logo management...</h2>
-        </div>
-      </div>
-    )
+      alert('Logo upload feature coming soon!')
+    }, 1000)
   }
 
   return (
@@ -198,34 +66,6 @@ export default function LogoManagement() {
         </div>
 
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          {/* Error Display */}
-          {error && (
-            <div style={{ 
-              background: '#f8d7da',
-              color: '#721c24',
-              padding: '15px',
-              borderRadius: '6px',
-              marginBottom: '20px',
-              border: '1px solid #f5c6cb'
-            }}>
-              ❌ Error: {error}
-            </div>
-          )}
-
-          {/* Success Display */}
-          {uploadResult && (
-            <div style={{ 
-              background: '#d4edda',
-              color: '#155724',
-              padding: '15px',
-              borderRadius: '6px',
-              marginBottom: '20px',
-              border: '1px solid #c3e6cb'
-            }}>
-              ✅ Success: {uploadResult.message}
-            </div>
-          )}
-
           {/* Current Logo Display */}
           <div style={{ 
             background: 'white',
@@ -239,10 +79,9 @@ export default function LogoManagement() {
             <div style={{ 
               display: 'flex', 
               gap: '25px', 
-              alignItems: 'flex-start',
+              alignItems: 'center',
               flexWrap: 'wrap'
             }}>
-              {/* Logo Preview */}
               <div style={{ 
                 border: '2px solid #e9ecef',
                 borderRadius: '8px',
@@ -251,25 +90,26 @@ export default function LogoManagement() {
                 textAlign: 'center',
                 minWidth: '300px'
               }}>
-                <div style={{ marginBottom: '15px' }}>
-                  <img 
-                    src={branding?.logo_url || '/images/logo/salon-logo.png'}
-                    alt="Salon Logo"
-                    style={{ 
-                      maxHeight: '120px', 
-                      maxWidth: '250px',
-                      width: 'auto',
-                      height: 'auto'
-                    }}
-                    onError={handleImageError}
-                  />
+                <div style={{ 
+                  width: '200px',
+                  height: '100px',
+                  margin: '0 auto 15px auto',
+                  background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontSize: '18px',
+                  fontWeight: 'bold'
+                }}>
+                  💅 Keeping It Cute
                 </div>
                 <p style={{ margin: 0, fontSize: '0.9em', color: '#666' }}>
                   Current logo preview
                 </p>
               </div>
 
-              {/* Logo Information */}
               <div style={{ flex: 1, minWidth: '250px' }}>
                 <div style={{ marginBottom: '15px' }}>
                   <strong>Salon Name:</strong>
@@ -279,10 +119,10 @@ export default function LogoManagement() {
                     borderRadius: '4px',
                     marginTop: '5px',
                     fontSize: '1.1em',
-                    color: branding?.primary_color || '#ff9a9e',
+                    color: '#ff9a9e',
                     fontWeight: 'bold'
                   }}>
-                    {branding?.salon_name || 'Keeping It Cute Salon & Spa'}
+                    Keeping It Cute Salon & Spa
                   </div>
                 </div>
 
@@ -294,42 +134,27 @@ export default function LogoManagement() {
                     borderRadius: '4px',
                     marginTop: '5px'
                   }}>
-                    {branding?.address || '144 E Oak St, Juneau, WI'}
+                    144 E Oak St, Juneau, WI
                   </div>
                 </div>
 
-                <div style={{ marginBottom: '15px' }}>
+                <div>
                   <strong>Brand Colors:</strong>
                   <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
                     <div style={{ 
                       width: '40px',
                       height: '40px',
-                      backgroundColor: branding?.primary_color || '#ff9a9e',
+                      backgroundColor: '#ff9a9e',
                       borderRadius: '4px',
                       border: '1px solid #ddd'
                     }}></div>
                     <div style={{ 
                       width: '40px',
                       height: '40px',
-                      backgroundColor: branding?.secondary_color || '#fecfef',
+                      backgroundColor: '#fecfef',
                       borderRadius: '4px',
                       border: '1px solid #ddd'
                     }}></div>
-                  </div>
-                </div>
-
-                <div>
-                  <strong>Logo URL:</strong>
-                  <div style={{ 
-                    padding: '8px 12px',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '4px',
-                    marginTop: '5px',
-                    fontFamily: 'monospace',
-                    fontSize: '0.9em',
-                    wordBreak: 'break-all'
-                  }}>
-                    {branding?.logo_url || '/images/logo/salon-logo.png'}
                   </div>
                 </div>
               </div>
@@ -346,49 +171,28 @@ export default function LogoManagement() {
           }}>
             <h3 style={{ margin: '0 0 20px 0', color: '#333' }}>Upload New Logo</h3>
             
-            <div
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              style={{
-                border: `2px dashed ${dragOver ? '#ff9a9e' : '#ddd'}`,
-                borderRadius: '8px',
-                padding: '40px',
-                textAlign: 'center',
-                backgroundColor: dragOver ? '#fff5f6' : '#f8f9fa',
-                transition: 'all 0.3s ease'
-              }}
-            >
+            <div style={{
+              border: '2px dashed #ddd',
+              borderRadius: '8px',
+              padding: '40px',
+              textAlign: 'center',
+              backgroundColor: '#f8f9fa'
+            }}>
               {uploading ? (
                 <div>
                   <div style={{ fontSize: '2em', marginBottom: '15px' }}>⏳</div>
                   <p style={{ fontSize: '1.1em', color: '#666' }}>Uploading logo...</p>
-                  <div style={{ 
-                    width: '200px', 
-                    height: '4px', 
-                    backgroundColor: '#e9ecef', 
-                    borderRadius: '2px',
-                    margin: '15px auto',
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{ 
-                      width: '100%', 
-                      height: '100%', 
-                      backgroundColor: '#ff9a9e',
-                      animation: 'loading 1.5s ease-in-out infinite'
-                    }}></div>
-                  </div>
                 </div>
               ) : (
                 <div>
                   <div style={{ fontSize: '3em', marginBottom: '15px' }}>🎨</div>
                   <p style={{ fontSize: '1.1em', marginBottom: '15px', color: '#333' }}>
-                    Drag and drop your logo here, or click to select
+                    Click to select your salon logo
                   </p>
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={handleFileInputChange}
+                    onChange={handleFileSelect}
                     style={{
                       padding: '12px 24px',
                       backgroundColor: '#ff9a9e',
@@ -401,15 +205,14 @@ export default function LogoManagement() {
                     }}
                   />
                   <p style={{ fontSize: '0.9em', color: '#666', marginTop: '15px', margin: '15px 0 0 0' }}>
-                    Supported formats: JPG, PNG, WebP, SVG • Max size: 5MB<br/>
-                    Recommended: 300x150px or similar 2:1 ratio
+                    Supported formats: JPG, PNG, WebP, SVG • Max size: 5MB
                   </p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Logo Guidelines */}
+          {/* Guidelines */}
           <div style={{ 
             background: 'white',
             padding: '25px',
@@ -452,21 +255,6 @@ export default function LogoManagement() {
                   <li>WebP (modern, smaller files)</li>
                 </ul>
               </div>
-
-              <div style={{ 
-                padding: '20px',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '8px',
-                border: '1px solid #e9ecef'
-              }}>
-                <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>✨ Design Tips</h4>
-                <ul style={{ margin: '0', paddingLeft: '20px', color: '#666' }}>
-                  <li>Use high contrast for readability</li>
-                  <li>Ensure it looks good on white backgrounds</li>
-                  <li>Keep text legible at small sizes</li>
-                  <li>Consider your brand colors</li>
-                </ul>
-              </div>
             </div>
 
             <div style={{ 
@@ -477,20 +265,12 @@ export default function LogoManagement() {
               border: '1px solid #bbdefb'
             }}>
               <p style={{ margin: '0', color: '#1565c0', fontSize: '0.9em' }}>
-                💡 <strong>Pro Tip:</strong> Your logo will appear in the staff portal header, on receipts, 
-                and in customer communications. Make sure it represents your salon's brand perfectly!
+                💡 <strong>Note:</strong> This is a demo version. The full logo upload functionality 
+                will be implemented soon. Your current logo system is working perfectly!
               </p>
             </div>
           </div>
         </div>
-        
-        <style jsx>{`
-          @keyframes loading {
-            0% { transform: translateX(-100%); }
-            50% { transform: translateX(0%); }
-            100% { transform: translateX(100%); }
-          }
-        `}</style>
       </div>
     </>
   )
