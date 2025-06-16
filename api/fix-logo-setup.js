@@ -37,18 +37,20 @@ export default async function handler(req, res) {
       }
     }
 
-    // 2. Check if salon-logo.png exists in the wrong location and move it
-    const wrongLogoPath = path.join(process.cwd(), 'public/images/branding/salon-logo.png')
-    const correctLogoPath = path.join(process.cwd(), 'public/images/logo/salon-logo.png')
-    
-    if (fs.existsSync(wrongLogoPath) && !fs.existsSync(correctLogoPath)) {
-      fs.copyFileSync(wrongLogoPath, correctLogoPath)
+    // 2. Check if salon-logo files exist in the wrong location and move them
+    const wrongPngPath = path.join(process.cwd(), 'public/images/branding/salon-logo.png')
+    const wrongSvgPath = path.join(process.cwd(), 'public/images/branding/salon-logo.svg')
+    const correctPngPath = path.join(process.cwd(), 'public/images/logo/salon-logo.png')
+    const correctSvgPath = path.join(process.cwd(), 'public/images/logo/salon-logo.svg')
+
+    if (fs.existsSync(wrongPngPath) && !fs.existsSync(correctPngPath)) {
+      fs.copyFileSync(wrongPngPath, correctPngPath)
       results.files_moved.push('salon-logo.png moved to correct location')
       console.log('✅ Moved salon-logo.png to correct location')
     }
 
     // 3. Create a fallback logo if none exists
-    if (!fs.existsSync(correctLogoPath)) {
+    if (!logoExistsPng && !logoExistsSvg) {
       const fallbackSVG = `<svg width="200" height="100" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
         <rect width="200" height="100" fill="white" stroke="#ff9a9e" stroke-width="2"/>
         <text x="100" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ff9a9e">
@@ -61,16 +63,19 @@ export default async function handler(req, res) {
           Juneau, WI
         </text>
       </svg>`
-      
-      fs.writeFileSync(correctLogoPath.replace('.png', '.svg'), fallbackSVG)
+
+      fs.writeFileSync(correctSvgPath, fallbackSVG)
       results.files_moved.push('Created fallback SVG logo')
       console.log('✅ Created fallback SVG logo')
+      logoExistsSvg = true
     }
+
+    const finalLogoUrl = logoExistsPng ? '/images/logo/salon-logo.png' : '/images/logo/salon-logo.svg'
 
     // 4. Update/Insert correct branding info in database
     try {
       const brandingData = {
-        logo_url: '/images/logo/salon-logo.png',
+        logo_url: finalLogoUrl,
         primary_color: '#ff9a9e',
         secondary_color: '#fecfef',
         salon_name: 'Keeping It Cute Salon & Spa',
@@ -115,7 +120,7 @@ export default async function handler(req, res) {
     }
 
     // 5. Test that the logo is now accessible
-    const logoExists = fs.existsSync(correctLogoPath) || fs.existsSync(correctLogoPath.replace('.png', '.svg'))
+    const logoExists = logoExistsPng || logoExistsSvg
     
     console.log('🎉 Logo setup complete!')
     
@@ -124,14 +129,14 @@ export default async function handler(req, res) {
       message: 'Logo system setup complete!',
       results: results,
       logo_accessible: logoExists,
-      logo_url: '/images/logo/salon-logo.png',
+      logo_url: finalLogoUrl,
       next_steps: [
         '1. Refresh your staff portal page',
         '2. The logo should now appear in the header',
         '3. If using SVG fallback, replace with actual PNG logo',
         '4. Upload a custom logo via the upload system if desired'
       ],
-      test_logo_url: `${req.headers.host}/images/logo/salon-logo.png`
+      test_logo_url: `${req.headers.host}${finalLogoUrl}`
     })
 
   } catch (error) {
