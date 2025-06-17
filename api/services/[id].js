@@ -28,12 +28,7 @@ export default async function handler(req, res) {
 
     const { data: service, error } = await supabase
       .from('salon_services')
-      .select(`
-        *,
-        staff(*),
-        resources(*),
-        products(*)
-      `)
+      .select('*')
       .eq('id', id)
       .single()
 
@@ -48,6 +43,28 @@ export default async function handler(req, res) {
     if (!service) {
       return res.status(404).json({ error: 'Service not found' })
     }
+
+    // Fetch related staff members
+    const { data: staffLinks } = await supabase
+      .from('service_staff')
+      .select('staff:staff(*)')
+      .eq('service_id', id)
+
+    // Fetch resources linked to the service
+    const { data: resourceRows } = await supabase
+      .from('service_resources')
+      .select('resource_name')
+      .eq('service_id', id)
+
+    // Fetch related products
+    const { data: productLinks } = await supabase
+      .from('service_products')
+      .select('product:products(*)')
+      .eq('service_id', id)
+
+    service.staff = staffLinks?.map((r) => r.staff) || []
+    service.resources = resourceRows?.map((r) => r.resource_name) || []
+    service.products = productLinks?.map((r) => r.product) || []
 
     res.status(200).json({
       success: true,

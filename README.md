@@ -101,3 +101,24 @@ CREATE TABLE webhook_logs (
   logged_at timestamptz DEFAULT now()
 );
 
+-- service_staff table
+CREATE TABLE service_staff (
+  service_id uuid REFERENCES salon_services(id),
+  staff_id uuid REFERENCES staff(id),
+  PRIMARY KEY (service_id, staff_id)
+);
+
+-- service_resources table
+CREATE TABLE service_resources (
+  service_id uuid REFERENCES salon_services(id),
+  resource_name text,
+  PRIMARY KEY (service_id, resource_name)
+);
+
+-- service_products table
+CREATE TABLE service_products (
+  service_id uuid REFERENCES salon_services(id),
+  product_id uuid REFERENCES products(id),
+  PRIMARY KEY (service_id, product_id)
+);
+
