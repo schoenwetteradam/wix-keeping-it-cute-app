@@ -845,15 +845,20 @@ export default function StaffPortal() {
                     gap: '15px'
                   }}>
                     {categoryServices.map((service) => (
-                      <div key={service.id} style={{ 
-                        background: 'white', 
-                        border: '1px solid #e9ecef', 
-                        borderRadius: '8px',
-                        padding: '20px',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                        display: 'flex',
-                        gap: '15px'
-                      }}>
+                      <div
+                        key={service.id}
+                        onClick={() => router.push('/services/' + service.id)}
+                        style={{
+                          background: 'white',
+                          border: '1px solid #e9ecef',
+                          borderRadius: '8px',
+                          padding: '20px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                          display: 'flex',
+                          gap: '15px',
+                          cursor: 'pointer'
+                        }}
+                      >
                         {/* Service Image */}
                         <div style={{ 
                           width: '80px', 
