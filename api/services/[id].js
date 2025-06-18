@@ -47,7 +47,7 @@ export default async function handler(req, res) {
     // Fetch related staff members
     const { data: staffLinks } = await supabase
       .from('service_staff')
-      .select('staff:staff(*)')
+      .select('staff(*)')
       .eq('service_id', id)
 
     // Fetch resources linked to the service

@@ -76,7 +76,15 @@ export default function ServiceDetail() {
       <Head>
         <title>{service.name}</title>
       </Head>
-      <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px' }}>
+      <div
+        style={{
+          fontFamily: 'Arial, sans-serif',
+          background:
+            'linear-gradient(135deg, #fdfdfd 0%, #c097d2 40%, #9f84ca 70%, #efc315 100%)',
+          minHeight: '100vh',
+          padding: '20px'
+        }}
+      >
         <button onClick={() => router.back()} style={{ marginBottom: '20px' }}>← Back</button>
         <h1 style={{ marginTop: 0 }}>{service.name}</h1>
         {service.image_url && (
