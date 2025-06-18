@@ -16,7 +16,8 @@ export default function ServiceDetail() {
     const loadService = async () => {
       try {
         setLoading(true)
-        const res = await fetch(`/api/get-service/${serviceId}`)
+        // Fetch the service along with related staff and products
+        const res = await fetch(`/api/services/${serviceId}`)
         if (!res.ok) throw new Error('Failed to load service')
         const data = await res.json()
         setService(data.service)
@@ -75,7 +76,15 @@ export default function ServiceDetail() {
       <Head>
         <title>{service.name}</title>
       </Head>
-      <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px' }}>
+      <div
+        style={{
+          fontFamily: 'Arial, sans-serif',
+          background:
+            'linear-gradient(135deg, #fdfdfd 0%, #c097d2 40%, #9f84ca 70%, #efc315 100%)',
+          minHeight: '100vh',
+          padding: '20px'
+        }}
+      >
         <button onClick={() => router.back()} style={{ marginBottom: '20px' }}>← Back</button>
         <h1 style={{ marginTop: 0 }}>{service.name}</h1>
         {service.image_url && (
@@ -91,6 +100,28 @@ export default function ServiceDetail() {
         )}
         <p><strong>Price:</strong> ${service.price}</p>
         <p><strong>Duration:</strong> {service.duration_minutes} minutes</p>
+
+        {service.staff && service.staff.length > 0 && (
+          <div style={{ marginTop: '20px' }}>
+            <h3>Available Staff</h3>
+            <ul>
+              {service.staff.map((member) => (
+                <li key={member.id}>{member.name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {service.products && service.products.length > 0 && (
+          <div style={{ marginTop: '20px' }}>
+            <h3>Products Used</h3>
+            <ul>
+              {service.products.map((product) => (
+                <li key={product.id}>{product.product_name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </>
   )
