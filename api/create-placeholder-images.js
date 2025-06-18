@@ -15,7 +15,7 @@ export default async function handler(req, res) {
       'public/images/products/tools',
       'public/images/products/other',
       'public/images/services',
-      'public/images/branding'
+      'public/images/logo'
     ]
 
     const results = {
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
       },
       { 
         name: 'logo-placeholder.png', 
-        dir: 'public/images/branding',
+        dir: 'public/images/logo',
         svg: createLogoPlaceholderSVG() 
       }
     ]
