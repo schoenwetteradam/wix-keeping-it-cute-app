@@ -245,3 +245,20 @@ export default async function handler(req, res) {
 
     console.log('🎉 === LOGO UPLOAD SUCCESS ===')
     console.log('Response:', JSON.stringify(response, null, 2))
+    res.status(200).json(response)
+
+  } catch (error) {
+    console.error('❌ === LOGO UPLOAD FAILED ===')
+    console.error('Error type:', error.constructor.name)
+    console.error('Error message:', error.message)
+    console.error('Error stack:', error.stack)
+
+    // Always return JSON, never HTML
+    res.status(500).json({
+      success: false,
+      error: 'Logo upload failed: ' + error.message,
+      error_type: error.constructor.name,
+      timestamp: new Date().toISOString()
+    })
+  }
+}
