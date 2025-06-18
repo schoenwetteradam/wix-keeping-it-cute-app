@@ -129,7 +129,14 @@ export default function LogoManagement() {
       <text x="${width/2}" y="${height*0.75}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.05}" fill="#999">Logo Coming Soon</text>
     </svg>`;
     
-    e.target.src = `data:image/svg+xml;base64,${btoa(svgContent)}`;
+    let dataUri;
+    try {
+      dataUri = `data:image/svg+xml;base64,${btoa(svgContent)}`;
+    } catch (err) {
+      dataUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
+    }
+
+    e.target.src = dataUri;
     e.target.dataset.fallbackSet = 'true';
   }
 
