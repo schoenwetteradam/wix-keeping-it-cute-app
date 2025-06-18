@@ -2,6 +2,7 @@
 import formidable from 'formidable'
 import fs from 'fs'
 import path from 'path'
+import os from 'os'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -36,10 +37,20 @@ export default async function handler(req, res) {
 
   try {
     // Ensure logo directory exists
-    const logoDir = path.join(process.cwd(), 'public', 'images', 'logo')
-    if (!fs.existsSync(logoDir)) {
-      fs.mkdirSync(logoDir, { recursive: true })
-      console.log('✅ Created logo directory')
+    let logoDir = path.join(process.cwd(), 'public', 'images', 'logo')
+    try {
+      if (!fs.existsSync(logoDir)) {
+        fs.mkdirSync(logoDir, { recursive: true })
+        console.log('✅ Created logo directory')
+      }
+    } catch (dirErr) {
+      // Fall back to a writable temp directory if creation fails
+      console.error('⚠️ Unable to create logo directory:', dirErr.message)
+      logoDir = path.join(os.tmpdir(), 'salon-logo')
+      if (!fs.existsSync(logoDir)) {
+        fs.mkdirSync(logoDir, { recursive: true })
+      }
+      console.log('📁 Using temporary logo directory:', logoDir)
     }
 
     // Configure formidable for logo uploads
