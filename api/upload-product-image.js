@@ -215,9 +215,8 @@ export default async function handler(req, res) {
       try {
         const { data, error: updateError } = await supabase
           .from('products')
-          .update({ 
+          .update({
             image_url: imageUrl,
-            image_uploaded_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
           .eq('id', productId)
