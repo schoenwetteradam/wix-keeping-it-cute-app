@@ -352,5 +352,3 @@ function extractContactId(data) {
         null;
 }
   
-  return notes.length > 0 ? notes.join(' | ') : null;
-}
