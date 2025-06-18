@@ -1,4 +1,5 @@
-// api/create-usage-session.js - New endpoint for starting sessions
+// api/complete-usage-session.js
+// Mark a product usage session as completed or create it if it doesn't exist
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -22,36 +23,62 @@ export default async function handler(req, res) {
   }
   
   try {
-    const { customer_id, customer_name, staff_member, service_type } = req.body;
-    
-    console.log('🆕 Creating new usage session...');
-    
-    // For now, just return a session object
-    // Later you can create a usage_sessions table
-    const session = {
-      id: `session_${Date.now()}`,
-      customer_id: customer_id || 'unknown',
-      customer_name: customer_name || 'Walk-in Customer',
-      staff_member: staff_member || 'Staff',
-      service_type: service_type || 'General Service',
-      created_at: new Date().toISOString(),
-      status: 'active'
-    };
-    
-    console.log(`✅ Created session: ${session.id}`);
-    
-    res.status(200).json({ 
-      status: 'success',
-      session: session,
-      message: 'Usage session created successfully'
-    });
-    
+    const sessionData = req.body
+
+    console.log('✅ Completing usage session...', JSON.stringify(sessionData, null, 2))
+
+    const mappedSession = {
+      booking_id: sessionData.booking_id,
+      staff_member_id: sessionData.staff_member_id,
+      service_performed: sessionData.service_performed,
+      customer_email: sessionData.customer_email,
+      customer_name: sessionData.customer_name,
+      session_notes: sessionData.session_notes,
+      total_service_cost: sessionData.total_service_cost
+    }
+
+    // Check if a session already exists for this booking
+    const { data: existingSession, error: fetchError } = await supabase
+      .from('product_usage_sessions')
+      .select('id')
+      .eq('booking_id', sessionData.booking_id)
+      .single()
+
+    let data, error
+
+    if (existingSession) {
+      ;({ data, error } = await supabase
+        .from('product_usage_sessions')
+        .update({ ...mappedSession, is_completed: true })
+        .eq('id', existingSession.id)
+        .select()
+        .single())
+    } else if (fetchError && fetchError.code !== 'PGRST116') {
+      error = fetchError
+    } else {
+      ;({ data, error } = await supabase
+        .from('product_usage_sessions')
+        .insert([{ ...mappedSession, session_start_time: new Date().toISOString(), is_completed: true }])
+        .select()
+        .single())
+    }
+
+    if (error) {
+      console.error('❌ Complete Usage Session Error:', error)
+      return res.status(500).json({ error: 'Failed to complete usage session', details: error.message })
+    }
+
+    res.status(200).json({
+      status: 'Usage session completed successfully',
+      session: data
+    })
+
   } catch (err) {
-    console.error('❌ Create Session Error:', err);
-    res.status(500).json({ 
-      error: 'Failed to create usage session', 
+    console.error('❌ Complete Session Error:', err)
+    res.status(500).json({
+      error: 'Failed to complete usage session',
       details: err.message,
       timestamp: new Date().toISOString()
-    });
+    })
   }
 }
