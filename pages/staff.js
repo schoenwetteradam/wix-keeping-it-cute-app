@@ -7,6 +7,7 @@ import slugify from '../utils/slugify'
 export default function StaffPortal() {
   const router = useRouter()
   const [products, setProducts] = useState([])
+  const [madamGlamCount, setMadamGlamCount] = useState(0)
   const [services, setServices] = useState([])
   const [appointments, setAppointments] = useState([])
   const [alerts, setAlerts] = useState([])
@@ -47,6 +48,8 @@ export default function StaffPortal() {
         throw new Error(`Products API Error: ${productsResponse.status}`)
       }
       const productsData = await productsResponse.json()
+      const madamGlamCount = productsData.products
+        .filter(p => p.brand && p.brand.toLowerCase() === 'madam glam').length
       console.log('Products loaded:', productsData.total_count)
 
       // Load services
@@ -66,6 +69,7 @@ export default function StaffPortal() {
       console.log('Appointments loaded:', appointmentsData.count)
 
       setProducts(productsData.products || [])
+      setMadamGlamCount(madamGlamCount)
       setServices(servicesData.services || [])
       setAppointments(appointmentsData.appointments || [])
       setAlerts(productsData.low_stock_alerts || [])
@@ -441,7 +445,7 @@ export default function StaffPortal() {
             }}>
               <h3 style={{ margin: '0 0 10px 0', color: '#1976d2', fontSize: '1.1em' }}>📦 Total Products</h3>
               <p style={{ fontSize: '2.5em', margin: 0, fontWeight: 'bold', color: '#333' }}>{products.length}</p>
-              <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '0.9em' }}>Madam Glam Inventory</p>
+              <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '0.9em' }}>{madamGlamCount} Madam Glam items</p>
             </div>
 
             <div style={{ 
