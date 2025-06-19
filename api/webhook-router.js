@@ -261,6 +261,8 @@ async function processNewFormatWebhook(webhookData) {
     return await processContactEvent(webhookData);
   } else if (webhookData.entityFqdn === 'wix.bookings.v2.booking') {
     return await processBookingEventNewFormat(webhookData);
+  } else if (webhookData.entityFqdn === 'wix.ecom.v1.order') {
+    return await processOrderEvent(webhookData);
   } else {
     return await logUnknownEvent(eventType, webhookData);
   }
@@ -278,6 +280,8 @@ async function processJWTWebhook(event, eventData) {
     return await processContactEventJWT(event, eventData);
   } else if (event?.entityFqdn === 'wix.bookings.v2.booking') {
     return await processBookingEventJWT(event, eventData);
+  } else if (event?.entityFqdn === 'wix.ecom.v1.order') {
+    return await processOrderEventJWT(event, eventData);
   } else {
     return await logUnknownEvent(eventType, event);
   }
@@ -368,6 +372,69 @@ async function processContactEventJWT(event, eventData = null) {
     
   } catch (error) {
     console.error('❌ Contact processing failed:', error);
+    throw error;
+  }
+}
+
+// === ORDER PROCESSING ===
+async function processOrderEvent(webhookData) {
+  return await processOrderEventJWT(webhookData, null);
+}
+
+async function processOrderEventJWT(event, eventData = null) {
+  try {
+    console.log('💰 Processing order event...');
+
+    const orderData = eventData || event?.createdEvent?.entity || event;
+
+    const orderRecord = {
+      wix_order_id: orderData.id || orderData.orderId,
+      order_number: orderData.number || orderData.orderNumber,
+      customer_email:
+        orderData.buyerInfo?.email ||
+        orderData.billingInfo?.email ||
+        orderData.contactDetails?.email,
+      total_amount:
+        orderData.priceSummary?.total?.amount ||
+        orderData.totalAmount ||
+        orderData.totals?.total ||
+        orderData.total,
+      currency: orderData.currency || 'USD',
+      payment_status: orderData.paymentStatus || 'NOT_PAID',
+      fulfillment_status: orderData.fulfillmentStatus || orderData.status,
+      items: orderData.lineItems || orderData.items,
+      billing_info: orderData.billingInfo,
+      shipping_info: orderData.shippingInfo,
+      payload: orderData,
+      created_at: orderData.createdDate || new Date().toISOString(),
+      updated_at: orderData.updatedDate || new Date().toISOString()
+    };
+
+    Object.keys(orderRecord).forEach(key => {
+      if (orderRecord[key] === undefined) delete orderRecord[key];
+    });
+
+    const { data, error } = await supabase
+      .from('orders')
+      .upsert(orderRecord, { onConflict: 'wix_order_id', ignoreDuplicates: false })
+      .select();
+
+    if (error) {
+      console.error('❌ Order upsert error:', error);
+      throw error;
+    }
+
+    console.log('✅ Order processed successfully:', data[0]?.id);
+
+    return {
+      type: 'order_processed',
+      order_id: data[0]?.id,
+      wix_order_id: orderRecord.wix_order_id,
+      order_number: orderRecord.order_number
+    };
+
+  } catch (error) {
+    console.error('❌ Order processing failed:', error);
     throw error;
   }
 }
