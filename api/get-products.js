@@ -23,9 +23,32 @@ export default async function handler(req, res) {
   
   try {
     console.log('🔍 Fetching products from database...');
-    
-    const { category, brand } = req.query;
-    
+
+    const { category, brand, id } = req.query;
+
+    if (id) {
+      const { data: product, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        console.error('❌ Product Fetch Error:', error);
+        return res.status(500).json({
+          error: 'Failed to fetch product',
+          details: error.message
+        });
+      }
+
+      if (!product) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      return res.status(200).json({ product });
+    }
+
     let query = supabase
       .from('products')
       .select('*')

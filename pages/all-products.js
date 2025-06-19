@@ -129,7 +129,8 @@ export default function AllProducts() {
                 {categoryProducts.map(product => (
                   <div
                     key={product.id}
-                    style={{ background: 'white', border: '1px solid #e9ecef', borderRadius: '8px', padding: '20px', display: 'flex', gap: '15px' }}
+                    onClick={() => router.push('/products/' + product.id)}
+                    style={{ background: 'white', border: '1px solid #e9ecef', borderRadius: '8px', padding: '20px', display: 'flex', gap: '15px', cursor: 'pointer' }}
                   >
                     <div style={{ width: '80px', height: '80px', flexShrink: 0, borderRadius: '8px', overflow: 'hidden', backgroundColor: '#f8f9fa' }}>
                       <img

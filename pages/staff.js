@@ -1058,11 +1058,25 @@ export default function StaffPortal() {
                 </div>
               )}
 
-              <div style={{ 
-                display: 'flex', 
-                gap: '10px', 
-                justifyContent: 'flex-end' 
+              <div style={{
+                display: 'flex',
+                gap: '10px',
+                justifyContent: 'flex-end'
               }}>
+                <button
+                  onClick={() => router.push('/products/' + selectedProduct.id)}
+                  style={{
+                    background: '#ff9a9e',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  View Full Page
+                </button>
                 <button
                   onClick={closeProductDetails}
                   style={{
