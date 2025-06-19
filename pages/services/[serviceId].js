@@ -33,12 +33,20 @@ export default function ServiceDetail() {
   }, [serviceId])
 
   const handleImageError = (e) => {
+    const localPath = e.target.dataset.localPath
+    if (localPath && !e.target.dataset.localTried) {
+      e.target.dataset.localTried = 'true'
+      e.target.src = localPath
+      return
+    }
+
     if (e.target.dataset.fallbackSet === 'true') return
 
     const width = e.target.offsetWidth || 200
     const height = e.target.offsetHeight || 200
 
-    const svgContent = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">` +
+    const svgContent =
+      `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">` +
       `<rect width="${width}" height="${height}" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>` +
       `<text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="#999" font-family="Arial, sans-serif" font-size="14">No Image</text>` +
       `</svg>`
@@ -93,6 +101,7 @@ export default function ServiceDetail() {
           return (
             <img
               src={service.image_url || localPath}
+              data-local-path={localPath}
               alt={service.name}
               style={{ width: '100%', maxWidth: '400px', borderRadius: '8px', marginBottom: '20px' }}
               onError={handleImageError}
