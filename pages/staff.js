@@ -1044,6 +1044,11 @@ export default function StaffPortal() {
                   <p style={{ margin: '0 0 5px 0', color: '#666' }}>
                     Cost per Unit: <strong>${selectedProduct.cost_per_unit}</strong>
                   </p>
+                  {selectedProduct.selling_price !== undefined && (
+                    <p style={{ margin: '0 0 5px 0', color: '#666' }}>
+                      Selling Price: <strong>${selectedProduct.selling_price}</strong>
+                    </p>
+                  )}
                   <p style={{ margin: '0 0 5px 0', color: '#666' }}>
                     Total Value: <strong>${(selectedProduct.current_stock * selectedProduct.cost_per_unit).toFixed(2)}</strong>
                   </p>
