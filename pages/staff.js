@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import slugify from '../utils/slugify'
 
 export default function StaffPortal() {
   const router = useRouter()
@@ -839,12 +840,14 @@ export default function StaffPortal() {
                     {category} ({categoryServices.length} services)
                   </h3>
 
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', 
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
                     gap: '15px'
                   }}>
-                    {categoryServices.map((service) => (
+                    {categoryServices.map((service) => {
+                      const localPath = `/images/services/${slugify(service.name)}.svg`
+                      return (
                       <div
                         key={service.id}
                         onClick={() => router.push('/services/' + service.id)}
@@ -869,7 +872,7 @@ export default function StaffPortal() {
                           backgroundColor: '#f8f9fa'
                         }}>
                           <img
-                            src={service.image_url || ''}
+                            src={service.image_url || localPath}
                             alt={service.name}
                             style={{
                               width: '100%',
@@ -904,7 +907,7 @@ export default function StaffPortal() {
                           </div>
                         </div>
                       </div>
-                    ))}
+                      )})}
                   </div>
                 </div>
               ))}

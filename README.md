@@ -122,3 +122,11 @@ CREATE TABLE service_products (
   PRIMARY KEY (service_id, product_id)
 );
 
+## 📷 Service Images
+
+Place SVG images for services in `public/images/services`.
+Each file should be named using the slugified service name
+(for example, `Cut & Style` becomes `cut-and-style.svg`).
+These images are used when a service does not specify its
+own `image_url`.
+
