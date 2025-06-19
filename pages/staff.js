@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import slugify from '../utils/slugify'
 
 export default function StaffPortal() {
   const router = useRouter()
@@ -160,11 +161,18 @@ export default function StaffPortal() {
 
   // FIXED IMAGE ERROR HANDLER - No more 404 errors!
   const handleImageError = (e) => {
+    const localPath = e.target.dataset.localPath;
+    if (localPath && !e.target.dataset.localTried) {
+      e.target.dataset.localTried = 'true';
+      e.target.src = localPath;
+      return;
+    }
+
     if (e.target.dataset.fallbackSet === 'true') return;
-    
+
     const width = e.target.offsetWidth || 200;
     const height = e.target.offsetHeight || 200;
-    
+
     const svgContent = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
       <rect width="${width}" height="${height}" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
       <circle cx="${width/2}" cy="${height*0.35}" r="${Math.min(width, height)*0.12}" fill="#ff9a9e" opacity="0.6"/>
@@ -172,7 +180,7 @@ export default function StaffPortal() {
       <text x="${width/2}" y="${height*0.7}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.06}" fill="#666">Product</text>
       <text x="${width/2}" y="${height*0.77}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.05}" fill="#999">Image Coming Soon</text>
     </svg>`;
-    
+
     try {
       e.target.src = `data:image/svg+xml;base64,${btoa(svgContent)}`;
       e.target.dataset.fallbackSet = 'true';
@@ -839,12 +847,14 @@ export default function StaffPortal() {
                     {category} ({categoryServices.length} services)
                   </h3>
 
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', 
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
                     gap: '15px'
                   }}>
-                    {categoryServices.map((service) => (
+                    {categoryServices.map((service) => {
+                      const localPath = `/images/services/${slugify(service.name)}.svg`
+                      return (
                       <div
                         key={service.id}
                         onClick={() => router.push('/services/' + service.id)}
@@ -869,7 +879,8 @@ export default function StaffPortal() {
                           backgroundColor: '#f8f9fa'
                         }}>
                           <img
-                            src={service.image_url || ''}
+                            src={service.image_url || localPath}
+                            data-local-path={localPath}
                             alt={service.name}
                             style={{
                               width: '100%',
@@ -904,7 +915,7 @@ export default function StaffPortal() {
                           </div>
                         </div>
                       </div>
-                    ))}
+                      )})}
                   </div>
                 </div>
               ))}
