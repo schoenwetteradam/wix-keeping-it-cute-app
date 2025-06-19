@@ -10,6 +10,10 @@ export default function AllProducts() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
 
+  const handleProductClick = (product) => {
+    router.push(`/products/${product.id}`)
+  }
+
   useEffect(() => {
     loadProducts()
   }, [])
@@ -103,17 +107,26 @@ export default function AllProducts() {
             onChange={e => setSearchTerm(e.target.value)}
             style={{ flex: 2, padding: '10px', border: '1px solid #ddd', borderRadius: '4px', minWidth: '200px' }}
           />
-          <select
-            value={selectedCategory}
-            onChange={e => setSelectedCategory(e.target.value)}
-            style={{ flex: 1, padding: '10px', border: '1px solid #ddd', borderRadius: '4px', minWidth: '150px' }}
-          >
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             {categories.map(cat => (
-              <option key={cat} value={cat}>
-                {cat === 'all' ? 'All Categories' : cat}
-              </option>
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  backgroundColor: selectedCategory === cat ? '#ff9a9e' : '#f8f9fa',
+                  color: selectedCategory === cat ? 'white' : '#333',
+                  fontWeight: selectedCategory === cat ? 'bold' : 'normal',
+                  borderBottom: selectedCategory === cat ? '3px solid #ff9a9e' : '3px solid transparent'
+                }}
+              >
+                {cat === 'all' ? 'All' : cat}
+              </button>
             ))}
-          </select>
+          </div>
           <span style={{ alignSelf: 'center', fontWeight: 'bold' }}>Products: {filteredProducts.length}</span>
         </div>
 
@@ -129,7 +142,16 @@ export default function AllProducts() {
                 {categoryProducts.map(product => (
                   <div
                     key={product.id}
-                    style={{ background: 'white', border: '1px solid #e9ecef', borderRadius: '8px', padding: '20px', display: 'flex', gap: '15px' }}
+                    onClick={() => handleProductClick(product)}
+                    style={{
+                      background: 'white',
+                      border: '1px solid #e9ecef',
+                      borderRadius: '8px',
+                      padding: '20px',
+                      display: 'flex',
+                      gap: '15px',
+                      cursor: 'pointer'
+                    }}
                   >
                     <div style={{ width: '80px', height: '80px', flexShrink: 0, borderRadius: '8px', overflow: 'hidden', backgroundColor: '#f8f9fa' }}>
                       <img
