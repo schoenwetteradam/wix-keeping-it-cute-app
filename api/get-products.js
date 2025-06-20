@@ -28,9 +28,7 @@ export default async function handler(req, res) {
     
     let query = supabase
       .from('products')
-      .select(
-        'id, product_name, brand, category, size, unit_type, sku, cost_per_unit, selling_price, current_stock, min_threshold, location, image_url, description, is_active'
-      )
+      .select('*')
       .eq('is_active', true)
       .order('category')
       .order('product_name');
