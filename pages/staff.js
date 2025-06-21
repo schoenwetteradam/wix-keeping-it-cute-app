@@ -3,9 +3,12 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import slugify from '../utils/slugify'
+import { useSession } from '../context/UserContext'
 
 export default function StaffPortal() {
   const router = useRouter()
+  const session = useSession()
+  const [role, setRole] = useState(null)
   const [products, setProducts] = useState([])
   const [madamGlamCount, setMadamGlamCount] = useState(0)
   const [services, setServices] = useState([])
@@ -26,9 +29,25 @@ export default function StaffPortal() {
   const [appointmentNotes, setAppointmentNotes] = useState('')
   const [savingNotes, setSavingNotes] = useState(false)
 
+  if (!session) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <p>Please <a href="/login">login</a> to access the staff portal.</p>
+      </div>
+    )
+  }
+
   useEffect(() => {
-    loadData()
-  }, [])
+    if (session) {
+      fetch('/api/profile', {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => setRole(data?.role || 'staff'))
+        .catch(() => {})
+      loadData()
+    }
+  }, [session])
 
   const loadData = async () => {
     try {
@@ -36,14 +55,16 @@ export default function StaffPortal() {
       setLoading(true)
 
       // Load branding info
-      const brandingResponse = await fetch('/api/get-branding')
+      const headers = { Authorization: `Bearer ${session.access_token}` }
+
+      const brandingResponse = await fetch('/api/get-branding', { headers })
       if (brandingResponse.ok) {
         const brandingData = await brandingResponse.json()
         setBranding(brandingData.branding)
       }
 
       // Load products
-      const productsResponse = await fetch('/api/get-products')
+      const productsResponse = await fetch('/api/get-products', { headers })
       if (!productsResponse.ok) {
         throw new Error(`Products API Error: ${productsResponse.status}`)
       }
@@ -53,7 +74,7 @@ export default function StaffPortal() {
       console.log('Products loaded:', productsData.total_count)
 
       // Load services
-      const servicesResponse = await fetch('/api/services')
+      const servicesResponse = await fetch('/api/services', { headers })
       if (!servicesResponse.ok) {
         throw new Error(`Services API Error: ${servicesResponse.status}`)
       }
@@ -61,7 +82,7 @@ export default function StaffPortal() {
       console.log('Services loaded:', servicesData.stats?.total_services)
 
       // Load appointments
-      const appointmentsResponse = await fetch('/api/get-appointments')
+      const appointmentsResponse = await fetch('/api/get-appointments', { headers })
       if (!appointmentsResponse.ok) {
         throw new Error(`Appointments API Error: ${appointmentsResponse.status}`)
       }
@@ -99,7 +120,9 @@ export default function StaffPortal() {
 
     // Check if product usage exists for this appointment
     try {
-      const response = await fetch(`/api/get-booking/${appointment.id}`)
+      const response = await fetch(`/api/get-booking/${appointment.id}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      })
       if (response.ok) {
         const data = await response.json()
         setSelectedAppointment({
@@ -127,7 +150,10 @@ export default function StaffPortal() {
 
       const response = await fetch('/api/update-appointment-notes', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({
           appointment_id: selectedAppointment.id,
           notes: appointmentNotes
@@ -306,6 +332,11 @@ export default function StaffPortal() {
               <p style={{ margin: '5px 0 0 0', fontSize: '1.3em', opacity: 0.9 }}>
                 Staff Portal - Business Management
               </p>
+              {session && (
+                <p style={{ margin: '5px 0 0 0', fontSize: '0.9em' }}>
+                  {session.user.email} ({role || 'staff'})
+                </p>
+              )}
             </div>
           </div>
           <p style={{ margin: '5px 0 0 0', fontSize: '1em', opacity: 0.8 }}>
@@ -346,7 +377,7 @@ export default function StaffPortal() {
             {/* Action Buttons */}
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               {/* Audit Button - Only show on inventory tab */}
-              {activeTab === 'inventory' && (
+              {activeTab === 'inventory' && role === 'manager' && (
                 <button
                   onClick={navigateToAudit}
                   style={{
@@ -366,6 +397,7 @@ export default function StaffPortal() {
               )}
 
               {/* Logo Management Button - Show on all tabs */}
+              {role === 'manager' && (
               <button
                 onClick={() => router.push('/logo-management')}
                 style={{
@@ -382,9 +414,10 @@ export default function StaffPortal() {
               >
                 🎨 Manage Logo
               </button>
+              )}
 
               {/* Upload Product Images Button - Only show on inventory tab */}
-              {activeTab === 'inventory' && (
+              {activeTab === 'inventory' && role === 'manager' && (
                 <button
                   onClick={() => router.push('/upload-product-images')}
                   style={{
