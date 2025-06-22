@@ -135,6 +135,17 @@ These values are required to build and run the API routes. The variables prefixe
 with `NEXT_PUBLIC_` are visible to the browser, while server-side handlers rely on
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
 
+### 2. Running locally
+
+Install dependencies and start the dev server:
+
+```bash
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000/signup` to create your first user (or `/login` if an account already exists). Successful authentication redirects to `/staff`.
+
 ## 📷 Service Images
 
 Place SVG images for services in `public/images/services`.
