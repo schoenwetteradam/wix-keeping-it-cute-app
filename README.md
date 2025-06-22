@@ -124,13 +124,15 @@ CREATE TABLE service_products (
 
 ## Environment Configuration
 
-Add these variables to your `.env.local` (or hosting provider):
+Add these variables to your `.env.local` for local development:
 
 - `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL` for the browser)
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `SUPABASE_ANON_KEY` (or `NEXT_PUBLIC_SUPABASE_ANON_KEY` for the browser)
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-`NEXT_PUBLIC_` variables are visible to the frontend, while server-side API routes rely on
+These values are required to build and run the API routes. The variables prefixed
+with `NEXT_PUBLIC_` are visible to the browser, while server-side handlers rely on
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
 
 ## 📷 Service Images
