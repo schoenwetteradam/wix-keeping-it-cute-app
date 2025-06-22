@@ -1,5 +1,6 @@
 // api/update-appointment-notes.js - Save appointment notes
 import { createClient } from '@supabase/supabase-js'
+import { verifyUser } from '../utils/verifyUser.js'
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -20,7 +21,12 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
-  
+
+  const { user, error: authError } = await verifyUser(req)
+  if (authError) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+
   try {
     const { appointment_id, notes } = req.body;
     
