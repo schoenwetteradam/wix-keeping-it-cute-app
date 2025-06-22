@@ -122,6 +122,17 @@ CREATE TABLE service_products (
   PRIMARY KEY (service_id, product_id)
 );
 
+## Environment Configuration
+
+Add these variables to your `.env.local` (or hosting provider):
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_ANON_KEY` (or `NEXT_PUBLIC_SUPABASE_ANON_KEY` for the browser)
+
+`NEXT_PUBLIC_` variables are visible to the frontend, while server-side API routes rely on
+`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
+
 ## 📷 Service Images
 
 Place SVG images for services in `public/images/services`.
