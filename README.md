@@ -57,7 +57,7 @@ Run this SQL in your Supabase dashboard:
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- bookings table
-CREATE TABLE bookings (
+CREATE TABLE IF NOT EXISTS bookings (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   customer_id uuid,
   service text,
@@ -68,7 +68,7 @@ CREATE TABLE bookings (
 );
 
 -- contacts table
-CREATE TABLE contacts (
+CREATE TABLE IF NOT EXISTS contacts (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   email text,
   phone text,
@@ -76,7 +76,7 @@ CREATE TABLE contacts (
 );
 
 -- orders table
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   order_number text,
   total numeric,
@@ -85,7 +85,7 @@ CREATE TABLE orders (
 );
 
 -- sessions table
-CREATE TABLE sessions (
+CREATE TABLE IF NOT EXISTS sessions (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   visitor_id text,
   started_at timestamptz,
@@ -94,7 +94,7 @@ CREATE TABLE sessions (
 );
 
 -- webhook_logs table
-CREATE TABLE webhook_logs (
+CREATE TABLE IF NOT EXISTS webhook_logs (
   id serial PRIMARY KEY,
   event_type text,
   payload jsonb,
@@ -102,24 +102,31 @@ CREATE TABLE webhook_logs (
 );
 
 -- service_staff table
-CREATE TABLE service_staff (
+CREATE TABLE IF NOT EXISTS service_staff (
   service_id uuid REFERENCES salon_services(id),
   staff_id uuid REFERENCES staff(id),
   PRIMARY KEY (service_id, staff_id)
 );
 
 -- service_resources table
-CREATE TABLE service_resources (
+CREATE TABLE IF NOT EXISTS service_resources (
   service_id uuid REFERENCES salon_services(id),
   resource_name text,
   PRIMARY KEY (service_id, resource_name)
 );
 
 -- service_products table
-CREATE TABLE service_products (
+CREATE TABLE IF NOT EXISTS service_products (
   service_id uuid REFERENCES salon_services(id),
   product_id uuid REFERENCES products(id),
   PRIMARY KEY (service_id, product_id)
+);
+
+-- profiles table for user roles
+CREATE TABLE IF NOT EXISTS profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  role text NOT NULL DEFAULT 'staff',
+  created_at timestamptz DEFAULT now()
 );
 
 ## 📷 Service Images
