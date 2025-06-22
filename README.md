@@ -126,7 +126,7 @@ CREATE TABLE service_products (
 
 Add these variables to your `.env.local` (or hosting provider):
 
-- `SUPABASE_URL`
+- `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL` for the browser)
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_ANON_KEY` (or `NEXT_PUBLIC_SUPABASE_ANON_KEY` for the browser)
 
@@ -141,3 +141,23 @@ Each file should be named using the slugified service name
 These images are used when a service does not specify its
 own `image_url`.
 
+
+## 🔧 Development Notes
+
+### Environment variables
+
+Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local`.
+These values let the frontend connect to your Supabase project.
+
+### Running migrations
+
+Apply each SQL file in the `migrations` directory in order:
+
+```bash
+psql $SUPABASE_URL < migrations/20240102_add_profiles_table.sql
+```
+
+### Authentication flow
+
+Use the `/login` and `/signup` pages to authenticate.
+After login, requests include a `Bearer` token from the Supabase session in the `Authorization` header.
