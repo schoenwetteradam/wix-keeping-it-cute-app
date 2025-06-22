@@ -130,3 +130,11 @@ Each file should be named using the slugified service name
 These images are used when a service does not specify its
 own `image_url`.
 
+## 🔑 Authentication
+
+The staff portal now requires users to sign up and log in with Supabase
+authentication. Create an account using `/signup` and then log in via
+`/login`. API routes used by the portal expect an `Authorization` header with a
+valid Supabase access token. Ensure the environment variables in `.env.local`
+provide both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+
