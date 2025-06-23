@@ -124,16 +124,16 @@ CREATE TABLE service_products (
 
 ## Environment Configuration
 
-Add these variables to your `.env.local` for local development:
+Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 
 - `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL` for the browser)
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-These values are required to build and run the API routes. The variables prefixed
-with `NEXT_PUBLIC_` are visible to the browser, while server-side handlers rely on
-`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
+These values are required to build and run the API routes. Variables prefixed
+with `NEXT_PUBLIC_` are exposed to the browser, while server-side handlers rely
+on `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
 
 ### 2. Running locally
 
@@ -159,8 +159,10 @@ own `image_url`.
 
 ### Environment variables
 
-Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local`.
-These values let the frontend connect to your Supabase project.
+Create a `.env.local` file by copying `.env.example` and setting your
+Supabase values. At a minimum set `NEXT_PUBLIC_SUPABASE_URL` and
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` so the frontend can connect to your
+Supabase project.
 
 ### Running migrations
 
