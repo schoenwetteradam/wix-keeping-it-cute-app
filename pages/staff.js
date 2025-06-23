@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import slugify from '../utils/slugify'
+import { fetchWithAuth } from '../utils/supabaseBrowserClient'
 
 export default function StaffPortal() {
   const router = useRouter()
@@ -36,14 +37,14 @@ export default function StaffPortal() {
       setLoading(true)
 
       // Load branding info
-      const brandingResponse = await fetch('/api/get-branding')
+      const brandingResponse = await fetchWithAuth('/api/get-branding')
       if (brandingResponse.ok) {
         const brandingData = await brandingResponse.json()
         setBranding(brandingData.branding)
       }
 
       // Load products
-      const productsResponse = await fetch('/api/get-products')
+      const productsResponse = await fetchWithAuth('/api/get-products')
       if (!productsResponse.ok) {
         throw new Error(`Products API Error: ${productsResponse.status}`)
       }
@@ -53,7 +54,7 @@ export default function StaffPortal() {
       console.log('Products loaded:', productsData.total_count)
 
       // Load services
-      const servicesResponse = await fetch('/api/services')
+      const servicesResponse = await fetchWithAuth('/api/services')
       if (!servicesResponse.ok) {
         throw new Error(`Services API Error: ${servicesResponse.status}`)
       }
@@ -61,7 +62,7 @@ export default function StaffPortal() {
       console.log('Services loaded:', servicesData.stats?.total_services)
 
       // Load appointments
-      const appointmentsResponse = await fetch('/api/get-appointments')
+      const appointmentsResponse = await fetchWithAuth('/api/get-appointments')
       if (!appointmentsResponse.ok) {
         throw new Error(`Appointments API Error: ${appointmentsResponse.status}`)
       }
@@ -99,7 +100,7 @@ export default function StaffPortal() {
 
     // Check if product usage exists for this appointment
     try {
-      const response = await fetch(`/api/get-booking/${appointment.id}`)
+      const response = await fetchWithAuth(`/api/get-booking/${appointment.id}`)
       if (response.ok) {
         const data = await response.json()
         setSelectedAppointment({
@@ -125,7 +126,7 @@ export default function StaffPortal() {
     try {
       setSavingNotes(true)
 
-      const response = await fetch('/api/update-appointment-notes', {
+      const response = await fetchWithAuth('/api/update-appointment-notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

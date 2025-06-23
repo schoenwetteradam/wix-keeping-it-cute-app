@@ -1,5 +1,6 @@
 // api/get-branding.js - UPDATED VERSION (replace your existing file)
 import { createClient } from '@supabase/supabase-js'
+import { requireAuth } from '../utils/auth'
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -7,10 +8,12 @@ const supabase = createClient(
 )
 
 export default async function handler(req, res) {
-  // Add CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  const allowedOrigin = process.env.CORS_ALLOW_ORIGIN
+  if (allowedOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigin)
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   if (req.method === 'OPTIONS') {
     res.status(200).end()
@@ -20,6 +23,9 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method Not Allowed' })
   }
+
+  const user = await requireAuth(req, res)
+  if (!user) return
 
   try {
     console.log('🎨 Fetching salon branding...')

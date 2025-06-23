@@ -4,6 +4,7 @@ import fs from 'fs'
 import path from 'path'
 import os from 'os'
 import { createClient } from '@supabase/supabase-js'
+import { requireAuth } from '../utils/auth'
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -17,8 +18,10 @@ export const config = {
 }
 
 export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  const allowedOrigin = process.env.CORS_ALLOW_ORIGIN
+  if (allowedOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigin)
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   
@@ -27,11 +30,14 @@ export default async function handler(req, res) {
   }
   
   if (req.method !== 'POST') {
-    return res.status(405).json({ 
+    return res.status(405).json({
       success: false,
-      error: 'Method not allowed. Use POST.' 
+      error: 'Method not allowed. Use POST.'
     })
   }
+
+  const user = await requireAuth(req, res)
+  if (!user) return
 
   console.log('🎨 === SALON LOGO UPLOAD START ===')
 

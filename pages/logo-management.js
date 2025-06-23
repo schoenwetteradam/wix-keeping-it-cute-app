@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import { fetchWithAuth } from '../utils/supabaseBrowserClient'
 
 export default function LogoManagement() {
   const router = useRouter()
@@ -19,7 +20,7 @@ export default function LogoManagement() {
   const loadBranding = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/get-branding')
+      const response = await fetchWithAuth('/api/get-branding')
       if (response.ok) {
         const data = await response.json()
         setBranding(data.branding)
@@ -60,7 +61,7 @@ export default function LogoManagement() {
 
       console.log('Uploading salon logo...')
 
-      const response = await fetch('/api/upload-salon-logo', {
+      const response = await fetchWithAuth('/api/upload-salon-logo', {
         method: 'POST',
         body: formData
       })

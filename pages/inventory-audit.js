@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
+import { fetchWithAuth } from '../utils/supabaseBrowserClient'
 
 export default function InventoryAudit() {
   const router = useRouter()
@@ -22,7 +23,7 @@ export default function InventoryAudit() {
   const loadProducts = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/get-products')
+      const response = await fetchWithAuth('/api/get-products')
       if (!response.ok) throw new Error('Failed to load products')
       
       const data = await response.json()
@@ -112,7 +113,7 @@ export default function InventoryAudit() {
         }
       }
 
-      const response = await fetch('/api/submit-inventory-audit', {
+      const response = await fetchWithAuth('/api/submit-inventory-audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(auditPayload)

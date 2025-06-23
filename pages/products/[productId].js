@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import slugify from '../../utils/slugify'
+import { fetchWithAuth } from '../../utils/supabaseBrowserClient'
 
 export default function ProductDetail() {
   const router = useRouter()
@@ -17,7 +18,7 @@ export default function ProductDetail() {
     const loadProduct = async () => {
       try {
         setLoading(true)
-        const res = await fetch(`/api/products/${productId}`)
+        const res = await fetchWithAuth(`/api/products/${productId}`)
         if (!res.ok) throw new Error('Failed to load product')
         const data = await res.json()
         setProduct(data.product)
