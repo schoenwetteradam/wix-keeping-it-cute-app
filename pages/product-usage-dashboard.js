@@ -1,6 +1,7 @@
 // pages/product-usage-dashboard.js
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
+import { fetchWithAuth } from '../utils/supabaseBrowserClient'
 
 export default function ProductUsageDashboard() {
   const [usageSessions, setUsageSessions] = useState([])
@@ -17,7 +18,7 @@ export default function ProductUsageDashboard() {
       setLoading(true)
       
       // Load usage sessions
-      const sessionsResponse = await fetch(`/api/product-usage-stats?range=${dateRange}`)
+      const sessionsResponse = await fetchWithAuth(`/api/product-usage-stats?range=${dateRange}`)
       if (sessionsResponse.ok) {
         const sessionsData = await sessionsResponse.json()
         setUsageSessions(sessionsData.sessions || [])
