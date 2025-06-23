@@ -137,6 +137,9 @@ on `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
 
 ### 2. Running locally
 
+Ensure you are using **Node.js 18**. A `.nvmrc` file is provided,
+so you can run `nvm use` to automatically select the correct version.
+
 Install dependencies and start the dev server:
 
 ```bash
