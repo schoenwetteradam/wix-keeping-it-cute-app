@@ -130,6 +130,7 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `CORS_ALLOW_ORIGIN` (optional)
 
 These values are required to build and run the API routes. Variables prefixed
 with `NEXT_PUBLIC_` are exposed to the browser, while server-side handlers rely
