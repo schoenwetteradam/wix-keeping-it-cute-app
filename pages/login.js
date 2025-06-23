@@ -3,12 +3,22 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-
 export default function Login() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return (
+      <p style={{ padding: '2rem', textAlign: 'center' }}>
+        Missing Supabase environment variables. Copy <code>.env.example</code> to{' '}
+        <code>.env.local</code> and set <code>NEXT_PUBLIC_SUPABASE_URL</code> and{' '}
+        <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>.
+      </p>
+    )
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
