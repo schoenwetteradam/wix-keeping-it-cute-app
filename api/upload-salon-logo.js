@@ -4,7 +4,8 @@ import fs from 'fs'
 import path from 'path'
 import os from 'os'
 import { createClient } from '@supabase/supabase-js'
-import { requireAuth } from '../utils/auth'
+import { setCorsHeaders } from '../utils/cors'
+import requireAuth from '../utils/requireAuth'
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -18,11 +19,7 @@ export const config = {
 }
 
 export default async function handler(req, res) {
-  const allowedOrigin = process.env.CORS_ALLOW_ORIGIN
-  if (allowedOrigin) {
-    res.setHeader('Access-Control-Allow-Origin', allowedOrigin)
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  setCorsHeaders(res, 'POST')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   
   if (req.method === 'OPTIONS') {

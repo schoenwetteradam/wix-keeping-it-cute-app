@@ -1,6 +1,7 @@
 // api/services.js - Get salon services
 import { createClient } from '@supabase/supabase-js'
-import { requireAuth } from '../utils/auth'
+import { setCorsHeaders } from '../utils/cors'
+import requireAuth from '../utils/requireAuth'
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -8,12 +9,7 @@ const supabase = createClient(
 )
 
 export default async function handler(req, res) {
-  const allowedOrigin = process.env.CORS_ALLOW_ORIGIN
-  if (allowedOrigin) {
-    res.setHeader('Access-Control-Allow-Origin', allowedOrigin)
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  setCorsHeaders(res, 'GET')
   
   if (req.method === 'OPTIONS') {
     res.status(200).end();

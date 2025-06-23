@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { setCorsHeaders } from '../utils/cors'
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -13,9 +14,7 @@ export default async function handler(req, res) {
   console.log('Body type:', typeof req.body)
   console.log('Body content:', JSON.stringify(req.body, null, 2))
   
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  setCorsHeaders(res, 'POST')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-wix-webhook-signature')
   
   if (req.method === 'OPTIONS') {

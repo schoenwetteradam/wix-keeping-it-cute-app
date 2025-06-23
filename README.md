@@ -138,6 +138,9 @@ on `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
 
 ### 2. Running locally
 
+Ensure you are using **Node.js 18**. A `.nvmrc` file is provided,
+so you can run `nvm use` to automatically select the correct version.
+
 Install dependencies and start the dev server:
 
 ```bash
@@ -177,3 +180,22 @@ psql $SUPABASE_URL < migrations/20240102_add_profiles_table.sql
 
 Use the `/login` and `/signup` pages to authenticate.
 After login, requests include a `Bearer` token from the Supabase session in the `Authorization` header.
+
+## Testing
+
+Run `npm install` to install all dependencies, including Jest for running the unit tests.
+
+```bash
+npm install
+npm test
+```
+
+The repository contains three tests across two files. When they all pass you should see output similar to:
+
+```text
+ PASS  tests/auth.test.js
+ PASS  tests/supabaseClient.test.js
+
+Test Suites: 2 passed, 2 total
+Tests:       3 passed, 3 total
+```

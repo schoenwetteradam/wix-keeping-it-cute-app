@@ -1,5 +1,6 @@
 // api/booking-created.js - COMPLETE CORRECTED VERSION
 import { createClient } from '@supabase/supabase-js'
+import { setCorsHeaders } from '../utils/cors'
 
 const supabase = createClient(
  process.env.SUPABASE_URL,
@@ -7,10 +8,8 @@ const supabase = createClient(
 )
 
 export default async function handler(req, res) {
- // Add CORS headers
- res.setHeader('Access-Control-Allow-Origin', '*');
- res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
- res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-wix-webhook-signature');
+  setCorsHeaders(res, 'POST');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-wix-webhook-signature');
  
  if (req.method === 'OPTIONS') {
    res.status(200).end();

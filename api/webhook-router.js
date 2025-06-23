@@ -1,6 +1,7 @@
 // api/webhook-router.js - FINAL VERSION with fixed labels and upserts
 import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
+import { setCorsHeaders } from '../utils/cors';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -54,8 +55,7 @@ export default async function handler(req, res) {
   console.log('Body preview:', JSON.stringify(req.body).substring(0, 500));
   
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  setCorsHeaders(res, 'POST');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-wix-webhook-signature');
   
   if (req.method === 'OPTIONS') {
