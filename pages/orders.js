@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
+import { useRouter } from 'next/router'
 
 export default function OrdersPage() {
+  const router = useRouter()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -42,7 +44,22 @@ export default function OrdersPage() {
         <title>Orders - Keeping It Cute Salon</title>
       </Head>
       <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-        <h1 style={{ marginTop: 0, marginBottom: '20px', textAlign: 'center' }}>🛒 Recent Orders</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h1 style={{ margin: 0 }}>🛒 Recent Orders</h1>
+          <button
+            onClick={() => router.push('/staff')}
+            style={{
+              background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            ← Back to Staff
+          </button>
+        </div>
         {loading ? (
           <p style={{ textAlign: 'center' }}>Loading orders...</p>
         ) : error ? (
