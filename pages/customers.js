@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import { toPlainString } from '../utils/translation'
 
 export default function CustomersPage() {
   const router = useRouter()
@@ -40,7 +41,24 @@ export default function CustomersPage() {
       const res = await fetch(`/api/get-customers?limit=100&sort_by=${sort_by}&sort_order=${sort_order}`)
       if (!res.ok) throw new Error('Failed to load customers')
       const data = await res.json()
-      setCustomers(data.customers || [])
+      const normalized = (data.customers || []).map(c => ({
+        ...c,
+        first_name: toPlainString(c.first_name),
+        last_name: toPlainString(c.last_name),
+        email: toPlainString(c.email),
+        phone: toPlainString(c.phone),
+        address: c.address && typeof c.address === 'object'
+          ? {
+              ...c.address,
+              addressLine1: toPlainString(c.address.addressLine1),
+              city: toPlainString(c.address.city),
+              region: toPlainString(c.address.region),
+              postalCode: toPlainString(c.address.postalCode),
+              country: toPlainString(c.address.country)
+            }
+          : c.address
+      }))
+      setCustomers(normalized)
     } catch (err) {
       setError(err.message)
     } finally {

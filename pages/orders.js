@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import { toPlainString } from '../utils/translation'
 
 export default function OrdersPage() {
   const router = useRouter()
@@ -20,7 +21,15 @@ export default function OrdersPage() {
       const res = await fetch('/api/get-orders')
       if (!res.ok) throw new Error('Failed to load orders')
       const data = await res.json()
-      setOrders(data.orders || [])
+      const normalized = (data.orders || []).map(order => ({
+        ...order,
+        order_number: toPlainString(order.order_number),
+        customer_email: toPlainString(order.customer_email),
+        fulfillment_status: toPlainString(order.fulfillment_status),
+        payment_status: toPlainString(order.payment_status),
+        total_amount: toPlainString(order.total_amount)
+      }))
+      setOrders(normalized)
     } catch (err) {
       setError(err.message)
     } finally {
