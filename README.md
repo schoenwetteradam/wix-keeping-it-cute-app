@@ -48,6 +48,18 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 
 ### Salon Data
 - `GET /api/get-branding` - Retrieve salon branding details
+- `GET /api/get-orders` - List recent orders
+- `GET /api/get-customers` - Fetch customer records
+
+Example usage:
+
+```bash
+# Fetch the 10 most recent orders
+curl '/api/get-orders?limit=10'
+
+# Search for customers by name
+curl '/api/get-customers?search=jane'
+```
 
 ## 🚀 Quick Setup
 
@@ -184,6 +196,15 @@ psql $SUPABASE_URL < migrations/20240102_add_profiles_table.sql
 
 Use the `/login` and `/signup` pages to authenticate.
 After login, requests include a `Bearer` token from the Supabase session in the `Authorization` header.
+
+## 🖥️ Pages
+
+After signing in you can open these screens directly:
+
+- **/orders** – view recent orders and open a modal with full details.
+- **/customers** – browse and search customer records.
+
+Navigate by entering the URL in your browser or by linking from the staff portal.
 
 ## Testing
 
