@@ -3,6 +3,8 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import slugify from '../../utils/slugify'
 
+const BASE_STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET}`
+
 export default function ProductDetail() {
   const router = useRouter()
   const { productId } = router.query
@@ -95,7 +97,7 @@ export default function ProductDetail() {
         <button onClick={() => router.back()} style={{ marginBottom: '20px' }}>← Back</button>
         <h1 style={{ marginTop: 0 }}>{product.product_name}</h1>
         {(() => {
-          const localPath = `/images/products/${slugify(product.product_name)}.svg`
+          const localPath = `${BASE_STORAGE_URL}/products/${slugify(product.product_name)}.svg`
           return (
             <img
               src={product.image_url || localPath}

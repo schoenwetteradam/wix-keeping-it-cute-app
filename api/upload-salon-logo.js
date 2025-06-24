@@ -2,7 +2,6 @@
 import formidable from 'formidable'
 import fs from 'fs'
 import path from 'path'
-import os from 'os'
 import { createClient } from '@supabase/supabase-js'
 import { setCorsHeaders } from '../utils/cors'
 
@@ -35,26 +34,11 @@ export default async function handler(req, res) {
   console.log('🎨 === SALON LOGO UPLOAD START ===')
 
   try {
-    // Ensure logo directory exists
-    let logoDir = path.join(process.cwd(), 'public', 'images', 'logo')
-    try {
-      if (!fs.existsSync(logoDir)) {
-        fs.mkdirSync(logoDir, { recursive: true })
-        console.log('✅ Created logo directory')
-      }
-    } catch (dirErr) {
-      // Fall back to a writable temp directory if creation fails
-      console.error('⚠️ Unable to create logo directory:', dirErr.message)
-      logoDir = path.join(os.tmpdir(), 'salon-logo')
-      if (!fs.existsSync(logoDir)) {
-        fs.mkdirSync(logoDir, { recursive: true })
-      }
-      console.log('📁 Using temporary logo directory:', logoDir)
-    }
+    const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'salon-images'
 
     // Configure formidable for logo uploads
     const form = formidable({
-      uploadDir: logoDir,
+      uploadDir: undefined,
       keepExtensions: true,
       maxFileSize: 5 * 1024 * 1024, // 5MB limit for logos
       maxFiles: 1,
@@ -118,60 +102,27 @@ export default async function handler(req, res) {
     }
 
     // Generate filename for the logo
-    const timestamp = Date.now()
     const originalExt = path.extname(file.originalFilename || '').toLowerCase()
     const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.svg'].includes(originalExt) ? originalExt : '.png'
-    
+
     // Always use a consistent filename for the main logo
     const logoFilename = `salon-logo${safeExt}`
-    const finalPath = path.join(logoDir, logoFilename)
+    const supabasePath = `logo/${logoFilename}`
 
-    // Backup existing logo if it exists
-    if (fs.existsSync(finalPath)) {
-      const backupPath = path.join(logoDir, `salon-logo-backup-${timestamp}${safeExt}`)
-      fs.copyFileSync(finalPath, backupPath)
-      console.log('💾 Backed up existing logo')
+    const fileBuffer = fs.readFileSync(file.filepath)
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(supabasePath, fileBuffer, { contentType: file.mimetype, upsert: true })
+
+    fs.unlinkSync(file.filepath)
+
+    if (uploadError) {
+      console.error('❌ Upload error:', uploadError)
+      return res.status(500).json({ success: false, error: 'Failed to upload logo' })
     }
 
-    console.log('📁 Moving logo to:', finalPath)
-
-    // Move file to final location
-    try {
-      if (!fs.existsSync(file.filepath)) {
-        throw new Error('Temporary file not found')
-      }
-
-      fs.renameSync(file.filepath, finalPath)
-      console.log('✅ Logo file moved successfully')
-
-      // Verify file was moved correctly
-      if (!fs.existsSync(finalPath)) {
-        throw new Error('Logo was not saved correctly')
-      }
-
-      const stats = fs.statSync(finalPath)
-      console.log('📊 Final logo size:', stats.size, 'bytes')
-
-    } catch (moveError) {
-      console.error('❌ Logo move error:', moveError)
-      
-      // Clean up temporary file if it exists
-      try {
-        if (fs.existsSync(file.filepath)) {
-          fs.unlinkSync(file.filepath)
-        }
-      } catch (cleanupError) {
-        console.error('⚠️ Cleanup error:', cleanupError)
-      }
-      
-      return res.status(500).json({ 
-        success: false,
-        error: 'Failed to save logo: ' + moveError.message 
-      })
-    }
-
-    // Construct public URL
-    const logoUrl = `/images/logo/${logoFilename}`
+    const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(supabasePath)
+    const logoUrl = publicData.publicUrl
     console.log('🔗 Public logo URL:', logoUrl)
 
     // Update database with new logo URL

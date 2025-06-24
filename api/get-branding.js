@@ -6,6 +6,7 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
+const BUCKET = process.env.SUPABASE_STORAGE_BUCKET || 'salon-images'
 
 export default async function handler(req, res) {
   setCorsHeaders(res, 'GET')
@@ -62,8 +63,9 @@ export default async function handler(req, res) {
     if (!branding) {
       console.log('📝 Creating default branding record...')
       
+      const { data: defaultUrlData } = supabase.storage.from(BUCKET).getPublicUrl('logo/salon-logo.svg')
       const defaultBranding = {
-        logo_url: '/images/logo/salon-logo.svg',
+        logo_url: defaultUrlData.publicUrl,
         primary_color: '#ff9a9e',
         secondary_color: '#fecfef',
         salon_name: 'Keeping It Cute Salon & Spa',
@@ -103,8 +105,9 @@ export default async function handler(req, res) {
     console.error('❌ Branding Error:', err)
     
     // Return defaults if everything fails
+    const { data: fallbackUrlData } = supabase.storage.from(BUCKET).getPublicUrl('logo/salon-logo.png')
     const fallbackBranding = {
-      logo_url: '/images/logo/salon-logo.png',
+      logo_url: fallbackUrlData.publicUrl,
       primary_color: '#ff9a9e',
       secondary_color: '#fecfef',
       salon_name: 'Keeping It Cute Salon & Spa',

@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 
+const BASE_STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET}`
+const DEFAULT_LOGO = `${BASE_STORAGE_URL}/logo/salon-logo.png`
+
 export default function LogoManagement() {
   const router = useRouter()
   const [branding, setBranding] = useState(null)
@@ -260,7 +263,7 @@ export default function LogoManagement() {
               }}>
                 <div style={{ marginBottom: '15px' }}>
                   <img 
-                    src={branding?.logo_url || '/images/logo/salon-logo.png'}
+                    src={branding?.logo_url || DEFAULT_LOGO}
                     alt="Salon Logo"
                     style={{ 
                       maxHeight: '120px', 
@@ -336,7 +339,7 @@ export default function LogoManagement() {
                     fontSize: '0.9em',
                     wordBreak: 'break-all'
                   }}>
-                    {branding?.logo_url || '/images/logo/salon-logo.png'}
+                    {branding?.logo_url || DEFAULT_LOGO}
                   </div>
                 </div>
               </div>
