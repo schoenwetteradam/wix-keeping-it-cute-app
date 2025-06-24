@@ -422,6 +422,42 @@ export default function StaffPortal() {
                   📋 All Products
                 </button>
               )}
+
+              {/* Orders Button - Show on all tabs */}
+              <button
+                onClick={() => router.push('/orders')}
+                style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 20px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}
+              >
+                🛒 View Orders
+              </button>
+
+              {/* Customers Button - Show on all tabs */}
+              <button
+                onClick={() => router.push('/customers')}
+                style={{
+                  background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 20px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}
+              >
+                👥 View Customers
+              </button>
             </div>
           </div>
         </div>
