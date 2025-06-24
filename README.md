@@ -205,6 +205,7 @@ After signing in you can open these screens directly:
 - **/customers** – browse and search customer records.
 
 Navigate by entering the URL in your browser or by linking from the staff portal.
+The staff portal now includes dedicated **Orders** and **Customers** buttons for quick access.
 
 ## Testing
 
