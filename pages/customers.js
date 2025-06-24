@@ -3,6 +3,14 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 
+// Helper to normalize translation objects to simple strings
+const toText = (val) => {
+  if (val && typeof val === 'object' && ('original' in val || 'translated' in val)) {
+    return val.translated || val.original || ''
+  }
+  return val
+}
+
 export default function CustomersPage() {
   const router = useRouter()
   const [customers, setCustomers] = useState([])
@@ -149,9 +157,9 @@ export default function CustomersPage() {
             <tbody>
               {filteredCustomers.map(c => (
                 <tr key={c.id} onClick={() => handleCustomerClick(c)} style={{ cursor: 'pointer', borderTop: '1px solid #eee' }}>
-                  <td style={{ padding: '12px' }}>{c.first_name} {c.last_name}</td>
-                  <td style={{ padding: '12px' }}>{c.email}</td>
-                  <td style={{ padding: '12px' }}>{c.phone || 'N/A'}</td>
+                  <td style={{ padding: '12px' }}>{toText(c.first_name)} {toText(c.last_name)}</td>
+                  <td style={{ padding: '12px' }}>{toText(c.email)}</td>
+                  <td style={{ padding: '12px' }}>{toText(c.phone) || 'N/A'}</td>
                   <td style={{ padding: '12px' }}>{c.created_at ? new Date(c.created_at).toLocaleDateString() : ''}</td>
                 </tr>
               ))}
@@ -192,9 +200,9 @@ export default function CustomersPage() {
                   ×
                 </button>
               </div>
-              <p><strong>Name:</strong> {selectedCustomer.first_name} {selectedCustomer.last_name}</p>
-              <p><strong>Email:</strong> {selectedCustomer.email}</p>
-              {selectedCustomer.phone && (<p><strong>Phone:</strong> {selectedCustomer.phone}</p>)}
+              <p><strong>Name:</strong> {toText(selectedCustomer.first_name)} {toText(selectedCustomer.last_name)}</p>
+              <p><strong>Email:</strong> {toText(selectedCustomer.email)}</p>
+              {selectedCustomer.phone && (<p><strong>Phone:</strong> {toText(selectedCustomer.phone)}</p>)}
               {selectedCustomer.labels && selectedCustomer.labels.length > 0 && (
                 <p><strong>Labels:</strong> {selectedCustomer.labels.join(', ')}</p>
               )}
@@ -202,11 +210,11 @@ export default function CustomersPage() {
                 <div>
                   <strong>Address:</strong>
                   <div style={{ marginLeft: '10px' }}>
-                    {selectedCustomer.address.addressLine1 && <div>{selectedCustomer.address.addressLine1}</div>}
-                    {selectedCustomer.address.city && <div>{selectedCustomer.address.city}</div>}
-                    {selectedCustomer.address.region && <div>{selectedCustomer.address.region}</div>}
-                    {selectedCustomer.address.postalCode && <div>{selectedCustomer.address.postalCode}</div>}
-                    {selectedCustomer.address.country && <div>{selectedCustomer.address.country}</div>}
+                    {selectedCustomer.address.addressLine1 && <div>{toText(selectedCustomer.address.addressLine1)}</div>}
+                    {selectedCustomer.address.city && <div>{toText(selectedCustomer.address.city)}</div>}
+                    {selectedCustomer.address.region && <div>{toText(selectedCustomer.address.region)}</div>}
+                    {selectedCustomer.address.postalCode && <div>{toText(selectedCustomer.address.postalCode)}</div>}
+                    {selectedCustomer.address.country && <div>{toText(selectedCustomer.address.country)}</div>}
                   </div>
                 </div>
               )}

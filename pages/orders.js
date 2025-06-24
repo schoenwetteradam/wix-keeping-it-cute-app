@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 
+// Helper to safely render values that might be translation objects
+const toText = (val) => {
+  if (val && typeof val === 'object' && ('original' in val || 'translated' in val)) {
+    return val.translated || val.original || ''
+  }
+  return val
+}
+
 export default function OrdersPage() {
   const router = useRouter()
   const [orders, setOrders] = useState([])
@@ -109,14 +117,14 @@ export default function OrdersPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
                   <div style={{ flex: 1 }}>
                     <h4 style={{ margin: '0 0 8px 0', color: '#333', fontSize: '1.2em' }}>
-                      Order #{order.order_number || order.id?.slice(0,8)}
+                      Order #{toText(order.order_number) || order.id?.slice(0,8)}
                     </h4>
                     <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '1em' }}>
-                      📧 {order.customer_email || 'No email'}
+                      📧 {toText(order.customer_email) || 'No email'}
                     </p>
                     {order.fulfillment_status && (
                       <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '0.95em' }}>
-                        📦 {order.fulfillment_status}
+                        📦 {toText(order.fulfillment_status)}
                       </p>
                     )}
                   </div>
@@ -129,7 +137,7 @@ export default function OrdersPage() {
                       backgroundColor: order.payment_status === 'paid' ? '#e8f5e8' : '#fff3e0',
                       color: order.payment_status === 'paid' ? '#2e7d32' : '#f57c00'
                     }}>
-                      {order.payment_status?.toUpperCase() || 'PENDING'}
+                      {toText(order.payment_status)?.toUpperCase() || 'PENDING'}
                     </span>
                     {order.total_amount && (
                       <span style={{
@@ -192,7 +200,7 @@ export default function OrdersPage() {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px' }}>
                 <h2 style={{ margin: 0, color: '#333', fontSize: '1.6em' }}>
-                  🛒 Order #{selectedOrder.order_number || selectedOrder.id?.slice(0,8)}
+                  🛒 Order #{toText(selectedOrder.order_number) || selectedOrder.id?.slice(0,8)}
                 </h2>
                 <button
                   onClick={closeOrderDetails}
@@ -220,9 +228,9 @@ export default function OrdersPage() {
                   gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
                   gap: '15px'
                 }}>
-                  <div><strong>Email:</strong> {selectedOrder.customer_email || 'None'}</div>
-                  <div><strong>Payment Status:</strong> {selectedOrder.payment_status}</div>
-                  <div><strong>Fulfillment:</strong> {selectedOrder.fulfillment_status || 'pending'}</div>
+                  <div><strong>Email:</strong> {toText(selectedOrder.customer_email) || 'None'}</div>
+                  <div><strong>Payment Status:</strong> {toText(selectedOrder.payment_status)}</div>
+                  <div><strong>Fulfillment:</strong> {toText(selectedOrder.fulfillment_status) || 'pending'}</div>
                   <div><strong>Total:</strong> ${selectedOrder.total_amount ? parseFloat(selectedOrder.total_amount).toFixed(2) : '0.00'}</div>
                 </div>
               </div>
@@ -238,7 +246,7 @@ export default function OrdersPage() {
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                     {selectedOrder.items.map((item, idx) => (
                       <li key={idx} style={{ marginBottom: '10px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                        <strong>{item.name || item.productName || 'Item'}</strong> - Qty: {item.quantity || item.qty || 1}
+                        <strong>{toText(item.name) || toText(item.productName) || 'Item'}</strong> - Qty: {item.quantity || item.qty || 1}
                         {item.price && (
                           <span style={{ marginLeft: '10px' }}>
                             ${parseFloat(item.price).toFixed(2)}
