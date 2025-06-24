@@ -46,6 +46,9 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 - `POST /api/session-ended` - Website visitor sessions
 - `POST /api/webhook-router` - Universal fallback for any webhook
 
+### Salon Data
+- `GET /api/get-branding` - Retrieve salon branding details
+
 ## 🚀 Quick Setup
 
 ### 1. Database Setup
