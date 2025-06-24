@@ -1224,7 +1224,17 @@ export default function StaffPortal() {
                   </div>
                   <div>
                     <strong>Total Price:</strong><br />
-                    ${selectedAppointment.total_price ? parseFloat(selectedAppointment.total_price).toFixed(2) : '0.00'}
+                    {
+                      (() => {
+                        const priceSource =
+                          selectedAppointment.total_price !== undefined && selectedAppointment.total_price !== null
+                            ? selectedAppointment.total_price
+                            : selectedAppointment.salon_services?.price;
+                        return priceSource !== undefined && priceSource !== null
+                          ? `$${parseFloat(priceSource).toFixed(2)}`
+                          : '$0.00';
+                      })()
+                    }
                   </div>
                 </div>
               </div>
