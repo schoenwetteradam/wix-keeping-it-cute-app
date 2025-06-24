@@ -37,18 +37,11 @@ export default async function handler(req, res) {
   console.log('Content-Length:', req.headers['content-length'])
 
   try {
-    // Ensure upload directory exists
-    const baseUploadDir = path.join(process.cwd(), 'public', 'images', 'products')
-    console.log('📁 Base upload directory:', baseUploadDir)
-    
-    if (!fs.existsSync(baseUploadDir)) {
-      fs.mkdirSync(baseUploadDir, { recursive: true })
-      console.log('✅ Created base upload directory')
-    }
+    const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'salon-images'
 
     // Configure formidable with enhanced error handling
     const form = formidable({
-      uploadDir: baseUploadDir,
+      uploadDir: undefined,
       keepExtensions: true,
       maxFileSize: 10 * 1024 * 1024, // 10MB limit
       maxFiles: 1,
@@ -142,68 +135,31 @@ export default async function handler(req, res) {
       })
     }
 
-    // Create category subdirectory
-    const categoryDir = path.join(baseUploadDir, category.toLowerCase().replace(/[^a-z0-9]/g, '-'))
-    if (!fs.existsSync(categoryDir)) {
-      fs.mkdirSync(categoryDir, { recursive: true })
-      console.log('✅ Created category directory:', categoryDir)
-    }
-
     // Generate safe, unique filename
     const timestamp = Date.now()
     const randomSuffix = Math.random().toString(36).substring(2, 8)
     const originalExt = path.extname(file.originalFilename || '').toLowerCase()
     const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'].includes(originalExt) ? originalExt : '.jpg'
-    
+
     const newFilename = `product-${productId}-${timestamp}-${randomSuffix}${safeExt}`
-    const finalPath = path.join(categoryDir, newFilename)
 
-    console.log('📁 Moving file to:', finalPath)
+    const supabasePath = `products/${category.toLowerCase().replace(/[^a-z0-9]/g, '-')}/${newFilename}`
 
-    // Move file to final location with error handling
-    try {
-      // Check if temp file exists
-      if (!fs.existsSync(file.filepath)) {
-        throw new Error('Temporary file not found')
-      }
+    // Upload to Supabase Storage
+    const fileBuffer = fs.readFileSync(file.filepath)
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(supabasePath, fileBuffer, { contentType: file.mimetype })
 
-      // Check temp file size
-      const tempStats = fs.statSync(file.filepath)
-      console.log('📊 Temp file size:', tempStats.size, 'bytes')
+    fs.unlinkSync(file.filepath)
 
-      // Move the file
-      fs.renameSync(file.filepath, finalPath)
-      console.log('✅ File moved successfully')
-
-      // Verify file was moved correctly
-      if (!fs.existsSync(finalPath)) {
-        throw new Error('File was not saved correctly')
-      }
-
-      const finalStats = fs.statSync(finalPath)
-      console.log('📊 Final file size:', finalStats.size, 'bytes')
-
-    } catch (moveError) {
-      console.error('❌ File move error:', moveError)
-      
-      // Clean up temporary file if it exists
-      try {
-        if (fs.existsSync(file.filepath)) {
-          fs.unlinkSync(file.filepath)
-          console.log('🧹 Cleaned up temp file')
-        }
-      } catch (cleanupError) {
-        console.error('⚠️ Cleanup error:', cleanupError)
-      }
-      
-      return res.status(500).json({ 
-        success: false,
-        error: 'Failed to save file: ' + moveError.message 
-      })
+    if (uploadError) {
+      console.error('❌ Upload error:', uploadError)
+      return res.status(500).json({ success: false, error: 'Failed to upload image' })
     }
 
-    // Construct public URL
-    const imageUrl = `/images/products/${category.toLowerCase().replace(/[^a-z0-9]/g, '-')}/${newFilename}`
+    const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(supabasePath)
+    const imageUrl = publicData.publicUrl
     console.log('🔗 Public image URL:', imageUrl)
 
     // Update database

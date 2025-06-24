@@ -130,6 +130,8 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_STORAGE_BUCKET` (e.g., `salon-images`)
+- `NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET` (same as above for the browser)
 
 These values are required to build and run the API routes. Variables prefixed
 with `NEXT_PUBLIC_` are exposed to the browser, while server-side handlers rely
