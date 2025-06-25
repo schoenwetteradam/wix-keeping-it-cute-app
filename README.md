@@ -197,6 +197,11 @@ psql $SUPABASE_URL < migrations/20240102_add_profiles_table.sql
 Use the `/login` and `/signup` pages to authenticate.
 After login, requests include a `Bearer` token from the Supabase session in the `Authorization` header.
 
+### Error handling
+
+Unexpected client errors are captured by a React error boundary defined in `pages/_app.js`. When an exception occurs, the boundary renders a simple message instead of leaving the page blank.
+
+
 ## 🖥️ Pages
 
 After signing in you can open these screens directly:
