@@ -18,6 +18,12 @@ export default function AllProducts() {
     loadProducts()
   }, [])
 
+  useEffect(() => {
+    if (router.isReady && router.query.category) {
+      setSelectedCategory(router.query.category)
+    }
+  }, [router.isReady, router.query.category])
+
   const loadProducts = async () => {
     try {
       setLoading(true)
@@ -135,7 +141,9 @@ export default function AllProducts() {
           if (categoryProducts.length === 0) return null
           return (
             <div key={category} style={{ marginBottom: '25px' }}>
-              <h3 style={{ background: 'white', padding: '15px', borderRadius: '8px', margin: '0 0 15px 0', color: '#333', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+              <h3
+                onClick={() => setSelectedCategory(category)}
+                style={{ background: 'white', padding: '15px', borderRadius: '8px', margin: '0 0 15px 0', color: '#333', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'pointer' }}>
                 {category} ({categoryProducts.length} items)
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '15px' }}>
