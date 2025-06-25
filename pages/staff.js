@@ -320,31 +320,81 @@ export default function StaffPortal() {
 
         {/* Navigation Tabs */}
         <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e9ecef', padding: '0 20px' }}>
-          <div style={{ display: 'flex', gap: '0', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', gap: '0' }}>
-              {['inventory', 'services', 'appointments', 'alerts'].map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  style={{
-                    padding: '15px 25px',
-                    border: 'none',
-                    backgroundColor: activeTab === tab ? (branding?.primary_color || '#ff9a9e') : 'transparent',
-                    color: activeTab === tab ? 'white' : '#666',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    fontWeight: activeTab === tab ? 'bold' : 'normal',
-                    borderBottom: activeTab === tab ? `3px solid ${branding?.primary_color || '#ff9a9e'}` : 'none',
-                    textTransform: 'capitalize'
-                  }}
-                >
-                  {tab === 'inventory' && '📦'} {tab === 'services' && '✨'} {tab === 'appointments' && '📅'} {tab === 'alerts' && '🚨'} {tab}
-                </button>
-              ))}
-            </div>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            {['inventory', 'services', 'appointments', 'alerts'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  padding: '15px 25px',
+                  border: 'none',
+                  backgroundColor: activeTab === tab ? (branding?.primary_color || '#ff9a9e') : 'transparent',
+                  color: activeTab === tab ? 'white' : '#666',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: activeTab === tab ? 'bold' : 'normal',
+                  borderBottom: activeTab === tab ? `3px solid ${branding?.primary_color || '#ff9a9e'}` : 'none',
+                  textTransform: 'capitalize'
+                }}
+              >
+                {tab === 'inventory' && '📦'} {tab === 'services' && '✨'} {tab === 'appointments' && '📅'} {tab === 'alerts' && '🚨'} {tab}
+              </button>
+            ))}
+
+            {/* Buttons next to navigation */}
+            {activeTab === 'inventory' && (
+              <button
+                onClick={() => router.push('/all-products')}
+                style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 20px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}
+              >
+                📋 All Products
+              </button>
+            )}
+            <button
+              onClick={() => router.push('/orders')}
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                padding: '12px 20px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              }}
+            >
+              🛒 View Orders
+            </button>
+            <button
+              onClick={() => router.push('/customers')}
+              style={{
+                background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+                color: 'white',
+                border: 'none',
+                padding: '12px 20px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              }}
+            >
+              👥 View Customers
+            </button>
 
             {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px', alignItems: 'center' }}>
               {/* Audit Button - Only show on inventory tab */}
               {activeTab === 'inventory' && (
                 <button
@@ -402,62 +452,6 @@ export default function StaffPortal() {
                   📸 Upload Images
                 </button>
               )}
-
-              {/* View All Products Button - Only show on inventory tab */}
-              {activeTab === 'inventory' && (
-                <button
-                  onClick={() => router.push('/all-products')}
-                  style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                    border: 'none',
-                    padding: '12px 20px',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                  }}
-                >
-                  📋 All Products
-                </button>
-              )}
-
-              {/* Orders Button - Show on all tabs */}
-              <button
-                onClick={() => router.push('/orders')}
-                style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 20px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                }}
-              >
-                🛒 View Orders
-              </button>
-
-              {/* Customers Button - Show on all tabs */}
-              <button
-                onClick={() => router.push('/customers')}
-                style={{
-                  background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 20px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                }}
-              >
-                👥 View Customers
-              </button>
             </div>
           </div>
         </div>
@@ -760,14 +754,18 @@ export default function StaffPortal() {
 
               {Object.entries(productsByCategory).map(([category, categoryProducts]) => (
                 <div key={category} style={{ marginBottom: '25px' }}>
-                  <h3 style={{ 
-                    background: 'white', 
-                    padding: '15px', 
-                    borderRadius: '8px',
-                    margin: '0 0 15px 0',
-                    color: '#333',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                  }}>
+                  <h3
+                    onClick={() => router.push(`/all-products?category=${encodeURIComponent(category)}`)}
+                    style={{
+                      background: 'white',
+                      padding: '15px',
+                      borderRadius: '8px',
+                      margin: '0 0 15px 0',
+                      color: '#333',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      cursor: 'pointer'
+                    }}
+                  >
                     {category} ({categoryProducts.length} items)
                   </h3>
 
