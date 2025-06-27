@@ -385,7 +385,12 @@ async function processOrderEventJWT(event, eventData = null) {
   try {
     console.log('💰 Processing order event...');
 
-    const orderData = eventData || event?.createdEvent?.entity || event;
+    // Handle both created and updated events
+    const orderData =
+      eventData ||
+      event?.updatedEvent?.currentEntity ||
+      event?.createdEvent?.entity ||
+      event;
 
     const orderRecord = {
       wix_order_id: orderData.id || orderData.orderId,
