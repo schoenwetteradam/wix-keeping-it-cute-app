@@ -801,14 +801,17 @@ export default function StaffPortal() {
                             {appointment.payment_status?.toUpperCase() || 'PENDING'}
                           </span>
 
-                          {appointment.total_price && (
-                            <span style={{
-                              fontSize: '1.1em',
-                              fontWeight: 'bold',
-                              color: '#333'
-                            }}>
-                              ${parseFloat(appointment.total_price).toFixed(2)}
-                            </span>
+                          {appointment.total_price !== undefined &&
+                            appointment.total_price !== null && (
+                              <span
+                                style={{
+                                  fontSize: '1.1em',
+                                  fontWeight: 'bold',
+                                  color: '#333'
+                                }}
+                              >
+                                ${parseFloat(appointment.total_price).toFixed(2)}
+                              </span>
                           )}
 
                           {appointment.status !== 'canceled' && (
