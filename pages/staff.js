@@ -25,6 +25,8 @@ export default function StaffPortal() {
   const [showAppointmentDetails, setShowAppointmentDetails] = useState(false)
   const [appointmentNotes, setAppointmentNotes] = useState('')
   const [savingNotes, setSavingNotes] = useState(false)
+  const [appointmentSearch, setAppointmentSearch] = useState('')
+  const [appointmentSort, setAppointmentSort] = useState('newest')
 
   useEffect(() => {
     loadData()
@@ -597,6 +599,20 @@ export default function StaffPortal() {
                   Click on any appointment to view details and manage product usage
                 </p>
               </div>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  placeholder="Search appointments..."
+                  value={appointmentSearch}
+                  onChange={e => setAppointmentSearch(e.target.value)}
+                  style={{ flex: '2', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', minWidth: '200px' }}
+                />
+                <select value={appointmentSort} onChange={e => setAppointmentSort(e.target.value)} style={{ padding: '10px', borderRadius: '4px' }}>
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                </select>
+                <span style={{ alignSelf: 'center', fontWeight: 'bold' }}>Appointments: {appointments.length}</span>
+              </div>
 
               {appointments.length === 0 ? (
                 <div style={{ 
@@ -613,14 +629,26 @@ export default function StaffPortal() {
                   </p>
                 </div>
               ) : (
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
                   gap: '20px'
                 }}>
-                  {appointments.slice(0, 20).map((appointment) => (
-                    <div 
-                      key={appointment.id} 
+                  {(() => {
+                    const term = appointmentSearch.toLowerCase()
+                    const filtered = appointments.filter(a =>
+                      (a.customer_name || '').toLowerCase().includes(term) ||
+                      (a.customer_email || '').toLowerCase().includes(term)
+                    )
+                    const sorted = filtered.sort((a, b) => {
+                      if (appointmentSort === 'oldest') {
+                        return new Date(a.appointment_date) - new Date(b.appointment_date)
+                      }
+                      return new Date(b.appointment_date) - new Date(a.appointment_date)
+                    })
+                    return sorted.slice(0, 20).map((appointment) => (
+                    <div
+                      key={appointment.id}
                       onClick={() => handleAppointmentClick(appointment)}
                       style={{ 
                         background: 'white', 
@@ -736,7 +764,8 @@ export default function StaffPortal() {
                         </div>
                       )}
                     </div>
-                  ))}
+                    ))
+                  })()}
                 </div>
               )}
             </div>

@@ -21,6 +21,7 @@ export default async function handler(req, res) {
 
     const usageRecords = productsUsed.map(product => ({
       usage_session_id: product.usage_session_id,
+      booking_id: product.booking_id,
       product_id: product.product_id,
       quantity_used: product.quantity_used,
       unit_cost: product.unit_cost,
