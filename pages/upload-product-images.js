@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import StaffNavBar from '../components/StaffNavBar'
 
 export default function UploadProductImages() {
   const router = useRouter()
@@ -12,9 +13,11 @@ export default function UploadProductImages() {
   const [dragOver, setDragOver] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [branding, setBranding] = useState(null)
 
   useEffect(() => {
     loadProducts()
+    loadBranding()
   }, [])
 
   const loadProducts = async () => {
@@ -31,6 +34,18 @@ export default function UploadProductImages() {
       console.error('Error loading products:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadBranding = async () => {
+    try {
+      const res = await fetch('/api/get-branding')
+      if (res.ok) {
+        const data = await res.json()
+        setBranding(data.branding)
+      }
+    } catch (err) {
+      console.error('Error loading branding:', err)
     }
   }
 
@@ -179,22 +194,11 @@ export default function UploadProductImages() {
                 Add photos to your salon inventory ({products.length} total products)
               </p>
             </div>
-            <button
-              onClick={() => router.push('/staff?tab=inventory')}
-              style={{
-                background: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                border: '1px solid rgba(255,255,255,0.3)',
-                padding: '10px 20px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              ← Back to Inventory
-            </button>
+            <div></div>
           </div>
         </div>
+
+        <StaffNavBar branding={branding} activeTab="inventory" />
 
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           {/* Error Display */}

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import StaffNavBar from '../components/StaffNavBar'
 
 const BASE_STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET}`
 const DEFAULT_LOGO = `${BASE_STORAGE_URL}/logo/salon-logo.png`
@@ -190,22 +191,11 @@ export default function LogoManagement() {
                 Upload and manage your salon's branding
               </p>
             </div>
-            <button
-              onClick={() => router.push('/staff')}
-              style={{
-                background: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                border: '1px solid rgba(255,255,255,0.3)',
-                padding: '10px 20px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              ← Back to Staff Portal
-            </button>
+            <div></div>
           </div>
         </div>
+
+        <StaffNavBar branding={branding} activeTab="inventory" />
 
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
           {/* Error Display */}

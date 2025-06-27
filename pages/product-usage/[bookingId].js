@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
+import StaffNavBar from '../../components/StaffNavBar'
 
 export default function ProductUsageForm() {
   const router = useRouter()
@@ -15,10 +16,12 @@ export default function ProductUsageForm() {
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
   const [alreadySubmitted, setAlreadySubmitted] = useState(false)
+  const [branding, setBranding] = useState(null)
 
   useEffect(() => {
     if (bookingId) {
       loadBookingAndProducts()
+      loadBranding()
     }
   }, [bookingId])
 
@@ -57,6 +60,18 @@ export default function ProductUsageForm() {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadBranding = async () => {
+    try {
+      const res = await fetch('/api/get-branding')
+      if (res.ok) {
+        const data = await res.json()
+        setBranding(data.branding)
+      }
+    } catch (err) {
+      console.error('Error loading branding:', err)
     }
   }
 
@@ -177,9 +192,10 @@ export default function ProductUsageForm() {
         <Head>
           <title>Product Usage Already Logged - Keeping It Cute Salon</title>
         </Head>
-        <div style={{ 
-          fontFamily: 'Arial, sans-serif', 
-          backgroundColor: '#f8f9fa', 
+        <StaffNavBar branding={branding} activeTab="appointments" />
+        <div style={{
+          fontFamily: 'Arial, sans-serif',
+          backgroundColor: '#f8f9fa',
           minHeight: '100vh',
           padding: '20px'
         }}>
@@ -199,20 +215,7 @@ export default function ProductUsageForm() {
             <p style={{ color: '#666', marginBottom: '20px' }}>
               Product usage has already been recorded for this appointment.
             </p>
-            <button
-              onClick={() => router.push('/staff?tab=appointments')}
-              style={{
-                background: '#ff9a9e',
-                color: 'white',
-                border: 'none',
-                padding: '12px 25px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '16px'
-              }}
-            >
-              Back to Appointments
-            </button>
+            <div></div>
           </div>
         </div>
       </>
@@ -245,6 +248,8 @@ export default function ProductUsageForm() {
             Record products used during service
           </p>
         </div>
+
+        <StaffNavBar branding={branding} activeTab="appointments" />
 
         {success ? (
           <div style={{ 
