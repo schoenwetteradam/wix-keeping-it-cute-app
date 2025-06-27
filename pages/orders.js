@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { toPlainString } from '../utils/translation'
+import StaffNavBar from '../components/StaffNavBar'
 
 export default function OrdersPage() {
   const router = useRouter()
@@ -65,23 +66,10 @@ export default function OrdersPage() {
       <Head>
         <title>Orders - Keeping It Cute Salon</title>
       </Head>
-      <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h1 style={{ margin: 0 }}>🛒 Recent Orders</h1>
-          <button
-            onClick={() => router.push('/staff')}
-            style={{
-              background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-              color: 'white',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '6px',
-              cursor: 'pointer'
-            }}
-          >
-            ← Back to Staff
-          </button>
-        </div>
+      <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+        <StaffNavBar branding={null} />
+        <div style={{ padding: '20px' }}>
+          <h1 style={{ margin: '0 0 20px 0' }}>🛒 Recent Orders</h1>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
           <input
             type="text"
