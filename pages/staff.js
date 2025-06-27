@@ -513,9 +513,6 @@ export default function StaffPortal() {
                 </button>
               )}
             </div>
-          </div>
-        </div>
-
         {/* Content Area */}
         <div style={{ padding: '20px' }}>
           {/* Stats Summary */}
