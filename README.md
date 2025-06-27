@@ -52,6 +52,7 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 - `GET /api/get-branding` - Retrieve salon branding details
 - `GET /api/get-orders` - List recent orders
 - `GET /api/get-customers` - Fetch customer records
+- `POST /api/query-availability` - Proxy Wix availability API to check open time slots
 
 Example usage:
 
