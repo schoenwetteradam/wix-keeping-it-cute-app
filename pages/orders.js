@@ -10,6 +10,9 @@ export default function OrdersPage() {
   const [error, setError] = useState(null)
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [showOrderDetails, setShowOrderDetails] = useState(false)
+  const [orderBookings, setOrderBookings] = useState([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [sortOption, setSortOption] = useState('newest')
 
   useEffect(() => {
     loadOrders()
@@ -18,7 +21,7 @@ export default function OrdersPage() {
   const loadOrders = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/get-orders')
+      const res = await fetch('/api/get-orders?limit=100')
       if (!res.ok) throw new Error('Failed to load orders')
       const data = await res.json()
       const normalized = (data.orders || []).map(order => ({
@@ -37,9 +40,19 @@ export default function OrdersPage() {
     }
   }
 
-  const handleOrderClick = (order) => {
+  const handleOrderClick = async (order) => {
     setSelectedOrder(order)
     setShowOrderDetails(true)
+    setOrderBookings([])
+    try {
+      const res = await fetch(`/api/get-order-bookings?order_id=${order.wix_order_id || order.id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setOrderBookings(data.bookings || [])
+      }
+    } catch (err) {
+      console.error('Failed to load order bookings:', err)
+    }
   }
 
   const closeOrderDetails = () => {
@@ -69,6 +82,22 @@ export default function OrdersPage() {
             ← Back to Staff
           </button>
         </div>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+          <input
+            type="text"
+            placeholder="Search orders..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            style={{ flex: '2', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', minWidth: '200px' }}
+          />
+          <select value={sortOption} onChange={e => setSortOption(e.target.value)} style={{ padding: '10px', borderRadius: '4px' }}>
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="amount-desc">Amount High-Low</option>
+            <option value="amount-asc">Amount Low-High</option>
+          </select>
+          <span style={{ alignSelf: 'center', fontWeight: 'bold' }}>Orders: {orders.length}</span>
+        </div>
         {loading ? (
           <p style={{ textAlign: 'center' }}>Loading orders...</p>
         ) : error ? (
@@ -93,7 +122,25 @@ export default function OrdersPage() {
             gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
             gap: '20px'
           }}>
-            {orders.map(order => (
+            {(() => {
+              const term = searchTerm.toLowerCase()
+              const filtered = orders.filter(o =>
+                (o.order_number || '').toLowerCase().includes(term) ||
+                (o.customer_email || '').toLowerCase().includes(term)
+              )
+              const sorted = filtered.sort((a, b) => {
+                if (sortOption === 'amount-asc') {
+                  return parseFloat(a.total_amount || 0) - parseFloat(b.total_amount || 0)
+                }
+                if (sortOption === 'amount-desc') {
+                  return parseFloat(b.total_amount || 0) - parseFloat(a.total_amount || 0)
+                }
+                if (sortOption === 'oldest') {
+                  return new Date(a.created_at) - new Date(b.created_at)
+                }
+                return new Date(b.created_at) - new Date(a.created_at)
+              })
+              return sorted.map(order => (
               <div
                 key={order.id}
                 onClick={() => handleOrderClick(order)}
@@ -171,7 +218,8 @@ export default function OrdersPage() {
                   </span>
                 </div>
               </div>
-            ))}
+              ))
+            })()}
           </div>
         )}
 
@@ -247,10 +295,10 @@ export default function OrdersPage() {
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                     {selectedOrder.items.map((item, idx) => (
                       <li key={idx} style={{ marginBottom: '10px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                        <strong>{item.name || item.productName || 'Item'}</strong> - Qty: {item.quantity || item.qty || 1}
+                        <strong>{toPlainString(item.name || item.productName) || 'Item'}</strong> - Qty: {item.quantity || item.qty || 1}
                         {item.price && (
                           <span style={{ marginLeft: '10px' }}>
-                            ${parseFloat(item.price).toFixed(2)}
+                            ${parseFloat(toPlainString(item.price)).toFixed(2)}
                           </span>
                         )}
                       </li>
@@ -260,6 +308,24 @@ export default function OrdersPage() {
                   <p>No items listed.</p>
                 )}
               </div>
+
+              {orderBookings.length > 0 && (
+                <div style={{
+                  background: '#e8f5e9',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  marginBottom: '20px'
+                }}>
+                  <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>Related Bookings</h3>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    {orderBookings.map(b => (
+                      <li key={b.id} style={{ marginBottom: '10px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                        <strong>{b.customer_name || 'Customer'}</strong> - {b.service_name || 'Service'} on {b.appointment_date ? new Date(b.appointment_date).toLocaleString() : 'Unknown'}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               <div style={{ textAlign: 'right' }}>
                 <button
