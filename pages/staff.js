@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import slugify from '../utils/slugify'
+import StaffNavBar from '../components/StaffNavBar'
 
 export default function StaffPortal() {
   const router = useRouter()
@@ -31,6 +32,12 @@ export default function StaffPortal() {
   useEffect(() => {
     loadData()
   }, [])
+
+  useEffect(() => {
+    if (router.isReady && router.query.tab) {
+      setActiveTab(String(router.query.tab))
+    }
+  }, [router.isReady, router.query.tab])
 
   const loadData = async () => {
     try {
@@ -192,8 +199,46 @@ export default function StaffPortal() {
   const rescheduleAppointment = async (appointment) => {
     if (!appointment) return
 
+    let available = []
+    try {
+      const service = services.find(s => s.name === appointment.service_name)
+      if (service?.id) {
+        const now = new Date()
+        const end = new Date(now)
+        end.setDate(now.getDate() + 7)
+        const availRes = await fetch('/api/query-availability', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: {
+              filter: {
+                serviceId: [service.id],
+                startDate: now.toISOString(),
+                endDate: end.toISOString(),
+                bookable: true
+              }
+            }
+          })
+        })
+        if (availRes.ok) {
+          const data = await availRes.json()
+          available = data.availabilityEntries || []
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch availability:', err)
+    }
+
+    const slotOptions = available
+      .map(s => `${s.slot.startDate} (${s.slot.resource?.name || 'Staff'})`)
+      .join('\n')
+
+    const promptMsg = slotOptions
+      ? `New start time (YYYY-MM-DDTHH:MM)\nAvailable slots:\n${slotOptions}`
+      : 'New start time (YYYY-MM-DDTHH:MM)'
+
     const newStart = prompt(
-      'New start time (YYYY-MM-DDTHH:MM)',
+      promptMsg,
       appointment.appointment_date ? appointment.appointment_date.slice(0, 16) : ''
     )
     if (!newStart) return
@@ -406,82 +451,10 @@ export default function StaffPortal() {
         </header>
 
         {/* Navigation Tabs */}
-        <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e9ecef', padding: '0 20px' }}>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-            {['inventory', 'services', 'appointments', 'alerts'].map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                style={{
-                  padding: '15px 25px',
-                  border: 'none',
-                  backgroundColor: activeTab === tab ? (branding?.primary_color || '#ff9a9e') : 'transparent',
-                  color: activeTab === tab ? 'white' : '#666',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: activeTab === tab ? 'bold' : 'normal',
-                  borderBottom: activeTab === tab ? `3px solid ${branding?.primary_color || '#ff9a9e'}` : 'none',
-                  textTransform: 'capitalize'
-                }}
-              >
-                {tab === 'inventory' && '📦'} {tab === 'services' && '✨'} {tab === 'appointments' && '📅'} {tab === 'alerts' && '🚨'} {tab}
-              </button>
-            ))}
+        <StaffNavBar activeTab={activeTab} setActiveTab={setActiveTab} branding={branding} />
 
-            {/* Buttons next to navigation */}
-            {activeTab === 'inventory' && (
-              <button
-                onClick={() => router.push('/all-products')}
-                style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 20px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                }}
-              >
-                📋 All Products
-              </button>
-            )}
-            <button
-              onClick={() => router.push('/orders')}
-              style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                border: 'none',
-                padding: '12px 20px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-              }}
-            >
-              🛒 View Orders
-            </button>
-            <button
-              onClick={() => router.push('/customers')}
-              style={{
-                background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-                color: 'white',
-                border: 'none',
-                padding: '12px 20px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-              }}
-            >
-              👥 View Customers
-            </button>
-
-            {/* Action Buttons */}
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px', alignItems: 'center' }}>
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '10px 20px' }}>
               {/* Audit Button - Only show on inventory tab */}
               {activeTab === 'inventory' && (
                 <button
