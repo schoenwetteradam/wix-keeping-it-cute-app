@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
+import StaffNavBar from '../components/StaffNavBar'
 
 export default function InventoryAudit() {
   const router = useRouter()
@@ -14,9 +15,11 @@ export default function InventoryAudit() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [staffName, setStaffName] = useState('')
+  const [branding, setBranding] = useState(null)
 
   useEffect(() => {
     loadProducts()
+    loadBranding()
   }, [])
 
   const loadProducts = async () => {
@@ -43,6 +46,18 @@ export default function InventoryAudit() {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadBranding = async () => {
+    try {
+      const res = await fetch('/api/get-branding')
+      if (res.ok) {
+        const data = await res.json()
+        setBranding(data.branding)
+      }
+    } catch (err) {
+      console.error('Error loading branding:', err)
     }
   }
 
@@ -222,22 +237,11 @@ export default function InventoryAudit() {
                 Complete physical count of all salon inventory
               </p>
             </div>
-            <button
-              onClick={() => router.back()}
-              style={{
-                background: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                border: '1px solid rgba(255,255,255,0.3)',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              ← Back to Inventory
-            </button>
+            <div></div>
           </div>
         </div>
+
+        <StaffNavBar branding={branding} activeTab="inventory" />
 
         {/* Staff Information */}
         <div style={{ 
