@@ -33,6 +33,7 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 - `POST /api/booking-created` - New appointments
 - `POST /api/booking-updated` - Appointment changes
 - `POST /api/booking-canceled` - Cancellations
+- `POST /api/cancel-booking/[bookingId]` - Cancel a booking via Wix API
 
 ### Customer Webhooks
 - `POST /api/contact-created` - New customer registrations
@@ -147,6 +148,7 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_STORAGE_BUCKET` (e.g., `salon-images`)
 - `NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET` (same as above for the browser)
+- `WIX_API_TOKEN` Wix API token used for booking operations
 
 These values are required to build and run the API routes. Variables prefixed
 with `NEXT_PUBLIC_` are exposed to the browser, while server-side handlers rely
