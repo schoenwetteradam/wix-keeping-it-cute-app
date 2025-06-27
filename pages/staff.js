@@ -161,6 +161,34 @@ export default function StaffPortal() {
     }
   }
 
+  const cancelAppointment = async (appointment) => {
+    if (!appointment) return
+    if (!confirm('Cancel this appointment?')) return
+
+    try {
+      const response = await fetch(`/api/cancel-booking/${appointment.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ revision: appointment.revision })
+      })
+
+      if (!response.ok) throw new Error('Cancel failed')
+
+      setAppointments(appointments.map(a =>
+        a.id === appointment.id ? { ...a, status: 'canceled' } : a
+      ))
+
+      if (selectedAppointment?.id === appointment.id) {
+        setSelectedAppointment({ ...selectedAppointment, status: 'canceled' })
+      }
+
+      alert('Appointment canceled')
+    } catch (error) {
+      console.error('Error canceling appointment:', error)
+      alert('Failed to cancel appointment')
+    }
+  }
+
   const navigateToAudit = () => {
     router.push('/inventory-audit')
   }
@@ -695,7 +723,7 @@ export default function StaffPortal() {
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                          <span style={{ 
+                          <span style={{
                             padding: '6px 12px',
                             borderRadius: '20px',
                             fontSize: '0.8em',
@@ -707,13 +735,32 @@ export default function StaffPortal() {
                           </span>
 
                           {appointment.total_price && (
-                            <span style={{ 
+                            <span style={{
                               fontSize: '1.1em',
                               fontWeight: 'bold',
                               color: '#333'
                             }}>
                               ${parseFloat(appointment.total_price).toFixed(2)}
                             </span>
+                          )}
+
+                          {appointment.status !== 'canceled' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                cancelAppointment(appointment)
+                              }}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#d32f2f',
+                                fontSize: '16px',
+                                cursor: 'pointer'
+                              }}
+                              title="Cancel appointment"
+                            >
+                              ×
+                            </button>
                           )}
                         </div>
                       </div>
@@ -1430,11 +1477,27 @@ export default function StaffPortal() {
               </div>
 
               {/* Action Buttons */}
-              <div style={{ 
-                display: 'flex', 
-                gap: '15px', 
-                justifyContent: 'flex-end' 
+              <div style={{
+                display: 'flex',
+                gap: '15px',
+                justifyContent: 'flex-end'
               }}>
+                {selectedAppointment?.status !== 'canceled' && (
+                  <button
+                    onClick={() => cancelAppointment(selectedAppointment)}
+                    style={{
+                      background: '#d32f2f',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 20px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}
+                  >
+                    Cancel Appointment
+                  </button>
+                )}
                 <button
                   onClick={closeAppointmentDetails}
                   style={{
