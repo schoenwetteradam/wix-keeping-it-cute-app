@@ -28,6 +28,13 @@ export default function StaffPortal() {
   const [appointmentSearch, setAppointmentSearch] = useState('')
   const [appointmentSort, setAppointmentSort] = useState('newest')
 
+  // Sync active tab with query string
+  useEffect(() => {
+    if (router.query.tab && typeof router.query.tab === 'string') {
+      setActiveTab(router.query.tab)
+    }
+  }, [router.query.tab])
+
   useEffect(() => {
     loadData()
   }, [])
@@ -411,7 +418,10 @@ export default function StaffPortal() {
             {['inventory', 'services', 'appointments', 'alerts'].map(tab => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  router.push({ pathname: '/staff', query: { tab } }, undefined, { shallow: true })
+                  setActiveTab(tab)
+                }}
                 style={{
                   padding: '15px 25px',
                   border: 'none',
