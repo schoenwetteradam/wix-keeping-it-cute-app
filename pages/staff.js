@@ -189,6 +189,63 @@ export default function StaffPortal() {
     }
   }
 
+  const rescheduleAppointment = async (appointment) => {
+    if (!appointment) return
+
+    const newStart = prompt(
+      'New start time (YYYY-MM-DDTHH:MM)',
+      appointment.appointment_date ? appointment.appointment_date.slice(0, 16) : ''
+    )
+    if (!newStart) return
+    const newEnd = prompt(
+      'New end time (YYYY-MM-DDTHH:MM)',
+      appointment.end_time ? appointment.end_time.slice(0, 16) : ''
+    )
+    if (!newEnd) return
+
+    try {
+      const response = await fetch(`/api/reschedule-booking/${appointment.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startDate: new Date(newStart).toISOString(),
+          endDate: new Date(newEnd).toISOString(),
+          revision: appointment.revision
+        })
+      })
+
+      if (!response.ok) throw new Error('Reschedule failed')
+      const data = await response.json()
+
+      setAppointments(
+        appointments.map((a) =>
+          a.id === appointment.id
+            ? {
+                ...a,
+                appointment_date: newStart,
+                end_time: newEnd,
+                revision: data.booking?.revision || a.revision
+              }
+            : a
+        )
+      )
+
+      if (selectedAppointment?.id === appointment.id) {
+        setSelectedAppointment({
+          ...selectedAppointment,
+          appointment_date: newStart,
+          end_time: newEnd,
+          revision: data.booking?.revision || selectedAppointment.revision
+        })
+      }
+
+      alert('Appointment rescheduled')
+    } catch (error) {
+      console.error('Error rescheduling appointment:', error)
+      alert('Failed to reschedule appointment')
+    }
+  }
+
   const navigateToAudit = () => {
     router.push('/inventory-audit')
   }
@@ -760,6 +817,24 @@ export default function StaffPortal() {
                               title="Cancel appointment"
                             >
                               ×
+                            </button>
+                          )}
+                          {appointment.status !== 'canceled' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                rescheduleAppointment(appointment)
+                              }}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#1976d2',
+                                fontSize: '16px',
+                                cursor: 'pointer'
+                              }}
+                              title="Reschedule appointment"
+                            >
+                              ↻
                             </button>
                           )}
                         </div>
@@ -1483,20 +1558,36 @@ export default function StaffPortal() {
                 justifyContent: 'flex-end'
               }}>
                 {selectedAppointment?.status !== 'canceled' && (
-                  <button
-                    onClick={() => cancelAppointment(selectedAppointment)}
-                    style={{
-                      background: '#d32f2f',
-                      color: 'white',
-                      border: 'none',
-                      padding: '12px 20px',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '14px'
-                    }}
-                  >
-                    Cancel Appointment
-                  </button>
+                  <>
+                    <button
+                      onClick={() => cancelAppointment(selectedAppointment)}
+                      style={{
+                        background: '#d32f2f',
+                        color: 'white',
+                        border: 'none',
+                        padding: '12px 20px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      Cancel Appointment
+                    </button>
+                    <button
+                      onClick={() => rescheduleAppointment(selectedAppointment)}
+                      style={{
+                        background: '#1976d2',
+                        color: 'white',
+                        border: 'none',
+                        padding: '12px 20px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      Reschedule
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={closeAppointmentDetails}

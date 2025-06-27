@@ -34,6 +34,7 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 - `POST /api/booking-updated` - Appointment changes
 - `POST /api/booking-canceled` - Cancellations
 - `POST /api/cancel-booking/[bookingId]` - Cancel a booking via Wix API
+- `POST /api/reschedule-booking/[bookingId]` - Reschedule a booking via Wix API
 
 ### Customer Webhooks
 - `POST /api/contact-created` - New customer registrations
