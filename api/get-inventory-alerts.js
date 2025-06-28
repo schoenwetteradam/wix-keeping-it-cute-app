@@ -24,8 +24,24 @@ export default async function handler(req, res) {
     console.log('🚨 Fetching inventory alerts...');
     
     // Get products where current_stock <= min_threshold using a stored procedure
-    const { data: lowStockProducts, error } = await supabase
-      .rpc('get_inventory_alerts');
+    let { data: lowStockProducts, error } = await supabase.rpc(
+      'get_inventory_alerts'
+    )
+
+    // Fall back to querying the table directly if the RPC is missing
+    if (error) {
+      console.warn('RPC failed, falling back to direct query:', error.message)
+      const fallback = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_active', true)
+        .lte('current_stock', 'min_threshold')
+        .order('current_stock', { ascending: true })
+        .order('product_name', { ascending: true })
+
+      lowStockProducts = fallback.data || []
+      error = fallback.error
+    }
 
     // The stored procedure should apply the following logic:
     //   SELECT *
