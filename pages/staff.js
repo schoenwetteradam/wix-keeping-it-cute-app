@@ -11,6 +11,7 @@ export default function StaffPortal() {
   const [services, setServices] = useState([])
   const [appointments, setAppointments] = useState([])
   const [alerts, setAlerts] = useState([])
+  const [notifications, setNotifications] = useState([])
   const [branding, setBranding] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -77,11 +78,25 @@ export default function StaffPortal() {
       const appointmentsData = await appointmentsResponse.json()
       console.log('Appointments loaded:', appointmentsData.count)
 
+      // Load alerts and notifications
+      const alertsResponse = await fetch('/api/get-inventory-alerts')
+      if (alertsResponse.ok) {
+        const alertsData = await alertsResponse.json()
+        setAlerts(alertsData.alerts || [])
+      } else {
+        setAlerts([])
+      }
+
+      const notificationsRes = await fetch('/api/get-notifications')
+      if (notificationsRes.ok) {
+        const nData = await notificationsRes.json()
+        setNotifications(nData.notifications || [])
+      }
+
       setProducts(productsData.products || [])
       setMadamGlamCount(madamGlamCount)
       setServices(servicesData.services || [])
       setAppointments(appointmentsData.appointments || [])
-      setAlerts(productsData.low_stock_alerts || [])
       setLoading(false)
 
     } catch (error) {
@@ -622,10 +637,10 @@ export default function StaffPortal() {
           </div>
 
           {/* Tab Content */}
-          {activeTab === 'alerts' && alerts.length > 0 && (
-            <div style={{ 
-              background: 'white', 
-              borderRadius: '12px', 
+          {activeTab === 'alerts' && (alerts.length > 0 || notifications.length > 0) && (
+            <div style={{
+              background: 'white',
+              borderRadius: '12px',
               padding: '25px',
               marginBottom: '25px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -682,6 +697,21 @@ export default function StaffPortal() {
                   </div>
                 ))}
               </div>
+
+              {notifications.length > 0 && (
+                <div style={{ marginTop: '30px' }}>
+                  <h3 style={{ color: '#333', marginBottom: '15px' }}>
+                    🔔 Notifications ({notifications.length})
+                  </h3>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    {notifications.slice().reverse().slice(0, 10).map(n => (
+                      <li key={n.id} style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                        {n.message}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 

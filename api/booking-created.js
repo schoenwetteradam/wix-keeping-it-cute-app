@@ -1,6 +1,7 @@
 // api/booking-created.js - COMPLETE CORRECTED VERSION
 import { createClient } from '@supabase/supabase-js'
 import { setCorsHeaders } from '../utils/cors'
+import { addNotification } from '../utils/notifications'
 
 const supabase = createClient(
  process.env.SUPABASE_URL,
@@ -135,7 +136,19 @@ export default async function handler(req, res) {
      });
    }
    
-   console.log('✅ Booking created successfully:', booking.id);
+  console.log('✅ Booking created successfully:', booking.id);
+
+  // Store appointment notification
+  try {
+    await addNotification({
+      type: 'appointment',
+      booking_id: booking.id,
+      message: `Booking created for ${booking.customer_name}`,
+      created_at: new Date().toISOString()
+    })
+  } catch (notifyError) {
+    console.error('Notification add failed:', notifyError)
+  }
    
    // Log successful webhook
    try {
