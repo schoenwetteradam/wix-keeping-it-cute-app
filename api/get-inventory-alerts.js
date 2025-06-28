@@ -1,6 +1,7 @@
 // api/get-inventory-alerts.js - Simplified for your current schema
 import { createClient } from '@supabase/supabase-js'
 import { setCorsHeaders } from '../utils/cors'
+import { addNotification, loadNotifications } from '../utils/notifications'
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -66,6 +67,28 @@ export default async function handler(req, res) {
       warning: alertsWithLevels.filter(alert => alert.alert_level === 'warning').length,
       total: alertsWithLevels.length
     };
+
+    // Persist each alert as a notification if it doesn't already exist
+    try {
+      const existing = await loadNotifications();
+      const existingIds = new Set(
+        existing.filter(n => n.type === 'inventory').map(n => n.product_id)
+      );
+      await Promise.all(
+        alertsWithLevels
+          .filter(a => !existingIds.has(a.id))
+          .map(a =>
+            addNotification({
+              type: 'inventory',
+              product_id: a.id,
+              message: `Low stock: ${a.product_name}`,
+              created_at: new Date().toISOString()
+            })
+          )
+      );
+    } catch (notifyErr) {
+      console.error('Failed to store inventory alerts:', notifyErr);
+    }
     
     console.log(`✅ Found ${alertsWithLevels.length} inventory alerts`);
     
