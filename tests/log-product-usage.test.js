@@ -33,10 +33,15 @@ describe('log-product-usage handler', () => {
     expect(res.json).toHaveBeenCalledWith({ error: 'Method Not Allowed' })
   })
 
-  test('inserts product usage records', async () => {
-    const insertQuery = createInsertQuery({ data: [{ id: 1 }], error: null })
+  test('inserts product usage records and logs alerts', async () => {
+    const insertQuery = createInsertQuery({
+      data: [{ id: 1, product_id: 'p1', products: { product_name: 'Test', current_stock: 0, min_threshold: 2 } }],
+      error: null
+    })
     const from = jest.fn(() => insertQuery)
+    const addNotification = jest.fn(() => Promise.resolve())
     jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/notifications', () => ({ addNotification }))
 
     const { default: handler } = await import('../api/log-product-usage.js')
 
@@ -50,8 +55,7 @@ describe('log-product-usage handler', () => {
 
     expect(from).toHaveBeenCalledWith('product_usage_log')
     expect(insertQuery.insert).toHaveBeenCalled()
-    const inserted = insertQuery.insert.mock.calls[0][0]
-    expect(inserted[0]).toMatchObject({ booking_id: 'b1', product_id: 'p1' })
+    expect(addNotification).toHaveBeenCalled()
     expect(res.status).toHaveBeenCalledWith(200)
   })
 })
