@@ -1,6 +1,7 @@
 // api/log-product-usage.js
 // Log individual product usage during a session
 import { createClient } from '@supabase/supabase-js'
+import { addNotification } from '../utils/notifications'
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -45,9 +46,22 @@ export default async function handler(req, res) {
     }
 
     // Check for low stock alerts
-    const lowStockProducts = data.filter(record => 
+    const lowStockProducts = data.filter(record =>
       record.products.current_stock <= record.products.min_threshold
     );
+
+    if (lowStockProducts.length > 0) {
+      await Promise.all(
+        lowStockProducts.map(p =>
+          addNotification({
+            type: 'inventory',
+            product_id: p.product_id,
+            message: `Low stock: ${p.products.product_name}`,
+            created_at: new Date().toISOString()
+          })
+        )
+      )
+    }
 
     console.log('✅ Product Usage Logged:', data);
     
