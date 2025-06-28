@@ -28,19 +28,27 @@ export default async function handler(req, res) {
       'get_inventory_alerts'
     )
 
-    // Fall back to querying the table directly if the RPC is missing
+    // Fall back to querying the table directly if the RPC is missing.
+    // Supabase's query builder doesn't support comparing two columns, so we
+    // fetch all active products and filter them in Node.js instead.
     if (error) {
       console.warn('RPC failed, falling back to direct query:', error.message)
       const fallback = await supabase
         .from('products')
         .select('*')
         .eq('is_active', true)
-        .lte('current_stock', 'min_threshold')
         .order('current_stock', { ascending: true })
         .order('product_name', { ascending: true })
 
-      lowStockProducts = fallback.data || []
-      error = fallback.error
+      if (fallback.error) {
+        error = fallback.error
+      }
+
+      lowStockProducts = (fallback.data || []).filter(p =>
+        typeof p.current_stock === 'number' &&
+        typeof p.min_threshold === 'number' &&
+        p.current_stock <= p.min_threshold
+      )
     }
 
     // The stored procedure should apply the following logic:
