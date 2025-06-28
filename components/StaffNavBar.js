@@ -2,10 +2,14 @@ import { useRouter } from 'next/router'
 
 export default function StaffNavBar({ branding, activeTab }) {
   const router = useRouter()
-  const tabs = ['inventory', 'services', 'appointments', 'alerts']
+  const tabs = ['inventory', 'services', 'appointments', 'calendar', 'alerts']
 
   const handleTabClick = (tab) => {
-    router.push({ pathname: '/staff', query: { tab } })
+    if (tab === 'calendar') {
+      router.push('/calendar')
+    } else {
+      router.push({ pathname: '/staff', query: { tab } })
+    }
   }
 
   return (
@@ -27,7 +31,7 @@ export default function StaffNavBar({ branding, activeTab }) {
               textTransform: 'capitalize'
             }}
           >
-            {tab === 'inventory' && '📦'} {tab === 'services' && '✨'} {tab === 'appointments' && '📅'} {tab === 'alerts' && '🚨'} {tab}
+            {tab === 'inventory' && '📦'} {tab === 'services' && '✨'} {tab === 'appointments' && '📅'} {tab === 'calendar' && '🗓️'} {tab === 'alerts' && '🚨'} {tab}
           </button>
         ))}
       </div>
