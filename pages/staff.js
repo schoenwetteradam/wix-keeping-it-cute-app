@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import slugify from '../utils/slugify'
+import CalendarView from '../components/CalendarView'
 
 export default function StaffPortal() {
   const router = useRouter()
@@ -28,6 +29,7 @@ export default function StaffPortal() {
   const [savingNotes, setSavingNotes] = useState(false)
   const [appointmentSearch, setAppointmentSearch] = useState('')
   const [appointmentSort, setAppointmentSort] = useState('newest')
+  const [appointmentView, setAppointmentView] = useState('list')
 
   // Sync active tab with query string
   useEffect(() => {
@@ -736,11 +738,17 @@ export default function StaffPortal() {
                   <option value="newest">Newest</option>
                   <option value="oldest">Oldest</option>
                 </select>
+                <button
+                  onClick={() => setAppointmentView(appointmentView === 'list' ? 'calendar' : 'list')}
+                  style={{ padding: '10px', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  {appointmentView === 'list' ? 'Calendar View' : 'List View'}
+                </button>
                 <span style={{ alignSelf: 'center', fontWeight: 'bold' }}>Appointments: {appointments.length}</span>
               </div>
 
               {appointments.length === 0 ? (
-                <div style={{ 
+                <div style={{
                   background: 'white',
                   padding: '40px',
                   borderRadius: '12px',
@@ -753,6 +761,8 @@ export default function StaffPortal() {
                     Appointments will appear here once bookings are made through your Wix website.
                   </p>
                 </div>
+              ) : appointmentView === 'calendar' ? (
+                <CalendarView appointments={appointments} onAppointmentClick={handleAppointmentClick} />
               ) : (
                 <div style={{
                   display: 'grid',
