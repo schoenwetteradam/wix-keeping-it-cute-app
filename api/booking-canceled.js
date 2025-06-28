@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { addNotification } from '../utils/notifications'
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -30,6 +31,16 @@ export default async function handler(req, res) {
     }
 
     console.log('✅ Booking Canceled Successfully:', data);
+    try {
+      await addNotification({
+        type: 'appointment',
+        booking_id: data.id,
+        message: 'Booking canceled',
+        created_at: new Date().toISOString()
+      })
+    } catch (notifyError) {
+      console.error('Notification add failed:', notifyError)
+    }
     res.status(200).json({ status: 'Booking canceled successfully', data });
 
   } catch (err) {
