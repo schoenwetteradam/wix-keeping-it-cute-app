@@ -150,6 +150,14 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 - `SUPABASE_STORAGE_BUCKET` (e.g., `salon-images`)
 - `NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET` (same as above for the browser)
 - `WIX_API_TOKEN` Wix API token used for booking operations
+- `WIX_WEBHOOK_SECRET` secret used to verify Wix webhooks
+
+Generate these values in the **Wix Developer Center** by creating (or selecting)
+an app and navigating to **API Keys**. Create a new API key for server-to-server
+calls and copy it into `WIX_API_TOKEN`. Add a webhook secret and place its value
+in `WIX_WEBHOOK_SECRET`. Put both variables in `.env.local` during development or
+set them as environment variables in your deployment platform. The webhook
+secret is currently unused unless you implement request verification.
 
 These values are required to build and run the API routes. Variables prefixed
 with `NEXT_PUBLIC_` are exposed to the browser, while server-side handlers rely
