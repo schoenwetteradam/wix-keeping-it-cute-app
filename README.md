@@ -52,6 +52,8 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 - `GET /api/get-branding` - Retrieve salon branding details
 - `GET /api/get-orders` - List recent orders
 - `GET /api/get-customers` - Fetch customer records
+- `POST /api/create-booking` - Create a Wix appointment booking
+- `POST /api/create-checkout` - Generate a Wix checkout session for payments
 
 Example usage:
 
@@ -62,6 +64,13 @@ curl '/api/get-orders?limit=10'
 # Search for customers by name
 curl '/api/get-customers?search=jane'
 ```
+
+### Booking & Payments
+
+1. Call `/api/services` and `/api/query-availability` to display open slots.
+2. Send the chosen slot and customer details to `/api/create-booking`.
+3. Use the returned booking information to call `/api/create-checkout` and obtain a payment URL.
+4. Redirect the customer to the checkout URL to complete payment on Wix.
 
 ## 🚀 Quick Setup
 
