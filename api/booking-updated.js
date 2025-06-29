@@ -48,6 +48,23 @@ export default async function handler(req, res) {
       updated_date: bookingData.updatedDate
     };
 
+    if (updateData.service_name) {
+      const { data: svc } = await supabase
+        .from('salon_services')
+        .select('id, duration_minutes, price')
+        .ilike('name', updateData.service_name)
+        .single();
+      if (svc) {
+        updateData.service_id = svc.id;
+        if (!updateData.service_duration) {
+          updateData.service_duration = svc.duration_minutes;
+        }
+        if (!updateData.total_price) {
+          updateData.total_price = svc.price;
+        }
+      }
+    }
+
     // Remove undefined values
     Object.keys(updateData).forEach(key => {
       if (updateData[key] === undefined) delete updateData[key];

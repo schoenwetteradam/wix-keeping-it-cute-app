@@ -44,7 +44,7 @@ export default async function handler(req, res) {
    console.log('✅ Database connection successful');
    
    // Map booking data to your EXACT table structure
-   const bookingRecord = {
+  const bookingRecord = {
      // Required/main fields
      wix_booking_id: bookingData.id || bookingData.booking_id || bookingData.bookingId || `booking-${Date.now()}`,
      
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
      
      // Service information
      service_name: extractServiceName(bookingData),
-     service_duration: extractServiceDuration(bookingData),
+    service_duration: extractServiceDuration(bookingData),
      
      // Timing
      appointment_date: extractAppointmentDate(bookingData),
@@ -87,8 +87,25 @@ export default async function handler(req, res) {
      created_at: new Date().toISOString(),
      created_date: bookingData.createdDate || new Date().toISOString(),
      updated_at: new Date().toISOString(),
-     updated_date: new Date().toISOString()
-   };
+    updated_date: new Date().toISOString()
+  };
+
+  // Link booking to salon_services entry
+  const { data: serviceLookup } = await supabase
+    .from('salon_services')
+    .select('id, duration_minutes, price')
+    .ilike('name', bookingRecord.service_name)
+    .single();
+
+  if (serviceLookup) {
+    bookingRecord.service_id = serviceLookup.id;
+    if (!bookingRecord.service_duration) {
+      bookingRecord.service_duration = serviceLookup.duration_minutes;
+    }
+    if (!bookingRecord.total_price) {
+      bookingRecord.total_price = serviceLookup.price;
+    }
+  }
    
    // Remove undefined values to prevent database errors
    Object.keys(bookingRecord).forEach(key => {
