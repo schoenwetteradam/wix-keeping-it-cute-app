@@ -720,11 +720,27 @@ export default function StaffPortal() {
           {/* Appointments Tab */}
           {activeTab === 'appointments' && (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, color: '#333' }}>📅 Recent Appointments</h2>
-                <p style={{ margin: 0, color: '#666', fontSize: '0.9em', fontStyle: 'italic' }}>
-                  Click on any appointment to view details and manage product usage
-                </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+                <div>
+                  <h2 style={{ margin: 0, color: '#333' }}>📅 Recent Appointments</h2>
+                  <p style={{ margin: 0, color: '#666', fontSize: '0.9em', fontStyle: 'italic' }}>
+                    Click on any appointment to view details and manage product usage
+                  </p>
+                </div>
+                <button
+                  onClick={() => router.push('/create-appointment')}
+                  style={{
+                    background: '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 16px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  + Create Appointment
+                </button>
               </div>
               <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
                 <input
@@ -1640,6 +1656,24 @@ export default function StaffPortal() {
                     >
                       Reschedule
                     </button>
+                    {selectedAppointment.payment_status !== 'paid' && (
+                      <button
+                        onClick={() => {
+                          window.open(`/collect-payment/${selectedAppointment.id}`, '_blank')
+                        }}
+                        style={{
+                          background: '#ffc107',
+                          color: 'white',
+                          border: 'none',
+                          padding: '12px 20px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        Collect Payment
+                      </button>
+                    )}
                   </>
                 )}
                 <button
