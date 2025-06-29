@@ -2,13 +2,30 @@
 import { createClient } from '@supabase/supabase-js'
 import { setCorsHeaders } from '../utils/cors'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
+const supabaseUrl = process.env.SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Missing Supabase configuration', {
+    SUPABASE_URL: !!supabaseUrl,
+    SUPABASE_SERVICE_ROLE_KEY: !!supabaseKey
+  })
+}
+
+const supabase =
+  supabaseUrl && supabaseKey
+    ? createClient(supabaseUrl, supabaseKey)
+    : null
 
 export default async function handler(req, res) {
   setCorsHeaders(res, 'GET');
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ Missing Supabase configuration');
+    return res.status(500).json({
+      error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY'
+    });
+  }
   
   if (req.method === 'OPTIONS') {
     res.status(200).end();
