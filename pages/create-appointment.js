@@ -12,6 +12,8 @@ export default function CreateAppointment() {
   const [booking, setBooking] = useState(null)
   const [checkout, setCheckout] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [availability, setAvailability] = useState([])
+  const [loadingAvailability, setLoadingAvailability] = useState(false)
   const [error, setError] = useState('')
   const [branding, setBranding] = useState({ primary_color: '#e0cdbb', secondary_color: '#eee4da' })
 
@@ -43,6 +45,40 @@ export default function CreateAppointment() {
     loadServices()
     loadBranding()
   }, [])
+
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      if (!serviceId) {
+        setAvailability([])
+        return
+      }
+      setLoadingAvailability(true)
+      try {
+        const res = await fetch('/api/query-availability', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: { filter: { serviceId } } })
+        })
+        const data = await res.json()
+        const slots =
+          data.slots || data.availability?.slots || data.bookableSlots || []
+        setAvailability(slots)
+      } catch (err) {
+        console.error('Failed to load availability', err)
+      } finally {
+        setLoadingAvailability(false)
+      }
+    }
+
+    fetchAvailability()
+  }, [serviceId])
+
+  const selectSlot = (slot) => {
+    const startDate = slot.startDate || slot.start || slot.from
+    const endDate = slot.endDate || slot.end || slot.to
+    if (startDate) setStart(startDate.slice(0, 16))
+    if (endDate) setEnd(endDate.slice(0, 16))
+  }
 
   const createBooking = async (e) => {
     e.preventDefault()
@@ -118,7 +154,7 @@ export default function CreateAppointment() {
           <form
             onSubmit={createBooking}
             style={{
-              maxWidth: '500px',
+              maxWidth: '600px',
               margin: '0 auto',
               background: 'white',
               padding: '20px',
@@ -135,6 +171,42 @@ export default function CreateAppointment() {
                 ))}
               </select>
             </div>
+            {serviceId && (
+              <div style={{ marginBottom: '20px' }}>
+                {loadingAvailability ? (
+                  <p>Loading available slots...</p>
+                ) : availability.length > 0 ? (
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill,minmax(120px,1fr))',
+                      gap: '8px'
+                    }}
+                  >
+                    {availability.map((slot, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => selectSlot(slot)}
+                        style={{
+                          padding: '8px',
+                          background: '#f9f9f9',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {new Date(
+                          slot.startDate || slot.start || slot.from
+                        ).toLocaleString()}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p>No open slots found.</p>
+                )}
+              </div>
+            )}
             <div style={{ marginBottom: '10px' }}>
               <label>Start Time:</label>
               <input type="datetime-local" value={start} onChange={e => setStart(e.target.value)} style={{ width: '100%', padding: '8px' }} />
