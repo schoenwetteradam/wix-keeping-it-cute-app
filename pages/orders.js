@@ -71,7 +71,7 @@ export default function OrdersPage() {
           <button
             onClick={() => router.push('/staff')}
             style={{
-              background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+              background: 'linear-gradient(135deg, #e0cdbb 0%, #eee4da 100%)',
               color: 'white',
               border: 'none',
               padding: '10px 20px',

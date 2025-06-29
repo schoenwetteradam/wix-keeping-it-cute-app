@@ -83,7 +83,7 @@ export default function CollectPaymentPage() {
             <p><strong>Price:</strong> ${booking.salon_services?.price}</p>
           </div>
         )}
-        <button onClick={handleCheckout} style={{ padding: '10px 16px', background: '#ff9a9e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+        <button onClick={handleCheckout} style={{ padding: '10px 16px', background: '#e0cdbb', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
           Generate Payment Link
         </button>
         {checkoutUrl && (

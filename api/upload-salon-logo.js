@@ -161,8 +161,8 @@ export default async function handler(req, res) {
           .insert([{
             ...brandingData,
             salon_name: 'Keeping It Cute Salon & Spa',
-            primary_color: '#ff9a9e',
-            secondary_color: '#fecfef',
+            primary_color: '#e0cdbb',
+            secondary_color: '#eee4da',
             address: '144 E Oak St, Juneau, WI'
           }])
           .select()

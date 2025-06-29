@@ -236,7 +236,7 @@ export default function ProductUsageForm() {
       }}>
         {/* Header */}
         <div style={{ 
-          background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+          background: 'linear-gradient(135deg, #e0cdbb 0%, #eee4da 100%)',
           padding: '20px',
           borderRadius: '12px',
           color: 'white',
@@ -617,7 +617,7 @@ export default function ProductUsageForm() {
                   type="submit"
                   disabled={saving}
                   style={{
-                    background: saving ? '#ccc' : '#ff9a9e',
+                    background: saving ? '#ccc' : '#e0cdbb',
                     color: 'white',
                     border: 'none',
                     padding: '12px 25px',

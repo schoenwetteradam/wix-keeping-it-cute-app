@@ -55,8 +55,8 @@ export default async function handler(req, res) {
     // 3. Create a fallback logo if none exists
     if (!logoExistsPng && !logoExistsSvg) {
       const fallbackSVG = `<svg width="200" height="100" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
-        <rect width="200" height="100" fill="white" stroke="#ff9a9e" stroke-width="2"/>
-        <text x="100" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ff9a9e">
+        <rect width="200" height="100" fill="white" stroke="#e0cdbb" stroke-width="2"/>
+        <text x="100" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#e0cdbb">
           💅 Keeping It Cute
         </text>
         <text x="100" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">
@@ -79,8 +79,8 @@ export default async function handler(req, res) {
     try {
       const brandingData = {
         logo_url: finalLogoUrl,
-        primary_color: '#ff9a9e',
-        secondary_color: '#fecfef',
+        primary_color: '#e0cdbb',
+        secondary_color: '#eee4da',
         salon_name: 'Keeping It Cute Salon & Spa',
         address: '144 E Oak St, Juneau, WI',
         phone: null,

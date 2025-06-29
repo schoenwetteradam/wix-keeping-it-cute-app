@@ -46,8 +46,8 @@ export default function AllProducts() {
 
     const svgContent = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
       <rect width="${width}" height="${height}" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
-      <circle cx="${width/2}" cy="${height*0.35}" r="${Math.min(width, height)*0.12}" fill="#ff9a9e" opacity="0.6"/>
-      <rect x="${width*0.3}" y="${height*0.55}" width="${width*0.4}" height="${height*0.3}" rx="8" fill="#fecfef" opacity="0.6"/>
+      <circle cx="${width/2}" cy="${height*0.35}" r="${Math.min(width, height)*0.12}" fill="#e0cdbb" opacity="0.6"/>
+      <rect x="${width*0.3}" y="${height*0.55}" width="${width*0.4}" height="${height*0.3}" rx="8" fill="#eee4da" opacity="0.6"/>
       <text x="${width/2}" y="${height*0.7}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.06}" fill="#666">Product</text>
       <text x="${width/2}" y="${height*0.77}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.05}" fill="#999">Image Coming Soon</text>
     </svg>`
@@ -87,7 +87,7 @@ export default function AllProducts() {
           <button
             onClick={() => router.push('/staff?tab=inventory')}
             style={{
-              background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+              background: 'linear-gradient(135deg, #e0cdbb 0%, #eee4da 100%)',
               color: 'white',
               border: 'none',
               padding: '10px 20px',
@@ -123,10 +123,10 @@ export default function AllProducts() {
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer',
-                  backgroundColor: selectedCategory === cat ? '#ff9a9e' : '#f8f9fa',
+                  backgroundColor: selectedCategory === cat ? '#e0cdbb' : '#f8f9fa',
                   color: selectedCategory === cat ? 'white' : '#333',
                   fontWeight: selectedCategory === cat ? 'bold' : 'normal',
-                  borderBottom: selectedCategory === cat ? '3px solid #ff9a9e' : '3px solid transparent'
+                  borderBottom: selectedCategory === cat ? '3px solid #e0cdbb' : '3px solid transparent'
                 }}
               >
                 {cat === 'all' ? 'All' : cat}

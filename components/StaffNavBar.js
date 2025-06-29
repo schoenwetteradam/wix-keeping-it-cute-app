@@ -18,12 +18,12 @@ export default function StaffNavBar({ branding, activeTab }) {
             style={{
               padding: '15px 25px',
               border: 'none',
-              backgroundColor: activeTab === tab ? (branding?.primary_color || '#ff9a9e') : 'transparent',
+              backgroundColor: activeTab === tab ? (branding?.primary_color || '#e0cdbb') : 'transparent',
               color: activeTab === tab ? 'white' : '#666',
               cursor: 'pointer',
               fontSize: '16px',
               fontWeight: activeTab === tab ? 'bold' : 'normal',
-              borderBottom: activeTab === tab ? `3px solid ${branding?.primary_color || '#ff9a9e'}` : 'none',
+              borderBottom: activeTab === tab ? `3px solid ${branding?.primary_color || '#e0cdbb'}` : 'none',
               textTransform: 'capitalize'
             }}
           >
