@@ -9,11 +9,11 @@ const supabase = createClient(
 )
 
 export default async function handler(req, res) {
-  setCorsHeaders(res, 'POST')
+  setCorsHeaders(res, 'POST');
 
   if (req.method === 'OPTIONS') {
-    res.status(200).end()
-    return
+    res.status(200).end();
+    return;
   }
 
   if (req.method !== 'POST') {

@@ -21,8 +21,9 @@ beforeEach(() => {
 describe('start-usage-session handler', () => {
   test('returns 405 on non-POST requests', async () => {
     const from = jest.fn(() => createInsertQuery({ data: [], error: null }))
+    const setCorsHeaders = jest.fn()
     jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
-    jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
+    jest.doMock('../utils/cors', () => ({ setCorsHeaders }))
 
     const { default: handler } = await import('../api/start-usage-session.js')
 
@@ -31,6 +32,7 @@ describe('start-usage-session handler', () => {
 
     await handler(req, res)
 
+    expect(setCorsHeaders).toHaveBeenCalledWith(res, 'POST')
     expect(res.status).toHaveBeenCalledWith(405)
     expect(res.json).toHaveBeenCalledWith({ error: 'Method Not Allowed' })
   })
@@ -56,8 +58,9 @@ describe('start-usage-session handler', () => {
   test('inserts session record and returns success', async () => {
     const insertQuery = createInsertQuery({ data: [{ id: 1 }], error: null })
     const from = jest.fn(() => insertQuery)
+    const setCorsHeaders = jest.fn()
     jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
-    jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
+    jest.doMock('../utils/cors', () => ({ setCorsHeaders }))
 
     const { default: handler } = await import('../api/start-usage-session.js')
 
@@ -76,6 +79,7 @@ describe('start-usage-session handler', () => {
 
     await handler(req, res)
 
+    expect(setCorsHeaders).toHaveBeenCalledWith(res, 'POST')
     expect(from).toHaveBeenCalledWith('product_usage_sessions')
     expect(insertQuery.insert).toHaveBeenCalled()
     expect(res.status).toHaveBeenCalledWith(200)
