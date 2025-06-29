@@ -3,6 +3,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { setCorsHeaders } from '../utils/cors'
 
+// Ensure consistent CORS behavior with other endpoints
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
