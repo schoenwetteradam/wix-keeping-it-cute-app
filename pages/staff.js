@@ -388,7 +388,6 @@ export default function StaffPortal() {
     <>
       <Head>
         <title>Staff Portal - {branding?.salon_name || 'Keeping It Cute Salon & Spa'}</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href={branding?.logo_url || '/favicon.ico'} />
       </Head>
 
