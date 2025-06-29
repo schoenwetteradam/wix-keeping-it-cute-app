@@ -56,8 +56,8 @@ export default async function handler(req, res) {
     // Create simple SVG placeholder
     const placeholderSVG = `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
       <rect width="200" height="200" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
-      <circle cx="100" cy="70" r="25" fill="#ff9a9e" opacity="0.6"/>
-      <rect x="60" y="110" width="80" height="60" rx="8" fill="#fecfef" opacity="0.6"/>
+      <circle cx="100" cy="70" r="25" fill="#e0cdbb" opacity="0.6"/>
+      <rect x="60" y="110" width="80" height="60" rx="8" fill="#eee4da" opacity="0.6"/>
       <text x="100" y="140" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">💅 Product</text>
       <text x="100" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#999">Image Coming Soon</text>
     </svg>`

@@ -180,7 +180,7 @@ export default function UploadProductImages() {
       }}>
         {/* Header */}
         <div style={{ 
-          background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+          background: 'linear-gradient(135deg, #e0cdbb 0%, #eee4da 100%)',
           padding: '30px',
           borderRadius: '12px',
           color: 'white',
@@ -371,7 +371,7 @@ export default function UploadProductImages() {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               style={{
-                border: `2px dashed ${dragOver ? '#ff9a9e' : selectedProduct ? '#28a745' : '#ddd'}`,
+                border: `2px dashed ${dragOver ? '#e0cdbb' : selectedProduct ? '#28a745' : '#ddd'}`,
                 borderRadius: '8px',
                 padding: '40px',
                 textAlign: 'center',
@@ -395,7 +395,7 @@ export default function UploadProductImages() {
                     <div style={{ 
                       width: '100%', 
                       height: '100%', 
-                      backgroundColor: '#ff9a9e',
+                      backgroundColor: '#e0cdbb',
                       animation: 'loading 1.5s ease-in-out infinite'
                     }}></div>
                   </div>
@@ -418,7 +418,7 @@ export default function UploadProductImages() {
                     disabled={!selectedProduct}
                     style={{
                       padding: '12px 24px',
-                      backgroundColor: selectedProduct ? '#ff9a9e' : '#ccc',
+                      backgroundColor: selectedProduct ? '#e0cdbb' : '#ccc',
                       color: 'white',
                       border: 'none',
                       borderRadius: '6px',

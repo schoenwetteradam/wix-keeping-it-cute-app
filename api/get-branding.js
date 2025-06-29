@@ -66,8 +66,8 @@ export default async function handler(req, res) {
       const { data: defaultUrlData } = supabase.storage.from(BUCKET).getPublicUrl('logo/salon-logo.svg')
       const defaultBranding = {
         logo_url: defaultUrlData.publicUrl,
-        primary_color: '#ff9a9e',
-        secondary_color: '#fecfef',
+        primary_color: '#e0cdbb',
+        secondary_color: '#eee4da',
         salon_name: 'Keeping It Cute Salon & Spa',
         address: '144 E Oak St, Juneau, WI',
         phone: null,
@@ -108,8 +108,8 @@ export default async function handler(req, res) {
     const { data: fallbackUrlData } = supabase.storage.from(BUCKET).getPublicUrl('logo/salon-logo.png')
     const fallbackBranding = {
       logo_url: fallbackUrlData.publicUrl,
-      primary_color: '#ff9a9e',
-      secondary_color: '#fecfef',
+      primary_color: '#e0cdbb',
+      secondary_color: '#eee4da',
       salon_name: 'Keeping It Cute Salon & Spa',
       address: '144 E Oak St, Juneau, WI',
       phone: null,

@@ -127,8 +127,8 @@ export default function LogoManagement() {
     const height = e.target.offsetHeight || 100;
     
     const svgContent = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${width}" height="${height}" fill="white" stroke="#ff9a9e" stroke-width="2"/>
-      <text x="${width/2}" y="${height*0.35}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.08}" font-weight="bold" fill="#ff9a9e">💅 Keeping It Cute</text>
+      <rect width="${width}" height="${height}" fill="white" stroke="#e0cdbb" stroke-width="2"/>
+      <text x="${width/2}" y="${height*0.35}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.08}" font-weight="bold" fill="#e0cdbb">💅 Keeping It Cute</text>
       <text x="${width/2}" y="${height*0.55}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.06}" fill="#666">Salon & Spa</text>
       <text x="${width/2}" y="${height*0.75}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.05}" fill="#999">Logo Coming Soon</text>
     </svg>`;
@@ -177,7 +177,7 @@ export default function LogoManagement() {
       }}>
         {/* Header */}
         <div style={{ 
-          background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+          background: 'linear-gradient(135deg, #e0cdbb 0%, #eee4da 100%)',
           padding: '30px',
           borderRadius: '12px',
           color: 'white',
@@ -279,7 +279,7 @@ export default function LogoManagement() {
                     borderRadius: '4px',
                     marginTop: '5px',
                     fontSize: '1.1em',
-                    color: branding?.primary_color || '#ff9a9e',
+                    color: branding?.primary_color || '#e0cdbb',
                     fontWeight: 'bold'
                   }}>
                     {branding?.salon_name || 'Keeping It Cute Salon & Spa'}
@@ -304,14 +304,14 @@ export default function LogoManagement() {
                     <div style={{ 
                       width: '40px',
                       height: '40px',
-                      backgroundColor: branding?.primary_color || '#ff9a9e',
+                      backgroundColor: branding?.primary_color || '#e0cdbb',
                       borderRadius: '4px',
                       border: '1px solid #ddd'
                     }}></div>
                     <div style={{ 
                       width: '40px',
                       height: '40px',
-                      backgroundColor: branding?.secondary_color || '#fecfef',
+                      backgroundColor: branding?.secondary_color || '#eee4da',
                       borderRadius: '4px',
                       border: '1px solid #ddd'
                     }}></div>
@@ -351,7 +351,7 @@ export default function LogoManagement() {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               style={{
-                border: `2px dashed ${dragOver ? '#ff9a9e' : '#ddd'}`,
+                border: `2px dashed ${dragOver ? '#e0cdbb' : '#ddd'}`,
                 borderRadius: '8px',
                 padding: '40px',
                 textAlign: 'center',
@@ -374,7 +374,7 @@ export default function LogoManagement() {
                     <div style={{ 
                       width: '100%', 
                       height: '100%', 
-                      backgroundColor: '#ff9a9e',
+                      backgroundColor: '#e0cdbb',
                       animation: 'loading 1.5s ease-in-out infinite'
                     }}></div>
                   </div>
@@ -391,7 +391,7 @@ export default function LogoManagement() {
                     onChange={handleFileInputChange}
                     style={{
                       padding: '12px 24px',
-                      backgroundColor: '#ff9a9e',
+                      backgroundColor: '#e0cdbb',
                       color: 'white',
                       border: 'none',
                       borderRadius: '6px',

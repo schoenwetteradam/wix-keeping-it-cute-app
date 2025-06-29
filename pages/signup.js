@@ -110,7 +110,7 @@ export default function Signup() {
             style={{
               width: '100%',
               padding: '10px',
-              backgroundColor: '#ff9a9e',
+              backgroundColor: '#e0cdbb',
               color: 'white',
               border: 'none',
               borderRadius: '4px',

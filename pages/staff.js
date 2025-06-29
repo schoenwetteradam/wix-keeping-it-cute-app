@@ -290,8 +290,8 @@ export default function StaffPortal() {
 
     const svgContent = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
       <rect width="${width}" height="${height}" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
-      <circle cx="${width/2}" cy="${height*0.35}" r="${Math.min(width, height)*0.12}" fill="#ff9a9e" opacity="0.6"/>
-      <rect x="${width*0.3}" y="${height*0.55}" width="${width*0.4}" height="${height*0.3}" rx="8" fill="#fecfef" opacity="0.6"/>
+      <circle cx="${width/2}" cy="${height*0.35}" r="${Math.min(width, height)*0.12}" fill="#e0cdbb" opacity="0.6"/>
+      <rect x="${width*0.3}" y="${height*0.55}" width="${width*0.4}" height="${height*0.3}" rx="8" fill="#eee4da" opacity="0.6"/>
       <text x="${width/2}" y="${height*0.7}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.06}" fill="#666">Product</text>
       <text x="${width/2}" y="${height*0.77}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.05}" fill="#999">Image Coming Soon</text>
     </svg>`;
@@ -322,7 +322,7 @@ export default function StaffPortal() {
         </div>
         <div style={{ marginTop: '50px' }}>
           <div style={{ fontSize: '18px', marginBottom: '20px' }}>Loading salon data...</div>
-          <div style={{ display: 'inline-block', border: '4px solid #f3f3f3', borderTop: '4px solid #ff9a9e', borderRadius: '50%', width: '50px', height: '50px', animation: 'spin 1s linear infinite' }}></div>
+          <div style={{ display: 'inline-block', border: '4px solid #f3f3f3', borderTop: '4px solid #e0cdbb', borderRadius: '50%', width: '50px', height: '50px', animation: 'spin 1s linear infinite' }}></div>
         </div>
         <style jsx>{`
           @keyframes spin {
@@ -355,7 +355,7 @@ export default function StaffPortal() {
             onClick={loadData}
             style={{
               padding: '10px 20px',
-              backgroundColor: '#ff9a9e',
+              backgroundColor: '#e0cdbb',
               color: 'white',
               border: 'none',
               borderRadius: '5px',
@@ -395,7 +395,7 @@ export default function StaffPortal() {
       <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
         {/* Header with Logo */}
         <header style={{ 
-          background: `linear-gradient(135deg, ${branding?.primary_color || '#ff9a9e'} 0%, ${branding?.secondary_color || '#fecfef'} 100%)`,
+          background: `linear-gradient(135deg, ${branding?.primary_color || '#e0cdbb'} 0%, ${branding?.secondary_color || '#eee4da'} 100%)`,
           padding: '30px 20px',
           color: 'white',
           textAlign: 'center',
@@ -442,12 +442,12 @@ export default function StaffPortal() {
                 style={{
                   padding: '15px 25px',
                   border: 'none',
-                  backgroundColor: activeTab === tab ? (branding?.primary_color || '#ff9a9e') : 'transparent',
+                  backgroundColor: activeTab === tab ? (branding?.primary_color || '#e0cdbb') : 'transparent',
                   color: activeTab === tab ? 'white' : '#666',
                   cursor: 'pointer',
                   fontSize: '16px',
                   fontWeight: activeTab === tab ? 'bold' : 'normal',
-                  borderBottom: activeTab === tab ? `3px solid ${branding?.primary_color || '#ff9a9e'}` : 'none',
+                  borderBottom: activeTab === tab ? `3px solid ${branding?.primary_color || '#e0cdbb'}` : 'none',
                   textTransform: 'capitalize'
                 }}
               >
@@ -493,7 +493,7 @@ export default function StaffPortal() {
             <button
               onClick={() => router.push('/customers')}
               style={{
-                background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+                background: 'linear-gradient(135deg, #e0cdbb 0%, #eee4da 100%)',
                 color: 'white',
                 border: 'none',
                 padding: '12px 20px',
@@ -533,7 +533,7 @@ export default function StaffPortal() {
               <button
                 onClick={() => router.push('/logo-management')}
                 style={{
-                  background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+                  background: 'linear-gradient(135deg, #e0cdbb 0%, #eee4da 100%)',
                   color: 'white',
                   border: 'none',
                   padding: '12px 20px',
@@ -1163,7 +1163,7 @@ export default function StaffPortal() {
                             <span style={{ 
                               fontSize: '1.2em', 
                               fontWeight: 'bold', 
-                              color: branding?.primary_color || '#ff9a9e'
+                              color: branding?.primary_color || '#e0cdbb'
                             }}>
                               ${service.price}
                             </span>
@@ -1247,7 +1247,7 @@ export default function StaffPortal() {
 
                 {/* Product Information */}
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ margin: '0 0 10px 0', color: branding?.primary_color || '#ff9a9e', fontSize: '1.3em' }}>
+                  <h3 style={{ margin: '0 0 10px 0', color: branding?.primary_color || '#e0cdbb', fontSize: '1.3em' }}>
                     {selectedProduct.product_name}
                   </h3>
                   <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '1.1em' }}>
@@ -1582,7 +1582,7 @@ export default function StaffPortal() {
                         window.open(`/product-usage/${selectedAppointment.id}`, '_blank')
                       }}
                       style={{
-                        background: '#ff9a9e',
+                        background: '#e0cdbb',
                         color: 'white',
                         border: 'none',
                         padding: '12px 20px',
@@ -1697,7 +1697,7 @@ export default function StaffPortal() {
                       window.open(`/product-usage/${selectedAppointment.id}`, '_blank')
                     }}
                     style={{
-                      background: '#ff9a9e',
+                      background: '#e0cdbb',
                       color: 'white',
                       border: 'none',
                       padding: '12px 20px',

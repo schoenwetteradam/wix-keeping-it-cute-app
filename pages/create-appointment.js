@@ -13,19 +13,35 @@ export default function CreateAppointment() {
   const [checkout, setCheckout] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [branding, setBranding] = useState({ primary_color: '#e0cdbb', secondary_color: '#eee4da' })
 
   useEffect(() => {
     const loadServices = async () => {
       try {
         const res = await fetch('/api/services')
-        if (!res.ok) return
-        const data = await res.json()
-        setServices(data.services || [])
+        if (res.ok) {
+          const data = await res.json()
+          setServices(data.services || [])
+        }
       } catch (err) {
         console.error('Failed to load services', err)
       }
     }
+
+    const loadBranding = async () => {
+      try {
+        const res = await fetch('/api/get-branding')
+        if (res.ok) {
+          const data = await res.json()
+          setBranding(data.branding)
+        }
+      } catch (err) {
+        console.error('Failed to load branding', err)
+      }
+    }
+
     loadServices()
+    loadBranding()
   }, [])
 
   const createBooking = async (e) => {
@@ -86,11 +102,30 @@ export default function CreateAppointment() {
       <Head>
         <title>Create Appointment</title>
       </Head>
-      <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-        <h1 style={{ marginBottom: '20px' }}>Create Appointment</h1>
+      <div
+        style={{
+          padding: '20px',
+          fontFamily: 'Arial, sans-serif',
+          background: branding.secondary_color,
+          minHeight: '100vh'
+        }}
+      >
+        <h1 style={{ marginBottom: '20px', color: branding.primary_color }}>
+          Create Appointment
+        </h1>
         {error && <p style={{ color: 'red' }}>{error}</p>}
         {!booking ? (
-          <form onSubmit={createBooking} style={{ maxWidth: '500px' }}>
+          <form
+            onSubmit={createBooking}
+            style={{
+              maxWidth: '500px',
+              margin: '0 auto',
+              background: 'white',
+              padding: '20px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}
+          >
             <div style={{ marginBottom: '10px' }}>
               <label>Service:</label>
               <select value={serviceId} onChange={e => setServiceId(e.target.value)} style={{ width: '100%', padding: '8px' }}>
@@ -124,7 +159,18 @@ export default function CreateAppointment() {
               <label>Phone:</label>
               <input type="tel" value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} style={{ width: '100%', padding: '8px' }} />
             </div>
-            <button type="submit" disabled={loading} style={{ padding: '10px 16px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                padding: '10px 16px',
+                background: branding.primary_color,
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
               {loading ? 'Creating...' : 'Create Appointment'}
             </button>
           </form>
@@ -132,7 +178,18 @@ export default function CreateAppointment() {
           <div>
             <p>Appointment created successfully.</p>
             <pre style={{ background: '#f8f8f8', padding: '10px' }}>{JSON.stringify(booking, null, 2)}</pre>
-            <button onClick={collectPayment} disabled={loading} style={{ padding: '10px 16px', background: '#ff9a9e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+            <button
+              onClick={collectPayment}
+              disabled={loading}
+              style={{
+                padding: '10px 16px',
+                background: branding.primary_color,
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
               {loading ? 'Processing...' : 'Collect Payment'}
             </button>
             {checkout && (

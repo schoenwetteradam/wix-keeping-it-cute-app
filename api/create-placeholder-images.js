@@ -107,8 +107,8 @@ body{margin:0;display:flex;align-items:center;justify-content:center;height:100v
 function createProductPlaceholderSVG() {
   return `<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
     <rect width="200" height="200" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
-    <circle cx="100" cy="70" r="25" fill="#ff9a9e" opacity="0.6"/>
-    <rect x="60" y="110" width="80" height="60" rx="8" fill="#fecfef" opacity="0.6"/>
+    <circle cx="100" cy="70" r="25" fill="#e0cdbb" opacity="0.6"/>
+    <rect x="60" y="110" width="80" height="60" rx="8" fill="#eee4da" opacity="0.6"/>
     <text x="100" y="140" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">
       💅 Product
     </text>
@@ -121,8 +121,8 @@ function createProductPlaceholderSVG() {
 function createServicePlaceholderSVG() {
   return `<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
     <rect width="200" height="200" fill="#fff3e0" stroke="#ffcc02" stroke-width="2"/>
-    <circle cx="100" cy="70" r="30" fill="#ff9a9e" opacity="0.7"/>
-    <path d="M70 110 Q100 90 130 110 Q100 130 70 110" fill="#fecfef" opacity="0.7"/>
+    <circle cx="100" cy="70" r="30" fill="#e0cdbb" opacity="0.7"/>
+    <path d="M70 110 Q100 90 130 110 Q100 130 70 110" fill="#eee4da" opacity="0.7"/>
     <text x="100" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">
       ✨ Service
     </text>
@@ -134,8 +134,8 @@ function createServicePlaceholderSVG() {
 
 function createLogoPlaceholderSVG() {
   return `<svg width="200" height="100" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
-    <rect width="200" height="100" fill="white" stroke="#ff9a9e" stroke-width="2"/>
-    <text x="100" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ff9a9e">
+    <rect width="200" height="100" fill="white" stroke="#e0cdbb" stroke-width="2"/>
+    <text x="100" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#e0cdbb">
       💅 Keeping It Cute
     </text>
     <text x="100" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">
