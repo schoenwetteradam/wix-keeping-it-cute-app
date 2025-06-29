@@ -270,6 +270,67 @@ export default function StaffPortal() {
     }
   }
 
+  const startUsageSession = async () => {
+    if (!selectedAppointment) return
+    try {
+      const response = await fetch('/api/start-usage-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          booking_id: selectedAppointment.id,
+          customer_name: selectedAppointment.customer_name,
+          service_performed: selectedAppointment.service_name,
+          staff_member: selectedAppointment.staff_member
+        })
+      })
+
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error)
+
+      setSelectedAppointment({
+        ...selectedAppointment,
+        has_product_usage: true,
+        product_usage_completed: false,
+        usage_session_id: data.session.id
+      })
+
+      alert('Usage session started')
+    } catch (error) {
+      console.error('Error starting usage session:', error)
+      alert('Failed to start usage session')
+    }
+  }
+
+  const endUsageSession = async () => {
+    if (!selectedAppointment) return
+    try {
+      const response = await fetch('/api/complete-usage-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          booking_id: selectedAppointment.id,
+          customer_name: selectedAppointment.customer_name,
+          service_performed: selectedAppointment.service_name,
+          staff_member: selectedAppointment.staff_member
+        })
+      })
+
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error)
+
+      setSelectedAppointment({
+        ...selectedAppointment,
+        has_product_usage: true,
+        product_usage_completed: true
+      })
+
+      alert('Usage session completed')
+    } catch (error) {
+      console.error('Error completing usage session:', error)
+      alert('Failed to complete usage session')
+    }
+  }
+
   const navigateToAudit = () => {
     router.push('/inventory-audit')
   }
@@ -1530,9 +1591,9 @@ export default function StaffPortal() {
 
                 {selectedAppointment.has_product_usage ? (
                   <div>
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: '10px',
                       marginBottom: '15px'
                     }}>
@@ -1541,15 +1602,31 @@ export default function StaffPortal() {
                         Product usage has been logged for this appointment
                       </span>
                     </div>
-                    <p style={{ margin: '0', color: '#666', fontSize: '0.9em' }}>
+                    <p style={{ margin: '0 0 15px 0', color: '#666', fontSize: '0.9em' }}>
                       Status: {selectedAppointment.product_usage_completed ? 'Completed' : 'In Progress'}
                     </p>
+                    {!selectedAppointment.product_usage_completed && (
+                      <button
+                        onClick={endUsageSession}
+                        style={{
+                          background: '#4CAF50',
+                          color: 'white',
+                          border: 'none',
+                          padding: '10px 16px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        End Usage Session
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div>
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: '10px',
                       marginBottom: '15px'
                     }}>
@@ -1561,23 +1638,39 @@ export default function StaffPortal() {
                     <p style={{ margin: '0 0 15px 0', color: '#666', fontSize: '0.9em' }}>
                       Record which products were used during this service for accurate inventory tracking.
                     </p>
-                    <button
-                      onClick={() => {
-                        window.open(`/product-usage/${selectedAppointment.id}`, '_blank')
-                      }}
-                      style={{
-                        background: '#ff9a9e',
-                        color: 'white',
-                        border: 'none',
-                        padding: '12px 20px',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      📦 Log Product Usage
-                    </button>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                      <button
+                        onClick={startUsageSession}
+                        style={{
+                          background: '#1976d2',
+                          color: 'white',
+                          border: 'none',
+                          padding: '10px 16px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        Start Usage Session
+                      </button>
+                      <button
+                        onClick={() => {
+                          window.open(`/product-usage/${selectedAppointment.id}`, '_blank')
+                        }}
+                        style={{
+                          background: '#ff9a9e',
+                          color: 'white',
+                          border: 'none',
+                          padding: '10px 16px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        📦 Log Product Usage
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
