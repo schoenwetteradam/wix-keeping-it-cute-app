@@ -1415,7 +1415,7 @@ export default function StaffPortal() {
                     <strong>Service:</strong> {selectedAppointment.service_name || 'Unknown Service'}
                   </div>
                   <div>
-                    <strong>Duration:</strong> {selectedAppointment.service_duration || 'Not specified'} minutes
+                    <strong>Duration:</strong> {selectedAppointment.service_duration || selectedAppointment.salon_services?.duration_minutes || 'Not specified'} minutes
                   </div>
                   <div>
                     <strong>Staff Member:</strong> {selectedAppointment.staff_member || 'Not assigned'}

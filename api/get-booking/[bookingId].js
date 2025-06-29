@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     // Get booking details
     const { data: booking, error } = await supabase
       .from('bookings')
-      .select('*')
+      .select('*, salon_services(*)')
       .eq('id', bookingId)
       .single();
     

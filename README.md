@@ -77,6 +77,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE bookings (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   customer_id uuid,
+  service_id uuid REFERENCES salon_services(id),
   service text,
   start_time timestamptz,
   end_time timestamptz,

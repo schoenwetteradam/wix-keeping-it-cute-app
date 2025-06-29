@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     
     let query = supabase
       .from('bookings')
-      .select('*')
+      .select('*, salon_services(*)')
       .order('appointment_date', { ascending: false })
       .limit(parseInt(limit));
     
