@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import slugify from '../utils/slugify'
+
+const isWixImage = (url) => url && url.startsWith('wix:image://')
+const getProductImageSrc = (product) => {
+  if (!product.image_url || isWixImage(product.image_url)) {
+    return `/images/products/${slugify(product.category)}/${slugify(product.product_name)}.svg`
+  }
+  return product.image_url.replace(/^\/public/, '')
+}
 
 export default function AllProducts() {
   const router = useRouter()
@@ -39,6 +48,13 @@ export default function AllProducts() {
   }
 
   const handleImageError = (e) => {
+    const localPath = e.target.dataset.localPath
+    if (localPath && !e.target.dataset.localTried) {
+      e.target.dataset.localTried = 'true'
+      e.target.src = localPath
+      return
+    }
+
     if (e.target.dataset.fallbackSet === 'true') return
 
     const width = e.target.offsetWidth || 200
@@ -52,8 +68,13 @@ export default function AllProducts() {
       <text x="${width/2}" y="${height*0.77}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.min(width, height)*0.05}" fill="#999">Image Coming Soon</text>
     </svg>`
 
-    e.target.src = `data:image/svg+xml;base64,${btoa(svgContent)}`
-    e.target.dataset.fallbackSet = 'true'
+    try {
+      e.target.src = `data:image/svg+xml;base64,${btoa(svgContent)}`
+      e.target.dataset.fallbackSet = 'true'
+    } catch (encodingError) {
+      e.target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`
+      e.target.dataset.fallbackSet = 'true'
+    }
   }
 
   const categories = ['all', ...new Set(products.map(p => p.category).filter(Boolean))]
@@ -163,7 +184,8 @@ export default function AllProducts() {
                   >
                     <div style={{ width: '80px', height: '80px', flexShrink: 0, borderRadius: '8px', overflow: 'hidden', backgroundColor: '#f8f9fa' }}>
                       <img
-                        src={product.image_url || ''}
+                        src={getProductImageSrc(product)}
+                        data-local-path={`/images/products/${slugify(product.category)}/${slugify(product.product_name)}.svg`}
                         alt={product.product_name}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={handleImageError}

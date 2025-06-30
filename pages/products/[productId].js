@@ -3,7 +3,13 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import slugify from '../../utils/slugify'
 
-const BASE_STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET}`
+const isWixImage = (url) => url && url.startsWith('wix:image://')
+const getProductImageSrc = (product) => {
+  if (!product.image_url || isWixImage(product.image_url)) {
+    return `/images/products/${slugify(product.category)}/${slugify(product.product_name)}.svg`
+  }
+  return product.image_url.replace(/^\/public/, '')
+}
 
 export default function ProductDetail() {
   const router = useRouter()
@@ -97,10 +103,10 @@ export default function ProductDetail() {
         <button onClick={() => router.back()} style={{ marginBottom: '20px' }}>← Back</button>
         <h1 style={{ marginTop: 0 }}>{product.product_name}</h1>
         {(() => {
-          const localPath = `${BASE_STORAGE_URL}/products/${slugify(product.product_name)}.svg`
+          const localPath = `/images/products/${slugify(product.category)}/${slugify(product.product_name)}.svg`
           return (
             <img
-              src={product.image_url || localPath}
+              src={getProductImageSrc(product)}
               data-local-path={localPath}
               alt={product.product_name}
               style={{ width: '100%', maxWidth: '400px', borderRadius: '8px', marginBottom: '20px' }}
