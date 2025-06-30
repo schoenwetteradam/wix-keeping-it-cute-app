@@ -6,12 +6,10 @@ import slugify from '../../utils/slugify'
 const isWixImage = (url) => url && url.startsWith('wix:image://')
 const getProductImageSrc = (product) => {
   if (!product.image_url || isWixImage(product.image_url)) {
-    return `${BASE_STORAGE_URL}/products/${slugify(product.product_name)}.svg`
+    return `/images/products/${slugify(product.category)}/${slugify(product.product_name)}.svg`
   }
-  return product.image_url
+  return product.image_url.replace(/^\/public/, '')
 }
-
-const BASE_STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET}`
 
 export default function ProductDetail() {
   const router = useRouter()
@@ -105,7 +103,7 @@ export default function ProductDetail() {
         <button onClick={() => router.back()} style={{ marginBottom: '20px' }}>← Back</button>
         <h1 style={{ marginTop: 0 }}>{product.product_name}</h1>
         {(() => {
-          const localPath = `${BASE_STORAGE_URL}/products/${slugify(product.product_name)}.svg`
+          const localPath = `/images/products/${slugify(product.category)}/${slugify(product.product_name)}.svg`
           return (
             <img
               src={getProductImageSrc(product)}
