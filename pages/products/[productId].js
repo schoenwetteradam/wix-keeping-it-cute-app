@@ -3,6 +3,14 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import slugify from '../../utils/slugify'
 
+const isWixImage = (url) => url && url.startsWith('wix:image://')
+const getProductImageSrc = (product) => {
+  if (!product.image_url || isWixImage(product.image_url)) {
+    return `${BASE_STORAGE_URL}/products/${slugify(product.product_name)}.svg`
+  }
+  return product.image_url
+}
+
 const BASE_STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET}`
 
 export default function ProductDetail() {
@@ -100,7 +108,7 @@ export default function ProductDetail() {
           const localPath = `${BASE_STORAGE_URL}/products/${slugify(product.product_name)}.svg`
           return (
             <img
-              src={product.image_url || localPath}
+              src={getProductImageSrc(product)}
               data-local-path={localPath}
               alt={product.product_name}
               style={{ width: '100%', maxWidth: '400px', borderRadius: '8px', marginBottom: '20px' }}

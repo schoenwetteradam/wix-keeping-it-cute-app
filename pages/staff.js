@@ -3,6 +3,17 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import slugify from '../utils/slugify'
+
+// Determine if a product image URL from Wix is unusable in the browser
+const isWixImage = (url) => url && url.startsWith('wix:image://')
+
+// Returns a usable image path, falling back to a local SVG when needed
+const getProductImageSrc = (product) => {
+  if (!product.image_url || isWixImage(product.image_url)) {
+    return `/images/products/${slugify(product.category)}/${slugify(product.product_name)}.svg`
+  }
+  return product.image_url
+}
 import CalendarView from '../components/CalendarView'
 
 export default function StaffPortal() {
@@ -1027,10 +1038,7 @@ export default function StaffPortal() {
                           backgroundColor: '#f8f9fa'
                         }}>
                           <img
-                            src={
-                              product.image_url ||
-                              `/images/products/${slugify(product.category)}/${slugify(product.product_name)}.svg`
-                            }
+                            src={getProductImageSrc(product)}
                             data-local-path={`/images/products/${slugify(product.category)}/${slugify(product.product_name)}.svg`}
                             alt={product.product_name}
                             style={{
@@ -1237,10 +1245,7 @@ export default function StaffPortal() {
                   border: '1px solid #e9ecef'
                 }}>
                   <img
-                    src={
-                      selectedProduct.image_url ||
-                      `/images/products/${slugify(selectedProduct.category)}/${slugify(selectedProduct.product_name)}.svg`
-                    }
+                    src={getProductImageSrc(selectedProduct)}
                     data-local-path={`/images/products/${slugify(selectedProduct.category)}/${slugify(selectedProduct.product_name)}.svg`}
                     alt={selectedProduct.product_name}
                     style={{
