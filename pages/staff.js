@@ -1027,7 +1027,11 @@ export default function StaffPortal() {
                           backgroundColor: '#f8f9fa'
                         }}>
                           <img
-                            src={product.image_url || ''}
+                            src={
+                              product.image_url ||
+                              `/images/products/${slugify(product.category)}/${slugify(product.product_name)}.svg`
+                            }
+                            data-local-path={`/images/products/${slugify(product.category)}/${slugify(product.product_name)}.svg`}
                             alt={product.product_name}
                             style={{
                               width: '100%',
@@ -1233,7 +1237,11 @@ export default function StaffPortal() {
                   border: '1px solid #e9ecef'
                 }}>
                   <img
-                    src={selectedProduct.image_url || ''}
+                    src={
+                      selectedProduct.image_url ||
+                      `/images/products/${slugify(selectedProduct.category)}/${slugify(selectedProduct.product_name)}.svg`
+                    }
+                    data-local-path={`/images/products/${slugify(selectedProduct.category)}/${slugify(selectedProduct.product_name)}.svg`}
                     alt={selectedProduct.product_name}
                     style={{
                       width: '100%',
