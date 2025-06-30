@@ -47,6 +47,18 @@ async function checkForProductUsagePrompt(bookingId, customerEmail) {
   }
 }
 
+function extractTotalPrice(booking) {
+  const price = booking.totalPrice ||
+                booking.total_price ||
+                booking.price?.value ||
+                booking.pricing?.total ||
+                booking.finalPrice?.amount ||
+                booking.amount ||
+                0;
+
+  return parseFloat(price) || 0;
+}
+
 export default async function handler(req, res) {
   console.log('🎯 === WIX WEBHOOK RECEIVED ===');
   console.log('Method:', req.method);
@@ -526,10 +538,10 @@ async function processBookingCreated(webhookData) {
       
       // Booking details
       number_of_participants: booking.numberOfParticipants || booking.totalParticipants || 1,
-      payment_status: (booking.paymentStatus || 'UNDEFINED').toLowerCase(),
-      
-      // Pricing (not in this webhook, set to 0 for now)
-      total_price: 0,
+      payment_status: (booking.paymentStatus || 'NOT_PAID').toLowerCase(),
+
+      // Pricing
+      total_price: extractTotalPrice(booking),
       
       // System fields
       business_id: null,
@@ -547,6 +559,19 @@ async function processBookingCreated(webhookData) {
       updated_at: new Date().toISOString(),
       updated_date: booking.updatedDate
     };
+
+    // If no price provided, attempt to look up service price
+    if (!bookingRecord.total_price) {
+      const { data: svc } = await supabase
+        .from('salon_services')
+        .select('price')
+        .ilike('name', bookingRecord.service_name)
+        .single();
+
+      if (svc && svc.price !== undefined) {
+        bookingRecord.total_price = svc.price;
+      }
+    }
     
     // Remove undefined values
     Object.keys(bookingRecord).forEach(key => {
