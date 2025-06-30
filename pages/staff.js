@@ -294,6 +294,13 @@ export default function StaffPortal() {
       return;
     }
 
+    const placeholder = '/images/products/placeholder.svg';
+    if (!e.target.dataset.placeholderTried) {
+      e.target.dataset.placeholderTried = 'true';
+      e.target.src = placeholder;
+      return;
+    }
+
     if (e.target.dataset.fallbackSet === 'true') return;
 
     const width = e.target.offsetWidth || 200;
