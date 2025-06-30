@@ -1623,7 +1623,8 @@ export default function StaffPortal() {
               <div style={{
                 display: 'flex',
                 gap: '15px',
-                justifyContent: 'flex-end'
+                flexWrap: 'wrap',
+                justifyContent: 'center'
               }}>
                 {selectedAppointment?.status !== 'canceled' && (
                   <>
