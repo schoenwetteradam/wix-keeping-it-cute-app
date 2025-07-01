@@ -8,7 +8,7 @@ const getProductImageSrc = (product) => {
   if (!product.image_url || isWixImage(product.image_url)) {
     return `/images/products/${slugify(product.category)}/${slugify(product.product_name)}.svg`
   }
-  return product.image_url.replace(/^\/public/, '')
+  return product.image_url.replace(/^\/?public/, '')
 }
 
 export default function ProductDetail() {
