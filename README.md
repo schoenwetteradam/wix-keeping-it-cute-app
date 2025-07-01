@@ -23,6 +23,7 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 |-------|---------|----------|
 | `bookings` | Appointment management | Customer details, services, scheduling |
 | `contacts` | Customer profiles | Contact info, preferences, demographics |
+| `loyalty` | Loyalty program | Points balance and activity |
 | `orders` | E-commerce transactions | Purchase data, payment status, items |
 | `sessions` | Website analytics | Visitor behavior, engagement metrics |
 | `webhook_logs` | System monitoring | All webhook events and debugging |
