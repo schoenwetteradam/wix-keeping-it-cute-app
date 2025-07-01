@@ -453,8 +453,12 @@ export default function StaffPortal() {
               <button
                 key={tab}
                 onClick={() => {
-                  router.push({ pathname: '/staff', query: { tab } }, undefined, { shallow: true })
-                  setActiveTab(tab)
+                  if (tab === 'alerts') {
+                    router.push('/alerts')
+                  } else {
+                    router.push({ pathname: '/staff', query: { tab } }, undefined, { shallow: true })
+                    setActiveTab(tab)
+                  }
                 }}
                 style={{
                   padding: '15px 25px',

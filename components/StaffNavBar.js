@@ -5,6 +5,10 @@ export default function StaffNavBar({ branding, activeTab }) {
   const tabs = ['inventory', 'services', 'appointments', 'alerts']
 
   const handleTabClick = (tab) => {
+    if (tab === 'alerts') {
+      router.push('/alerts')
+      return
+    }
     router.push({ pathname: '/staff', query: { tab } })
   }
 
