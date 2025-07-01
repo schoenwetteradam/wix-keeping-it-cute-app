@@ -15,6 +15,7 @@ export default function CustomersPage() {
 
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [showDetails, setShowDetails] = useState(false)
+  const [loyaltyRecord, setLoyaltyRecord] = useState(null)
 
   useEffect(() => {
     loadCustomers()
@@ -82,14 +83,25 @@ export default function CustomersPage() {
     return matchesSearch && matchesLabel
   })
 
-  const handleCustomerClick = (customer) => {
+  const handleCustomerClick = async (customer) => {
     setSelectedCustomer(customer)
     setShowDetails(true)
+    setLoyaltyRecord(null)
+    try {
+      const res = await fetch(`/api/get-loyalty?email=${encodeURIComponent(customer.email)}`)
+      if (res.ok) {
+        const data = await res.json()
+        setLoyaltyRecord((data.loyalty || [])[0] || null)
+      }
+    } catch (err) {
+      console.error('Failed to load loyalty', err)
+    }
   }
 
   const closeDetails = () => {
     setShowDetails(false)
     setSelectedCustomer(null)
+    setLoyaltyRecord(null)
   }
 
   if (loading) {
@@ -225,6 +237,15 @@ export default function CustomersPage() {
                     {selectedCustomer.address.region && <div>{selectedCustomer.address.region}</div>}
                     {selectedCustomer.address.postalCode && <div>{selectedCustomer.address.postalCode}</div>}
                     {selectedCustomer.address.country && <div>{selectedCustomer.address.country}</div>}
+                  </div>
+                </div>
+              )}
+              {loyaltyRecord && (
+                <div style={{ marginTop: '10px' }}>
+                  <strong>Loyalty Points:</strong>
+                  <div style={{ marginLeft: '10px' }}>
+                    <div>Balance: {loyaltyRecord.points_balance}</div>
+                    <div>Redeemed: {loyaltyRecord.redeemed_points}</div>
                   </div>
                 </div>
               )}
