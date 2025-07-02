@@ -1,9 +1,20 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import styles from './NavBar.module.css'
 
 export default function NavBar() {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    const handleRouteChange = () => setOpen(false)
+    router.events.on('routeChangeComplete', handleRouteChange)
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange)
+    }
+  }, [router.events])
 
   return (
     <nav className={styles.navbar}>
