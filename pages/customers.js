@@ -15,6 +15,7 @@ export default function CustomersPage() {
 
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [showDetails, setShowDetails] = useState(false)
+  const [loyaltyRecord, setLoyaltyRecord] = useState(null)
 
   useEffect(() => {
     loadCustomers()
@@ -82,14 +83,25 @@ export default function CustomersPage() {
     return matchesSearch && matchesLabel
   })
 
-  const handleCustomerClick = (customer) => {
+  const handleCustomerClick = async (customer) => {
     setSelectedCustomer(customer)
     setShowDetails(true)
+    setLoyaltyRecord(null)
+    try {
+      const res = await fetch(`/api/get-loyalty?email=${encodeURIComponent(customer.email)}`)
+      if (res.ok) {
+        const data = await res.json()
+        setLoyaltyRecord((data.loyalty || [])[0] || null)
+      }
+    } catch (err) {
+      console.error('Failed to load loyalty', err)
+    }
   }
 
   const closeDetails = () => {
     setShowDetails(false)
     setSelectedCustomer(null)
+    setLoyaltyRecord(null)
   }
 
   if (loading) {
@@ -108,19 +120,34 @@ export default function CustomersPage() {
       <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h1 style={{ margin: 0 }}>👥 Customers</h1>
-          <button
-            onClick={() => router.push('/staff')}
-            style={{
-              background: 'linear-gradient(135deg, #e0cdbb 0%, #eee4da 100%)',
-              color: 'white',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '6px',
-              cursor: 'pointer'
-            }}
-          >
-            ← Back to Staff
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => router.push('/loyalty-dashboard')}
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              💎 Loyalty Dashboard
+            </button>
+            <button
+              onClick={() => router.push('/staff')}
+              style={{
+                background: 'linear-gradient(135deg, #e0cdbb 0%, #eee4da 100%)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              ← Back to Staff
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -225,6 +252,15 @@ export default function CustomersPage() {
                     {selectedCustomer.address.region && <div>{selectedCustomer.address.region}</div>}
                     {selectedCustomer.address.postalCode && <div>{selectedCustomer.address.postalCode}</div>}
                     {selectedCustomer.address.country && <div>{selectedCustomer.address.country}</div>}
+                  </div>
+                </div>
+              )}
+              {loyaltyRecord && (
+                <div style={{ marginTop: '10px' }}>
+                  <strong>Loyalty Points:</strong>
+                  <div style={{ marginLeft: '10px' }}>
+                    <div>Balance: {loyaltyRecord.points_balance}</div>
+                    <div>Redeemed: {loyaltyRecord.redeemed_points}</div>
                   </div>
                 </div>
               )}

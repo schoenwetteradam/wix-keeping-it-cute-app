@@ -20,13 +20,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { limit = '50' } = req.query
+    const { limit = '50', email, contact_id } = req.query
 
-    const { data, error } = await supabase
-      .from('loyalty')
-      .select('*')
-      .limit(parseInt(limit))
-      .order('last_activity', { ascending: false })
+    let query = supabase.from('loyalty').select('*')
+
+    if (email) {
+      query = query.eq('email', email)
+    }
+
+    if (contact_id) {
+      query = query.eq('contact_id', contact_id)
+    }
+
+    if (!email && !contact_id) {
+      query = query.limit(parseInt(limit))
+    }
+
+    query = query.order('last_activity', { ascending: false })
+
+    const { data, error } = await query
 
     if (error) {
       console.error('❌ Loyalty fetch error:', error)
