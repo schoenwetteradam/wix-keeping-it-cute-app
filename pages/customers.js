@@ -120,19 +120,34 @@ export default function CustomersPage() {
       <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h1 style={{ margin: 0 }}>👥 Customers</h1>
-          <button
-            onClick={() => router.push('/staff')}
-            style={{
-              background: 'linear-gradient(135deg, #e0cdbb 0%, #eee4da 100%)',
-              color: 'white',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '6px',
-              cursor: 'pointer'
-            }}
-          >
-            ← Back to Staff
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => router.push('/loyalty-dashboard')}
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              💎 Loyalty Dashboard
+            </button>
+            <button
+              onClick={() => router.push('/staff')}
+              style={{
+                background: 'linear-gradient(135deg, #e0cdbb 0%, #eee4da 100%)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              ← Back to Staff
+            </button>
+          </div>
         </div>
 
         {error && (
