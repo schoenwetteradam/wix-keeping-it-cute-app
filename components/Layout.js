@@ -9,7 +9,9 @@ export default function Layout({ children }) {
   return (
     <>
       {showNav && <NavBar />}
-      <main className="container">{children}</main>
+      <main className="container" style={{ paddingTop: showNav ? '1rem' : 0 }}>
+        {children}
+      </main>
     </>
   )
 }

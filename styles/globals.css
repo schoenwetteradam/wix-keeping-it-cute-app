@@ -3,6 +3,8 @@
 :root {
   --primary-color: #e0cdbb;
   --accent-color: #764ba2;
+  --background-color: #fdfdfd;
+  --text-color: #2b2b2b;
 }
 
 html, body {
@@ -10,8 +12,9 @@ html, body {
   margin: 0;
   box-sizing: border-box;
   font-family: 'Roboto', Arial, sans-serif;
-  background: #fdfdfd;
+  background: var(--background-color);
   line-height: 1.6;
+  color: var(--text-color);
 }
 
 *, *::before, *::after {
