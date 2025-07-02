@@ -1,9 +1,9 @@
-// api/create-placeholder-images.js
-// Run this once to create placeholder images programmatically
+// scripts/create-placeholder-images.mjs
+// Run this once locally to create placeholder images programmatically
 import fs from 'fs'
 import path from 'path'
 
-export default async function handler(req, res) {
+async function createPlaceholders() {
   try {
     // Create all necessary directories
     const directories = [
@@ -84,23 +84,11 @@ body{margin:0;display:flex;align-items:center;justify-content:center;height:100v
       }
     }
 
-    res.status(200).json({
-      success: true,
-      message: 'Placeholder setup complete',
-      results: results,
-      next_steps: [
-        'Replace .jpg/.png references with .svg in your code',
-        'Or add actual image files to the placeholders directory',
-        'Test image loading in your application'
-      ]
-    })
+    console.log('Placeholder setup complete')
+    console.log(JSON.stringify(results, null, 2))
 
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      stack: error.stack
-    })
+    console.error('Error generating placeholders:', error)
   }
 }
 
@@ -145,4 +133,9 @@ function createLogoPlaceholderSVG() {
       Logo Coming Soon
     </text>
   </svg>`
+}
+
+// Execute when run directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  createPlaceholders()
 }

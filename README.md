@@ -196,6 +196,16 @@ Each file should be named using the slugified service name
 These images are used when a service does not specify its
 own `image_url`.
 
+### Generating placeholder images
+
+Run the local script to create placeholder assets in `public/images`:
+
+```bash
+node scripts/create-placeholder-images.mjs
+```
+
+The script is for development only and is not deployed as an API route.
+
 
 ## 🔧 Development Notes
 
