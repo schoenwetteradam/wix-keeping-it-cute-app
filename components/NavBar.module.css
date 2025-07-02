@@ -1,10 +1,7 @@
 .navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background: #e0cdbb;
-  color: #333;
+  background: #fff;
+  border-bottom: 1px solid #e9ecef;
+  padding: 0 20px;
 }
 
 .brand {
@@ -14,12 +11,47 @@
 
 .links {
   display: flex;
-  gap: 1rem;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
-.links a {
-  color: inherit;
-  font-weight: 500;
+.tab {
+  padding: 15px 25px;
+  border: none;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  font-size: 16px;
+  text-transform: capitalize;
+}
+
+.action {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+}
+
+.beige {
+  background: linear-gradient(135deg, #e0cdbb 0%, #eee4da 100%);
+}
+
+.green {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.right {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .toggle {
@@ -40,12 +72,17 @@
     top: 56px;
     left: 0;
     right: 0;
-    background: #e0cdbb;
+    background: #fff;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.5rem;
     padding: 1rem;
     display: none;
+  }
+  .right {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
   }
   .show {
     display: flex;
