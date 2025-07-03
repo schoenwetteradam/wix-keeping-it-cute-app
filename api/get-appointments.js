@@ -20,13 +20,19 @@ export default async function handler(req, res) {
   }
   
   try {
-    const { limit = '50', status, payment_status } = req.query;
+    const { page = '1', limit = '50', status, payment_status } = req.query;
+
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    if (!Number.isFinite(pageNum) || pageNum < 1 || !Number.isFinite(limitNum) || limitNum < 1) {
+      return res.status(400).json({ error: 'Invalid page or limit parameter' });
+    }
     
     let query = supabase
       .from('bookings')
       .select('*, salon_services(*)')
       .order('appointment_date', { ascending: false })
-      .limit(parseInt(limit));
+      .limit(limitNum);
     
     if (status) {
       query = query.eq('status', status);
