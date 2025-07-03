@@ -20,6 +20,33 @@ export default async function handler(req, res) {
   }
   
   try {
+
+    const {
+      limit = '50',
+      page = '1',
+      status,
+      payment_status,
+      staff_member,
+      start_date,
+      end_date
+    } = req.query;
+
+    const lim = parseInt(limit);
+    const pg = parseInt(page);
+
+    let query = supabase
+      .from('bookings')
+      .select('*, salon_services(*)')
+      .order('appointment_date', { ascending: false });
+
+    if (!Number.isNaN(lim) && !Number.isNaN(pg)) {
+      const from = (pg - 1) * lim;
+      const to = from + lim - 1;
+      query = query.range(from, to);
+    } else if (!Number.isNaN(lim)) {
+      query = query.limit(lim);
+    }
+
     const { page = '1', limit = '50', status, payment_status } = req.query;
 
     const pageNum = parseInt(page, 10);
@@ -33,13 +60,26 @@ export default async function handler(req, res) {
       .select('*, salon_services(*)')
       .order('appointment_date', { ascending: false })
       .limit(limitNum);
+
     
     if (status) {
       query = query.eq('status', status);
     }
-    
+
     if (payment_status) {
       query = query.eq('payment_status', payment_status);
+    }
+
+    if (staff_member) {
+      query = query.eq('staff_member', staff_member);
+    }
+
+    if (start_date) {
+      query = query.gte('appointment_date', start_date);
+    }
+
+    if (end_date) {
+      query = query.lte('appointment_date', end_date);
     }
     
     const { data: appointments, error } = await query;
