@@ -1474,6 +1474,24 @@ export default function StaffPortal() {
                     >
                       📦 Log Product Usage
                     </button>
+                    <button
+                      onClick={() => {
+                        window.open(`/booking-images/${selectedAppointment.id}`, '_blank')
+                      }}
+                      style={{
+                        background: '#1976d2',
+                        color: 'white',
+                        border: 'none',
+                        padding: '12px 20px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        marginLeft: '10px'
+                      }}
+                    >
+                      📷 Upload Images
+                    </button>
                   </div>
                 )}
               </div>
@@ -1591,6 +1609,24 @@ export default function StaffPortal() {
                     📦 Log Product Usage
                   </button>
                 )}
+                <button
+                  onClick={() => {
+                    window.open(`/booking-images/${selectedAppointment.id}`, '_blank')
+                  }}
+                  style={{
+                    background: '#1976d2',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 20px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    marginLeft: '10px'
+                  }}
+                >
+                  📷 Upload Images
+                </button>
               </div>
             </div>
           </div>
