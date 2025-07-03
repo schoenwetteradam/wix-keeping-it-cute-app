@@ -434,6 +434,22 @@ export default function StaffPortal() {
     return acc
   }, {})
 
+  // Appointment list helpers
+  const term = appointmentSearch.toLowerCase()
+  const filtered = appointments.filter(
+    (a) =>
+      (a.customer_name || '').toLowerCase().includes(term) ||
+      (a.customer_email || '').toLowerCase().includes(term)
+  )
+  const sorted = filtered
+    .sort((a, b) => {
+      if (appointmentSort === 'oldest') {
+        return new Date(a.appointment_date) - new Date(b.appointment_date)
+      }
+      return new Date(b.appointment_date) - new Date(a.appointment_date)
+    })
+    .slice(0, 20)
+
   return (
     <>
       <Head>
@@ -708,6 +724,7 @@ export default function StaffPortal() {
                   gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
                   gap: '20px'
                 }}>
+
                   {(() => {
                     const term = appointmentSearch.toLowerCase()
                     const filtered = appointments.filter(a =>
@@ -721,11 +738,14 @@ export default function StaffPortal() {
                       return new Date(b.appointment_date) - new Date(a.appointment_date)
                     })
                     return sorted.map((appointment) => (
+
+                  {sorted.map((appointment) => (
+
                     <div
                       key={appointment.id}
                       onClick={() => handleAppointmentClick(appointment)}
-                      style={{ 
-                        background: 'white', 
+                      style={{
+                        background: 'white',
                         border: '1px solid #e9ecef', 
                         borderRadius: '12px',
                         padding: '20px',
@@ -879,8 +899,7 @@ export default function StaffPortal() {
                         </div>
                       )}
                     </div>
-                    ))
-                  })()}
+                  ))}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
                   <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</button>
