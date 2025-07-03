@@ -1,4 +1,4 @@
-// pages/staff.js - COMPLETE FIXED Staff Portal
+// Staff portal page
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'

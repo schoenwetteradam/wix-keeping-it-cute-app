@@ -80,6 +80,8 @@ export default async function handler(req, res) {
       success: true,
       appointments: appointments || [],
       count: appointments?.length || 0,
+      page: pg,
+      limit: lim,
       timestamp: new Date().toISOString()
     });
     
