@@ -42,6 +42,8 @@ export default async function handler(req, res) {
 
       if (fallback.error) {
         error = fallback.error
+      } else {
+        error = null
       }
 
       lowStockProducts = (fallback.data || []).filter(p =>
