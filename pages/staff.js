@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import slugify from '../utils/slugify'
+import { buildAppointmentsQuery } from '../utils/appointments'
 
 // Determine if a product image URL from Wix is unusable in the browser
 const isWixImage = (url) => url && url.startsWith('wix:image://')
@@ -41,6 +42,13 @@ export default function StaffPortal() {
   const [appointmentSearch, setAppointmentSearch] = useState('')
   const [appointmentSort, setAppointmentSort] = useState('newest')
   const [appointmentView, setAppointmentView] = useState('list')
+  const pageSize = 50
+  const [currentPage, setCurrentPage] = useState(1)
+  const [filterStatus, setFilterStatus] = useState('')
+  const [filterPaymentStatus, setFilterPaymentStatus] = useState('')
+  const [filterStaff, setFilterStaff] = useState('')
+  const [filterStartDate, setFilterStartDate] = useState('')
+  const [filterEndDate, setFilterEndDate] = useState('')
 
   // Sync active tab with query string
   useEffect(() => {
@@ -52,6 +60,30 @@ export default function StaffPortal() {
   useEffect(() => {
     loadData()
   }, [])
+
+  const fetchAppointments = async (pageNum = currentPage) => {
+    try {
+      const params = buildAppointmentsQuery({
+        page: pageNum,
+        limit: pageSize,
+        status: filterStatus,
+        payment_status: filterPaymentStatus,
+        staff_member: filterStaff,
+        start_date: filterStartDate,
+        end_date: filterEndDate
+      })
+
+      const appointmentsResponse = await fetch(`/api/get-appointments?${params}`)
+      if (!appointmentsResponse.ok) {
+        throw new Error(`Appointments API Error: ${appointmentsResponse.status}`)
+      }
+      const appointmentsData = await appointmentsResponse.json()
+      console.log('Appointments loaded:', appointmentsData.count)
+      setAppointments(appointmentsData.appointments || [])
+    } catch (err) {
+      console.error('Error loading appointments:', err)
+    }
+  }
 
   const loadData = async () => {
     try {
@@ -83,13 +115,8 @@ export default function StaffPortal() {
       const servicesData = await servicesResponse.json()
       console.log('Services loaded:', servicesData.stats?.total_services)
 
-      // Load appointments
-      const appointmentsResponse = await fetch('/api/get-appointments')
-      if (!appointmentsResponse.ok) {
-        throw new Error(`Appointments API Error: ${appointmentsResponse.status}`)
-      }
-      const appointmentsData = await appointmentsResponse.json()
-      console.log('Appointments loaded:', appointmentsData.count)
+      // Load first page of appointments
+      await fetchAppointments(1)
 
       // Load alerts and notifications
       const alertsResponse = await fetch('/api/get-inventory-alerts')
@@ -109,7 +136,6 @@ export default function StaffPortal() {
       setProducts(productsData.products || [])
       setMadamGlamCount(madamGlamCount)
       setServices(servicesData.services || [])
-      setAppointments(appointmentsData.appointments || [])
       setLoading(false)
 
     } catch (error) {
@@ -118,6 +144,12 @@ export default function StaffPortal() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (!loading) {
+      fetchAppointments()
+    }
+  }, [currentPage, filterStatus, filterPaymentStatus, filterStaff, filterStartDate, filterEndDate])
 
   const handleProductClick = (product) => {
     setSelectedProduct(product)
@@ -632,6 +664,19 @@ export default function StaffPortal() {
                   <option value="newest">Newest</option>
                   <option value="oldest">Oldest</option>
                 </select>
+                <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setCurrentPage(1) }} style={{ padding: '10px', borderRadius: '4px' }}>
+                  <option value="">All Statuses</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="canceled">Canceled</option>
+                </select>
+                <select value={filterPaymentStatus} onChange={e => { setFilterPaymentStatus(e.target.value); setCurrentPage(1) }} style={{ padding: '10px', borderRadius: '4px' }}>
+                  <option value="">All Payments</option>
+                  <option value="paid">Paid</option>
+                  <option value="unpaid">Unpaid</option>
+                </select>
+                <input type="text" placeholder="Staff" value={filterStaff} onChange={e => { setFilterStaff(e.target.value); setCurrentPage(1) }} style={{ padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }} />
+                <input type="date" value={filterStartDate} onChange={e => { setFilterStartDate(e.target.value); setCurrentPage(1) }} style={{ padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }} />
+                <input type="date" value={filterEndDate} onChange={e => { setFilterEndDate(e.target.value); setCurrentPage(1) }} style={{ padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }} />
                 <button
                   onClick={() => setAppointmentView(appointmentView === 'list' ? 'calendar' : 'list')}
                   style={{ padding: '10px', borderRadius: '4px', cursor: 'pointer' }}
@@ -675,7 +720,7 @@ export default function StaffPortal() {
                       }
                       return new Date(b.appointment_date) - new Date(a.appointment_date)
                     })
-                    return sorted.slice(0, 20).map((appointment) => (
+                    return sorted.map((appointment) => (
                     <div
                       key={appointment.id}
                       onClick={() => handleAppointmentClick(appointment)}
@@ -829,12 +874,18 @@ export default function StaffPortal() {
                           color: '#666',
                           fontStyle: 'italic'
                         }}>
-                          💬 "{appointment.notes.substring(0, 50)}{appointment.notes.length > 50 ? '...' : ''}"
+                          💬 {appointment.notes.substring(0, 50)}
+                          {appointment.notes.length > 50 ? '...' : ''}
                         </div>
                       )}
                     </div>
                     ))
                   })()}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
+                  <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</button>
+                  <span>Page {currentPage}</span>
+                  <button onClick={() => setCurrentPage(p => p + 1)} disabled={appointments.length < pageSize}>Next</button>
                 </div>
               )}
             </div>
