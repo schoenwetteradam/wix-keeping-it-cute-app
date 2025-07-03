@@ -874,7 +874,8 @@ export default function StaffPortal() {
                           color: '#666',
                           fontStyle: 'italic'
                         }}>
-                          💬 "{appointment.notes.substring(0, 50)}{appointment.notes.length > 50 ? '...' : ''}"
+                          💬 {appointment.notes.substring(0, 50)}
+                          {appointment.notes.length > 50 ? '...' : ''}
                         </div>
                       )}
                     </div>
