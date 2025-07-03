@@ -160,6 +160,8 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_STORAGE_BUCKET` (e.g., `salon-images`)
 - `NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET` (same as above for the browser)
+- `SUPABASE_CLIENT_UPLOADS_BUCKET` bucket for before/after service photos
+- `SUPABASE_RECEIPTS_BUCKET` bucket for product usage receipts
 - `WIX_API_TOKEN` Wix API token used for booking operations
 - `WIX_WEBHOOK_SECRET` secret used to verify Wix webhooks
 
@@ -205,6 +207,13 @@ node scripts/create-placeholder-images.mjs
 ```
 
 The script is for development only and is not deployed as an API route.
+
+### Client Uploads
+
+Staff can attach before/after photos or other files to a booking. Files are
+uploaded to the `client-uploads` bucket and linked to the booking record. Use
+the `Upload Images` button on an appointment in the staff portal to manage
+these files.
 
 
 ## 🔧 Development Notes
