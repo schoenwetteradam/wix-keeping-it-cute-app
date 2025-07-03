@@ -21,11 +21,15 @@ oYciq9XsE/4PlRsA7kdl1aXlL6ZpwW3pti02ewIDAQAB
 // Product usage tracking function
 async function checkForProductUsagePrompt(bookingId, customerEmail) {
   try {
-    const { data: existingUsage } = await supabase
+    const { data: existingUsage, error: usageError } = await supabase
       .from('product_usage_sessions')
       .select('id')
       .eq('booking_id', bookingId)
-      .single();
+      .maybeSingle();
+
+    if (usageError) {
+      console.error('Product usage lookup error:', usageError.message);
+    }
     
     if (!existingUsage) {
       await supabase
@@ -562,13 +566,17 @@ async function processBookingCreated(webhookData) {
       .from('bookings')
       .upsert(bookingRecord, { onConflict: 'wix_booking_id', ignoreDuplicates: false })
       .select()
-      .single();
+      .maybeSingle();
     
     if (upsertError) {
       console.error('❌ Booking upsert error:', upsertError);
       throw upsertError;
     }
-    
+
+    if (!upsertedBooking) {
+      throw new Error('Booking upsert failed');
+    }
+
     console.log('✅ Booking created/updated successfully:', upsertedBooking.id);
     
     // Product usage tracking
@@ -626,13 +634,17 @@ async function processBookingUpdated(webhookData) {
       .update(updateData)
       .eq('wix_booking_id', booking.id)
       .select()
-      .single();
+      .maybeSingle();
     
     if (updateError) {
       console.error('❌ Booking update error:', updateError);
       throw updateError;
     }
-    
+
+    if (!updatedBooking) {
+      throw new Error('Booking not found');
+    }
+
     console.log('✅ Booking updated:', updatedBooking.id);
     
     return {
@@ -663,13 +675,17 @@ async function processBookingCanceled(webhookData) {
       })
       .eq('wix_booking_id', booking.id)
       .select()
-      .single();
+      .maybeSingle();
     
     if (cancelError) {
       console.error('❌ Booking cancellation error:', cancelError);
       throw cancelError;
     }
-    
+
+    if (!canceledBooking) {
+      throw new Error('Booking not found');
+    }
+
     console.log('✅ Booking canceled:', canceledBooking.id);
     
     return {

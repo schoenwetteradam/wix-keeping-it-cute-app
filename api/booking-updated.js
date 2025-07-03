@@ -49,11 +49,16 @@ export default async function handler(req, res) {
     };
 
     if (updateData.service_name) {
-      const { data: svc } = await supabase
+      const { data: svc, error: svcError } = await supabase
         .from('salon_services')
         .select('id, duration_minutes, price')
         .ilike('name', updateData.service_name)
-        .single();
+        .maybeSingle();
+
+      if (svcError) {
+        console.error('Service lookup error:', svcError.message);
+      }
+
       if (svc) {
         updateData.service_id = svc.id;
         if (!updateData.service_duration) {
@@ -75,11 +80,15 @@ export default async function handler(req, res) {
       .update(updateData)
       .eq('wix_booking_id', bookingData.id || bookingData.bookingId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('❌ Booking Update Error:', error);
       return res.status(500).json({ error: 'Failed to update booking', details: error.message });
+    }
+
+    if (!data) {
+      return res.status(404).json({ error: 'Booking not found' });
     }
 
     // Update related usage session if it exists
