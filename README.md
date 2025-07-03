@@ -27,6 +27,7 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 | `orders` | E-commerce transactions | Purchase data, payment status, items |
 | `sessions` | Website analytics | Visitor behavior, engagement metrics |
 | `webhook_logs` | System monitoring | All webhook events and debugging |
+| `staff_chat_messages` | Internal staff chat | Message content and timestamps |
 
 ## 🔗 API Endpoints
 
@@ -55,6 +56,8 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 - `GET /api/get-customers` - Fetch customer records
 - `POST /api/create-booking` - Create a Wix appointment booking
 - `POST /api/create-checkout` - Generate a Wix checkout session for payments
+- `GET /api/staff-chat` - Retrieve recent staff chat messages
+- `POST /api/staff-chat` - Post a new staff chat message
 
 Example usage:
 
