@@ -280,6 +280,14 @@ psql $SUPABASE_URL < migrations/20240102_add_profiles_table.sql
 Use the `/login` and `/signup` pages to authenticate.
 After login, requests include a `Bearer` token from the Supabase session in the `Authorization` header.
 
+Alternatively you can enable Wix OAuth. Set the `WIX_CLIENT_ID`,
+`WIX_CLIENT_SECRET`, `NEXT_PUBLIC_WIX_CLIENT_ID`, and
+`NEXT_PUBLIC_WIX_REDIRECT_URI` environment variables. The login page includes a
+"Login with Wix" button that sends users to Wix for authorization. The callback
+route `/api/wix-oauth-callback` exchanges the code for an access token and stores
+it in a `wix_token` cookie. Pages like `/staff` use the `useRequireWixAuth` hook
+to redirect to `/login` if the token is missing.
+
 ### Error handling
 
 Unexpected client errors are captured by a React error boundary defined in `pages/_app.js`. When an exception occurs, the boundary renders a simple message instead of leaving the page blank.

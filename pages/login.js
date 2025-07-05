@@ -25,6 +25,12 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  const wixClientId = process.env.NEXT_PUBLIC_WIX_CLIENT_ID
+  const redirect = encodeURIComponent(
+    process.env.NEXT_PUBLIC_WIX_REDIRECT_URI || ''
+  )
+  const wixAuthUrl = `https://www.wix.com/installer/install?token=&appId=${wixClientId}&redirectUrl=${redirect}`
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -119,6 +125,23 @@ export default function Login() {
           >
             {loading ? 'Signing in...' : 'Login'}
           </button>
+          <a href={wixAuthUrl} style={{ textDecoration: 'none' }}>
+            <button
+              type="button"
+              style={{
+                width: '100%',
+                marginTop: '10px',
+                padding: '10px',
+                backgroundColor: '#6b8ec4',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Login with Wix
+            </button>
+          </a>
           <p style={{ marginTop: '15px', textAlign: 'center' }}>
             No account? <a href="/signup">Sign up</a>
           </p>
