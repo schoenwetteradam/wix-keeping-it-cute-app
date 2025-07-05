@@ -69,6 +69,45 @@ curl '/api/get-orders?limit=10'
 curl '/api/get-customers?search=jane'
 ```
 
+### Dashboard Metrics
+
+Create a function in Supabase that aggregates the numbers used on the business dashboard:
+
+```sql
+-- migrations/20240915_create_dashboard_metrics_function.sql
+CREATE OR REPLACE FUNCTION dashboard_metrics()
+RETURNS TABLE(
+  upcoming_appointments integer,
+  product_usage_needed integer,
+  low_stock integer,
+  orders_today integer
+) AS $$
+BEGIN
+  SELECT COUNT(*) INTO upcoming_appointments
+    FROM bookings
+    WHERE appointment_date >= NOW()
+      AND appointment_date < NOW() + INTERVAL '7 days';
+
+  SELECT COUNT(*) INTO product_usage_needed
+    FROM product_usage_sessions
+    WHERE completed = false;
+
+  SELECT COUNT(*) INTO low_stock
+    FROM products
+    WHERE is_active = true
+      AND current_stock <= min_threshold;
+
+  SELECT COUNT(*) INTO orders_today
+    FROM orders
+    WHERE created_at::date = CURRENT_DATE;
+
+  RETURN NEXT;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+The frontend calls `/api/get-dashboard-metrics` which executes this function and returns the results.
+
 ### Booking & Payments
 
 1. Call `/api/services` and `/api/query-availability` to display open slots.
