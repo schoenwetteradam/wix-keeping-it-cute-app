@@ -5,11 +5,15 @@ import styles from './NavBar.module.css'
 
 export default function NavBar() {
   const [open, setOpen] = useState(false)
+  const [toolsOpen, setToolsOpen] = useState(false)
   const router = useRouter()
 
-  // Close mobile menu on route change
+  // Close menus on route change
   useEffect(() => {
-    const handleRouteChange = () => setOpen(false)
+    const handleRouteChange = () => {
+      setOpen(false)
+      setToolsOpen(false)
+    }
     router.events.on('routeChangeComplete', handleRouteChange)
     return () => {
       router.events.off('routeChangeComplete', handleRouteChange)
@@ -27,40 +31,47 @@ export default function NavBar() {
         &#9776;
       </button>
       <div className={`${styles.links} ${open ? styles.show : ''}`}>
-        <Link href="/staff?tab=inventory" className={styles.tab}>
-          📦 Inventory
-        </Link>
-        <Link href="/staff?tab=services" className={styles.tab}>
-          ✨ Services
+        <Link href="/staff" className={styles.tab}>
+          🏠 Dashboard
         </Link>
         <Link href="/staff?tab=appointments" className={styles.tab}>
           📅 Appointments
         </Link>
-        <Link href="/alerts" className={styles.tab}>
-          🚨 Alerts
+        <Link href="/staff?tab=inventory" className={styles.tab}>
+          📦 Inventory
         </Link>
-        <Link href="/all-products" className={styles.action}>
-          📋 All Products
+        <Link href="/orders" className={styles.tab}>
+          🛒 Orders
         </Link>
-        <Link href="/orders" className={styles.action}>
-          🛒 View Orders
+        <Link href="/customers" className={styles.tab}>
+          👥 Contacts
         </Link>
-        <Link href="/customers" className={`${styles.action} ${styles.beige}`}>
-          👥 View Customers
-        </Link>
-        <Link href="/loyalty-dashboard" className={styles.action}>
-          💎 Loyalty Points
-        </Link>
-        <div className={styles.right}>
-          <Link href="/inventory-audit" className={styles.action}>
-            📊 Start Inventory Audit
-          </Link>
-          <Link href="/logo-management" className={`${styles.action} ${styles.beige}`}>
-            🎨 Manage Logo
-          </Link>
-          <Link href="/upload-product-images" className={`${styles.action} ${styles.green}`}>
-            📸 Upload Images
-          </Link>
+        <div className={styles.tools}>
+          <button
+            className={styles.tab}
+            onClick={() => setToolsOpen(!toolsOpen)}
+            aria-haspopup="true"
+            aria-expanded={toolsOpen}
+          >
+            Tools ▾
+          </button>
+          <div className={`${styles.dropdown} ${toolsOpen ? styles.show : ''}`}>
+            <Link href="/all-products" className={styles.action}>
+              📋 All Products
+            </Link>
+            <Link href="/inventory-audit" className={styles.action}>
+              📊 Start Inventory Audit
+            </Link>
+            <Link href="/logo-management" className={`${styles.action} ${styles.beige}`}>
+              🎨 Manage Logo
+            </Link>
+            <Link href="/upload-product-images" className={`${styles.action} ${styles.green}`}>
+              📸 Upload Images
+            </Link>
+            <Link href="/loyalty-dashboard" className={styles.action}>
+              💎 Loyalty Points
+            </Link>
+          </div>
         </div>
       </div>
     </nav>
