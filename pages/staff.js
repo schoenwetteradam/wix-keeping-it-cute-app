@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import slugify from '../utils/slugify'
+import useRequireWixAuth from '../utils/useRequireWixAuth'
 
 // Determine if a product image URL from Wix is unusable in the browser
 const isWixImage = (url) => url && url.startsWith('wix:image://')
@@ -18,6 +19,7 @@ import CalendarView from '../components/CalendarView'
 
 export default function StaffPortal() {
   const router = useRouter()
+  useRequireWixAuth()
   const [products, setProducts] = useState([])
   const [madamGlamCount, setMadamGlamCount] = useState(0)
   const [services, setServices] = useState([])
