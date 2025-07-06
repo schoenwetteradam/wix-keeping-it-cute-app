@@ -17,5 +17,9 @@ export async function fetchWithAuth(url, options = {}) {
       opts.headers['Authorization'] = `Bearer ${token}`
     }
   }
-  return fetch(url, opts)
+  const res = await fetch(url, opts)
+  if (res.status === 401 && typeof window !== 'undefined') {
+    window.location.href = '/login'
+  }
+  return res
 }
