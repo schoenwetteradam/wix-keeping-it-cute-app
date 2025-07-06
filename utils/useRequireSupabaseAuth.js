@@ -23,8 +23,8 @@ export default function useRequireSupabaseAuth() {
             router.replace('/staff')
             return
           }
-        } catch (e) {
-          // ignore parsing errors
+        } catch (err) {
+          console.error('Failed to parse invite link', err)
         }
       }
 
