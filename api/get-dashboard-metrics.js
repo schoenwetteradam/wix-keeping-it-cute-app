@@ -24,7 +24,12 @@ export default async function handler(req, res) {
     const user = await requireAuth(req, res)
     if (!user) return
 
-    const staffId = req.query.staff_id || user.id
+    let staffId = req.query.staff_id
+    if (staffId === undefined) {
+      staffId = user.id
+    } else if (staffId === '' || staffId === 'null') {
+      staffId = null
+    }
     const { data, error } = await supabase.rpc('dashboard_metrics', { p_staff_id: staffId })
     if (error) {
       throw error
