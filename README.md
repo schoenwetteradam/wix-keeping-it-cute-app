@@ -74,8 +74,8 @@ curl '/api/get-customers?search=jane'
 Create a function in Supabase that aggregates the numbers used on the business dashboard:
 
 ```sql
--- migrations/20240915_create_dashboard_metrics_function.sql
-CREATE OR REPLACE FUNCTION dashboard_metrics()
+-- migrations/20240916_update_dashboard_metrics_for_staff.sql
+CREATE OR REPLACE FUNCTION dashboard_metrics(p_staff_id uuid)
 RETURNS TABLE(
   upcoming_appointments integer,
   product_usage_needed integer,
@@ -83,27 +83,23 @@ RETURNS TABLE(
   orders_today integer
 ) AS $$
 BEGIN
-  SELECT COUNT(*) INTO upcoming_appointments
-    FROM bookings
-    WHERE appointment_date >= NOW()
-      AND appointment_date < NOW() + INTERVAL '7 days';
-
-  SELECT COUNT(*) INTO product_usage_needed
-    FROM product_usage_sessions
-    WHERE completed = false;
-
-  SELECT COUNT(*) INTO low_stock
-    FROM products
-    WHERE is_active = true
-      AND current_stock <= min_threshold;
-
-  SELECT COUNT(*) INTO orders_today
-    FROM orders
-    WHERE created_at::date = CURRENT_DATE;
-
-  RETURN NEXT;
+  RETURN QUERY
+    SELECT
+      (SELECT COUNT(*) FROM bookings
+         WHERE staff_id = p_staff_id
+           AND appointment_date >= NOW()
+           AND appointment_date < NOW() + INTERVAL '7 days'),
+      (SELECT COUNT(*) FROM product_usage_sessions
+         WHERE staff_id = p_staff_id
+           AND completed = false),
+      (SELECT COUNT(*) FROM products
+         WHERE is_active = true
+           AND current_stock <= min_threshold),
+      (SELECT COUNT(*) FROM orders
+         WHERE staff_id = p_staff_id
+           AND created_at::date = CURRENT_DATE);
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE;
 ```
 
 The frontend calls `/api/get-dashboard-metrics` which executes this function and returns the results.
