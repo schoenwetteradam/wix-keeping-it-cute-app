@@ -46,6 +46,9 @@ export default function NavBar() {
         <Link href="/customers" className={styles.tab}>
           👥 Contacts
         </Link>
+        <Link href="/staff-chat" className={styles.tab}>
+          💬 Chat
+        </Link>
         <div className={styles.tools}>
           <button
             className={styles.tab}
