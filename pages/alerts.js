@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import { fetchWithAuth } from '../utils/api'
 
 export default function AlertsDashboard() {
   const router = useRouter()
@@ -16,12 +17,12 @@ export default function AlertsDashboard() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const alertsRes = await fetch('/api/get-inventory-alerts')
+      const alertsRes = await fetchWithAuth('/api/get-inventory-alerts')
       if (alertsRes.ok) {
         const data = await alertsRes.json()
         setAlerts(data.alerts || [])
       }
-      const notificationsRes = await fetch('/api/get-notifications')
+      const notificationsRes = await fetchWithAuth('/api/get-notifications')
       if (notificationsRes.ok) {
         const data = await notificationsRes.json()
         setNotifications(data.notifications || [])

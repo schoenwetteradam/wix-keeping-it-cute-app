@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import { fetchWithAuth } from '../utils/api'
 
 export default function LoyaltyDashboard() {
   const router = useRouter()
@@ -15,7 +16,7 @@ export default function LoyaltyDashboard() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/get-loyalty?limit=200')
+      const res = await fetchWithAuth('/api/get-loyalty?limit=200')
       if (!res.ok) throw new Error('Failed to load loyalty records')
       const data = await res.json()
       setRecords(data.loyalty || [])
@@ -31,7 +32,7 @@ export default function LoyaltyDashboard() {
     const amt = parseInt(input, 10)
     if (!amt || isNaN(amt)) return
     try {
-      const res = await fetch('/api/update-loyalty-points', {
+      const res = await fetchWithAuth('/api/update-loyalty-points', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ loyalty_id: record.id, points: amt, action })

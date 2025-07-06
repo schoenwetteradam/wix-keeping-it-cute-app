@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
+import { fetchWithAuth } from '../../utils/api'
 
 export default function CollectPaymentPage() {
   const router = useRouter()
@@ -14,7 +15,7 @@ export default function CollectPaymentPage() {
     if (!bookingId) return
     const loadBooking = async () => {
       try {
-        const res = await fetch(`/api/get-booking/${bookingId}`)
+        const res = await fetchWithAuth(`/api/get-booking/${bookingId}`)
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load booking')
         setBooking(data.booking)
@@ -32,7 +33,7 @@ export default function CollectPaymentPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/create-checkout', {
+      const res = await fetchWithAuth('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lineItems: [{ catalogReference: { id: booking.service_id } }] })

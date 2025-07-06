@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
+import { fetchWithAuth } from '../utils/api'
 
 export default function Dashboard() {
   const [metrics, setMetrics] = useState(null)
@@ -9,13 +10,13 @@ export default function Dashboard() {
   useEffect(() => {
     async function load() {
       try {
-        const bRes = await fetch('/api/get-branding')
+        const bRes = await fetchWithAuth('/api/get-branding')
         if (bRes.ok) {
           const data = await bRes.json()
           setBranding(data.branding)
         }
 
-        const mRes = await fetch('/api/get-dashboard-metrics')
+        const mRes = await fetchWithAuth('/api/get-dashboard-metrics')
         if (mRes.ok) {
           const data = await mRes.json()
           setMetrics(data.metrics)

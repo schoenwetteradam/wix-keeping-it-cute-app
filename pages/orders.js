@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { toPlainString } from '../utils/translation'
+import { fetchWithAuth } from '../utils/api'
 
 export default function OrdersPage() {
   const router = useRouter()
@@ -21,7 +22,7 @@ export default function OrdersPage() {
   const loadOrders = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/get-orders?limit=100')
+      const res = await fetchWithAuth('/api/get-orders?limit=100')
       if (!res.ok) throw new Error('Failed to load orders')
       const data = await res.json()
       const normalized = (data.orders || []).map(order => ({
@@ -45,7 +46,7 @@ export default function OrdersPage() {
     setShowOrderDetails(true)
     setOrderBookings([])
     try {
-      const res = await fetch(`/api/get-order-bookings?order_id=${order.wix_order_id || order.id}`)
+      const res = await fetchWithAuth(`/api/get-order-bookings?order_id=${order.wix_order_id || order.id}`)
       if (res.ok) {
         const data = await res.json()
         setOrderBookings(data.bookings || [])

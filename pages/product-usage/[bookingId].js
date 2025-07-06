@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import StaffNavBar from '../../components/StaffNavBar'
+import { fetchWithAuth } from '../../utils/api'
 
 export default function ProductUsageForm() {
   const router = useRouter()
@@ -30,7 +31,7 @@ export default function ProductUsageForm() {
       setLoading(true)
       
       // Load booking details
-      const bookingResponse = await fetch(`/api/get-booking/${bookingId}`)
+      const bookingResponse = await fetchWithAuth(`/api/get-booking/${bookingId}`)
       if (!bookingResponse.ok) throw new Error('Failed to load booking')
       const bookingData = await bookingResponse.json()
       setBooking(bookingData.booking)
@@ -43,7 +44,7 @@ export default function ProductUsageForm() {
       }
       
       // Load all products
-      const productsResponse = await fetch('/api/get-products')
+      const productsResponse = await fetchWithAuth('/api/get-products')
       if (!productsResponse.ok) throw new Error('Failed to load products')
       const productsData = await productsResponse.json()
       setProducts(productsData.products || [])
@@ -65,7 +66,7 @@ export default function ProductUsageForm() {
 
   const loadBranding = async () => {
     try {
-      const res = await fetch('/api/get-branding')
+      const res = await fetchWithAuth('/api/get-branding')
       if (res.ok) {
         const data = await res.json()
         setBranding(data.branding)
@@ -123,7 +124,7 @@ export default function ProductUsageForm() {
       }
 
       // Start usage session
-      const sessionResponse = await fetch('/api/start-usage-session', {
+      const sessionResponse = await fetchWithAuth('/api/start-usage-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -138,7 +139,7 @@ export default function ProductUsageForm() {
       if (!sessionResponse.ok) throw new Error(sessionData.error)
 
       // Log product usage (all items are 1mL each)
-      const usageResponse = await fetch('/api/log-product-usage', {
+      const usageResponse = await fetchWithAuth('/api/log-product-usage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
