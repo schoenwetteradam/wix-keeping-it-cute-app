@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import { createClient } from '@supabase/supabase-js'
 import StaffNavBar from '../components/StaffNavBar'
+import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
 
 export default function StaffChat() {
+  useRequireSupabaseAuth()
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!supabaseUrl || !supabaseAnonKey) {

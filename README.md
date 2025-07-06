@@ -231,6 +231,7 @@ npm run dev
 ```
 
 Open `http://localhost:3000/signup` to create your first user (or `/login` if an account already exists). Successful authentication redirects to `/staff`.
+Your staff portal uses Supabase-only login. Staff members visit `/login` and sign in with the email and password you created for them in the Supabase dashboard. After logging in they land on `/staff` and all API requests are authorized using their Supabase session.
 
 ## 📷 Service Images
 
@@ -280,13 +281,11 @@ psql $SUPABASE_URL < migrations/20240102_add_profiles_table.sql
 Use the `/login` and `/signup` pages to authenticate.
 After login, requests include a `Bearer` token from the Supabase session in the `Authorization` header.
 
-Alternatively you can enable Wix OAuth. Set the `WIX_CLIENT_ID`,
-`WIX_CLIENT_SECRET`, `NEXT_PUBLIC_WIX_CLIENT_ID`, and
-`NEXT_PUBLIC_WIX_REDIRECT_URI` environment variables. The login page includes a
-"Login with Wix" button that sends users to Wix for authorization. The callback
-route `/api/wix-oauth-callback` exchanges the code for an access token and stores
-it in a `wix_token` cookie. Pages like `/staff` use the `useRequireWixAuth` hook
-to redirect to `/login` if the token is missing.
+This project previously supported Wix OAuth, but the staff portal now relies
+solely on Supabase authentication. Staff members sign in with the credentials
+you create for them in Supabase. After logging in they are redirected to
+`/staff`, and all requests include the Supabase session token in the
+`Authorization` header.
 
 ### Error handling
 
