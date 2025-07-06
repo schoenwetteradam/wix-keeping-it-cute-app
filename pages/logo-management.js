@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import StaffNavBar from '../components/StaffNavBar'
+import { fetchWithAuth } from '../utils/api'
 
 const BASE_STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET}`
 const DEFAULT_LOGO = `${BASE_STORAGE_URL}/logo/salon-logo.png`
@@ -23,7 +24,7 @@ export default function LogoManagement() {
   const loadBranding = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/get-branding')
+      const response = await fetchWithAuth('/api/get-branding')
       if (response.ok) {
         const data = await response.json()
         setBranding(data.branding)
@@ -64,7 +65,7 @@ export default function LogoManagement() {
 
       console.log('Uploading salon logo...')
 
-      const response = await fetch('/api/upload-salon-logo', {
+      const response = await fetchWithAuth('/api/upload-salon-logo', {
         method: 'POST',
         body: formData
       })

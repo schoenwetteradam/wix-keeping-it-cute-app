@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
+import { fetchWithAuth } from '../utils/api'
 
 export default function CreateAppointment() {
   const router = useRouter()
@@ -20,7 +21,7 @@ export default function CreateAppointment() {
   useEffect(() => {
     const loadServices = async () => {
       try {
-        const res = await fetch('/api/services')
+        const res = await fetchWithAuth('/api/services')
         if (res.ok) {
           const data = await res.json()
           setServices(data.services || [])
@@ -32,7 +33,7 @@ export default function CreateAppointment() {
 
     const loadBranding = async () => {
       try {
-        const res = await fetch('/api/get-branding')
+        const res = await fetchWithAuth('/api/get-branding')
         if (res.ok) {
           const data = await res.json()
           setBranding(data.branding)
@@ -54,7 +55,7 @@ export default function CreateAppointment() {
       }
       setLoadingAvailability(true)
       try {
-        const res = await fetch('/api/query-availability', {
+        const res = await fetchWithAuth('/api/query-availability', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query: { filter: { serviceId } } })
@@ -89,7 +90,7 @@ export default function CreateAppointment() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/create-booking', {
+      const res = await fetchWithAuth('/api/create-booking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -116,7 +117,7 @@ export default function CreateAppointment() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/create-checkout', {
+      const res = await fetchWithAuth('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lineItems: [{ catalogReference: { id: serviceId } }] })

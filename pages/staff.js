@@ -4,6 +4,7 @@ import Head from 'next/head'
 import { useRouter } from 'next/router'
 import slugify from '../utils/slugify'
 import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
+import { fetchWithAuth } from '../utils/api'
 
 // Determine if a product image URL from Wix is unusable in the browser
 const isWixImage = (url) => url && url.startsWith('wix:image://')
@@ -61,14 +62,14 @@ export default function StaffPortal() {
       setLoading(true)
 
       // Load branding info
-      const brandingResponse = await fetch('/api/get-branding')
+      const brandingResponse = await fetchWithAuth('/api/get-branding')
       if (brandingResponse.ok) {
         const brandingData = await brandingResponse.json()
         setBranding(brandingData.branding)
       }
 
       // Load products
-      const productsResponse = await fetch('/api/get-products')
+      const productsResponse = await fetchWithAuth('/api/get-products')
       if (!productsResponse.ok) {
         throw new Error(`Products API Error: ${productsResponse.status}`)
       }
@@ -78,7 +79,7 @@ export default function StaffPortal() {
       console.log('Products loaded:', productsData.total_count)
 
       // Load services
-      const servicesResponse = await fetch('/api/services')
+      const servicesResponse = await fetchWithAuth('/api/services')
       if (!servicesResponse.ok) {
         throw new Error(`Services API Error: ${servicesResponse.status}`)
       }
@@ -86,7 +87,7 @@ export default function StaffPortal() {
       console.log('Services loaded:', servicesData.stats?.total_services)
 
       // Load appointments
-      const appointmentsResponse = await fetch('/api/get-appointments')
+      const appointmentsResponse = await fetchWithAuth('/api/get-appointments')
       if (!appointmentsResponse.ok) {
         throw new Error(`Appointments API Error: ${appointmentsResponse.status}`)
       }
@@ -94,7 +95,7 @@ export default function StaffPortal() {
       console.log('Appointments loaded:', appointmentsData.count)
 
       // Load alerts and notifications
-      const alertsResponse = await fetch('/api/get-inventory-alerts')
+      const alertsResponse = await fetchWithAuth('/api/get-inventory-alerts')
       if (alertsResponse.ok) {
         const alertsData = await alertsResponse.json()
         setAlerts(alertsData.alerts || [])
@@ -102,7 +103,7 @@ export default function StaffPortal() {
         setAlerts([])
       }
 
-      const notificationsRes = await fetch('/api/get-notifications')
+      const notificationsRes = await fetchWithAuth('/api/get-notifications')
       if (notificationsRes.ok) {
         const nData = await notificationsRes.json()
         setNotifications(nData.notifications || [])
@@ -138,7 +139,7 @@ export default function StaffPortal() {
 
     // Check if product usage exists for this appointment
     try {
-      const response = await fetch(`/api/get-booking/${appointment.id}`)
+      const response = await fetchWithAuth(`/api/get-booking/${appointment.id}`)
       if (response.ok) {
         const data = await response.json()
         setSelectedAppointment({
@@ -164,7 +165,7 @@ export default function StaffPortal() {
     try {
       setSavingNotes(true)
 
-      const response = await fetch('/api/update-appointment-notes', {
+      const response = await fetchWithAuth('/api/update-appointment-notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -203,7 +204,7 @@ export default function StaffPortal() {
     if (!confirm('Cancel this appointment?')) return
 
     try {
-      const response = await fetch(`/api/cancel-booking/${appointment.id}`, {
+      const response = await fetchWithAuth(`/api/cancel-booking/${appointment.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ revision: appointment.revision })
@@ -241,7 +242,7 @@ export default function StaffPortal() {
     if (!newEnd) return
 
     try {
-      const response = await fetch(`/api/reschedule-booking/${appointment.id}`, {
+      const response = await fetchWithAuth(`/api/reschedule-booking/${appointment.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

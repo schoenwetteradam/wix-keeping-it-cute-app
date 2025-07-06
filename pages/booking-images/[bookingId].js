@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import StaffNavBar from '../../components/StaffNavBar'
+import { fetchWithAuth } from '../../utils/api'
 
 export default function BookingImages() {
   const router = useRouter()
@@ -21,7 +22,7 @@ export default function BookingImages() {
   }, [bookingId])
 
   const loadBooking = async () => {
-    const res = await fetch(`/api/get-booking/${bookingId}`)
+    const res = await fetchWithAuth(`/api/get-booking/${bookingId}`)
     if (res.ok) {
       const data = await res.json()
       setBooking(data.booking)
@@ -29,7 +30,7 @@ export default function BookingImages() {
   }
 
   const loadImages = async () => {
-    const res = await fetch(`/api/get-booking-images/${bookingId}`)
+    const res = await fetchWithAuth(`/api/get-booking-images/${bookingId}`)
     if (res.ok) {
       const data = await res.json()
       setImages(data.images || [])
@@ -37,7 +38,7 @@ export default function BookingImages() {
   }
 
   const loadBranding = async () => {
-    const res = await fetch('/api/get-branding')
+    const res = await fetchWithAuth('/api/get-branding')
     if (res.ok) {
       const data = await res.json()
       setBranding(data.branding)
@@ -52,7 +53,7 @@ export default function BookingImages() {
     form.append('file', file)
     form.append('booking_id', bookingId)
 
-    const res = await fetch('/api/upload-booking-file', {
+    const res = await fetchWithAuth('/api/upload-booking-file', {
       method: 'POST',
       body: form
     })

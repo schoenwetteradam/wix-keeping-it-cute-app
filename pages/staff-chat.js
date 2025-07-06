@@ -3,6 +3,7 @@ import Head from 'next/head'
 import { createClient } from '@supabase/supabase-js'
 import StaffNavBar from '../components/StaffNavBar'
 import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
+import { fetchWithAuth } from '../utils/api'
 
 export default function StaffChat() {
   useRequireSupabaseAuth()
@@ -47,7 +48,7 @@ export default function StaffChat() {
 
   const loadBranding = async () => {
     try {
-      const res = await fetch('/api/get-branding')
+      const res = await fetchWithAuth('/api/get-branding')
       if (res.ok) {
         const data = await res.json()
         setBranding(data.branding)
@@ -59,7 +60,7 @@ export default function StaffChat() {
 
   const fetchMessages = async () => {
     try {
-      const res = await fetch('/api/staff-chat')
+      const res = await fetchWithAuth('/api/staff-chat')
       if (res.ok) {
         const data = await res.json()
         setMessages(data.messages || [])
@@ -72,7 +73,7 @@ export default function StaffChat() {
   const sendMessage = async () => {
     if (!newMessage.trim()) return
     try {
-      await fetch('/api/staff-chat', {
+      await fetchWithAuth('/api/staff-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: newMessage })

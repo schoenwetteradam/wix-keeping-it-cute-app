@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import slugify from '../../utils/slugify'
+import { fetchWithAuth } from '../../utils/api'
 
 export default function ServiceDetail() {
   const router = useRouter()
@@ -18,7 +19,7 @@ export default function ServiceDetail() {
       try {
         setLoading(true)
         // Fetch the service along with related staff and products
-        const res = await fetch(`/api/services/${serviceId}`)
+        const res = await fetchWithAuth(`/api/services/${serviceId}`)
         if (!res.ok) throw new Error('Failed to load service')
         const data = await res.json()
         setService(data.service)

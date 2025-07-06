@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import StaffNavBar from '../components/StaffNavBar'
+import { fetchWithAuth } from '../utils/api'
 
 export default function UploadProductImages() {
   const router = useRouter()
@@ -23,7 +24,7 @@ export default function UploadProductImages() {
   const loadProducts = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/get-products')
+      const response = await fetchWithAuth('/api/get-products')
       if (!response.ok) throw new Error('Failed to load products')
       
       const data = await response.json()
@@ -39,7 +40,7 @@ export default function UploadProductImages() {
 
   const loadBranding = async () => {
     try {
-      const res = await fetch('/api/get-branding')
+      const res = await fetchWithAuth('/api/get-branding')
       if (res.ok) {
         const data = await res.json()
         setBranding(data.branding)
@@ -86,7 +87,7 @@ export default function UploadProductImages() {
 
       console.log('Uploading image for product:', product?.product_name)
 
-      const response = await fetch('/api/upload-product-image', {
+      const response = await fetchWithAuth('/api/upload-product-image', {
         method: 'POST',
         body: formData
       })

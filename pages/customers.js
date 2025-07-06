@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { toPlainString } from '../utils/translation'
+import { fetchWithAuth } from '../utils/api'
 
 export default function CustomersPage() {
   const router = useRouter()
@@ -39,7 +40,7 @@ export default function CustomersPage() {
         sort_order = 'desc'
       }
 
-      const res = await fetch(`/api/get-customers?limit=100&sort_by=${sort_by}&sort_order=${sort_order}`)
+      const res = await fetchWithAuth(`/api/get-customers?limit=100&sort_by=${sort_by}&sort_order=${sort_order}`)
       if (!res.ok) throw new Error('Failed to load customers')
       const data = await res.json()
       const normalized = (data.customers || []).map(c => ({
@@ -88,7 +89,7 @@ export default function CustomersPage() {
     setShowDetails(true)
     setLoyaltyRecord(null)
     try {
-      const res = await fetch(`/api/get-loyalty?email=${encodeURIComponent(customer.email)}`)
+      const res = await fetchWithAuth(`/api/get-loyalty?email=${encodeURIComponent(customer.email)}`)
       if (res.ok) {
         const data = await res.json()
         setLoyaltyRecord((data.loyalty || [])[0] || null)
