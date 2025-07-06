@@ -12,11 +12,28 @@ export default function useRequireSupabaseAuth() {
       router.replace('/login')
       return
     }
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey)
-    supabase.auth.getSession().then(({ data }) => {
+
+    async function checkSession() {
+      if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+        try {
+          const { data } = await supabase.auth.getSessionFromUrl()
+          if (data?.session) {
+            router.replace('/staff')
+            return
+          }
+        } catch (e) {
+          // ignore parsing errors
+        }
+      }
+
+      const { data } = await supabase.auth.getSession()
       if (!data.session) {
         router.replace('/login')
       }
-    })
+    }
+
+    checkSession()
   }, [router])
 }
