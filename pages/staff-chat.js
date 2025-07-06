@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import { createClient } from '@supabase/supabase-js'
-import StaffNavBar from '../components/StaffNavBar'
 import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
 import { fetchWithAuth } from '../utils/api'
 
@@ -93,7 +92,6 @@ export default function StaffChat() {
       <Head>
         <title>Staff Chat - {branding?.salon_name || 'Keeping It Cute Salon'}</title>
       </Head>
-      <StaffNavBar branding={branding} activeTab="chat" />
       <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto', background: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
           <h1 style={{ marginTop: 0 }}>💬 Staff Chat</h1>
