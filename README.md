@@ -287,6 +287,11 @@ you create for them in Supabase. After logging in they are redirected to
 `/staff`, and all requests include the Supabase session token in the
 `Authorization` header.
 
+When a staff member uses a Supabase invite or magic link, the URL includes
+`#access_token=...`. The app now detects this fragment in `pages/_app.js`, calls
+`supabase.auth.getSessionFromUrl()` to store the session, and then redirects to
+`/staff` automatically.
+
 ### Error handling
 
 Unexpected client errors are captured by a React error boundary defined in `pages/_app.js`. When an exception occurs, the boundary renders a simple message instead of leaving the page blank.
