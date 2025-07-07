@@ -280,7 +280,9 @@ async function processJWTWebhook(event, eventData) {
   
   const eventType = (event?.entityFqdn || 'unknown') + '.' + (event?.slug || 'unknown');
   
-  if (event?.entityFqdn === 'wix.contacts.v4.contact') {
+  if (event?.eventType === 'com.wix.payment.api.pay.v3.PaymentEvent') {
+    return await processPaymentEventJWT(event, eventData);
+  } else if (event?.entityFqdn === 'wix.contacts.v4.contact') {
     return await processContactEventJWT(event, eventData);
   } else if (event?.entityFqdn === 'wix.bookings.v2.booking') {
     return await processBookingEventJWT(event, eventData);
@@ -444,6 +446,90 @@ async function processOrderEventJWT(event, eventData = null) {
 
   } catch (error) {
     console.error('❌ Order processing failed:', error);
+    throw error;
+  }
+}
+
+async function processPaymentEventJWT(event, eventData = null) {
+  try {
+    console.log('💸 Processing payment event...');
+
+    const data = eventData || event;
+    const detail =
+      data.transactionStatusChangedEvent ||
+      data.refundStatusChangedEvent ||
+      data.recurringPaymentStatusChangedEvent ||
+      data.transactionUpdatedEvent ||
+      data.transactionCreatedEvent ||
+      {};
+
+    const orderInfo = detail.order || {};
+    const txn = detail.transaction || detail.refund || {};
+    const amountInfo = txn.amount || txn.refundedAmount || {};
+    const status =
+      txn.status || detail.status || detail.previousStatus || 'UNKNOWN';
+
+    const paymentRecord = {
+      wix_payment_id: txn.id || detail.id || data.id,
+      wix_order_id: orderInfo.id || txn.verticalOrderId,
+      wix_booking_id: orderInfo.bookingId || orderInfo.wixAppBookingId,
+      provider_transaction_id: txn.providerTransactionId,
+      payment_method: txn.paymentMethod,
+      amount: amountInfo.amount,
+      currency: amountInfo.currency,
+      status,
+      payload: data,
+      processed_at: new Date().toISOString()
+    };
+
+    Object.keys(paymentRecord).forEach(key => {
+      if (paymentRecord[key] === undefined) delete paymentRecord[key];
+    });
+
+    const { data: paymentRow, error } = await supabase
+      .from('wix_payments')
+      .upsert(paymentRecord, { onConflict: 'wix_payment_id', ignoreDuplicates: false })
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.error('❌ Payment upsert error:', error);
+      throw error;
+    }
+
+    if (paymentRecord.wix_order_id) {
+      await supabase
+        .from('orders')
+        .update({ payment_status: 'paid', updated_at: new Date().toISOString() })
+        .eq('wix_order_id', paymentRecord.wix_order_id);
+    }
+
+    if (paymentRecord.wix_order_id || paymentRecord.wix_booking_id) {
+      const update = {
+        payment_status: 'paid',
+        payment_date: new Date().toISOString(),
+        wix_payment_id: paymentRecord.wix_payment_id
+      };
+      const query = supabase.from('salon_appointments').update(update);
+      if (paymentRecord.wix_order_id && paymentRecord.wix_booking_id) {
+        query.or(`wix_order_id.eq.${paymentRecord.wix_order_id},wix_booking_id.eq.${paymentRecord.wix_booking_id}`);
+      } else if (paymentRecord.wix_order_id) {
+        query.eq('wix_order_id', paymentRecord.wix_order_id);
+      } else if (paymentRecord.wix_booking_id) {
+        query.eq('wix_booking_id', paymentRecord.wix_booking_id);
+      }
+      await query;
+    }
+
+    console.log('✅ Payment event processed:', paymentRow?.id);
+
+    return {
+      type: 'payment_event',
+      payment_id: paymentRow?.id,
+      wix_payment_id: paymentRecord.wix_payment_id
+    };
+  } catch (error) {
+    console.error('❌ Payment event processing failed:', error);
     throw error;
   }
 }

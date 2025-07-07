@@ -34,6 +34,9 @@ export default function NavBar() {
         <Link href="/staff" className={styles.tab}>
           🏠 Dashboard
         </Link>
+        <Link href="/dashboard" className={styles.tab}>
+          📈 Metrics
+        </Link>
         <Link href="/staff?tab=appointments" className={styles.tab}>
           📅 Appointments
         </Link>

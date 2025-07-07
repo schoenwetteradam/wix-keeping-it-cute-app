@@ -25,6 +25,7 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 | `contacts` | Customer profiles | Contact info, preferences, demographics |
 | `loyalty` | Loyalty program | Points balance and activity |
 | `orders` | E-commerce transactions | Purchase data, payment status, items |
+| `wix_payments` | Wix Cashier payments | Order links, amounts, status, provider ID |
 | `sessions` | Website analytics | Visitor behavior, engagement metrics |
 | `webhook_logs` | System monitoring | All webhook events and debugging |
 | `staff_chat_messages` | Internal staff chat | Message content and timestamps |
@@ -47,6 +48,7 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 ### E-commerce Webhooks
 - `POST /api/order-paid` - Purchase completions
 - `POST /api/invoice-paid` - Invoice payments
+- `POST /api/payment-approved` - Wix Cashier payment events
 
 ### Analytics Webhooks
 - `POST /api/session-ended` - Website visitor sessions
