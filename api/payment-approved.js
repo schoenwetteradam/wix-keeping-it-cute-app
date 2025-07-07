@@ -98,6 +98,18 @@ export default async function handler(req, res) {
             }
           });
 
+        // Record revenue for the staff member if available
+        if (appointment.staff_id) {
+          await supabase
+            .from('staff_revenue')
+            .insert({
+              staff_id: appointment.staff_id,
+              appointment_id: appointment.id,
+              revenue_amount: payment.amount,
+              revenue_date: new Date().toISOString().split('T')[0]
+            });
+        }
+
         // Send confirmation email could go here
         console.log('📧 Payment confirmation ready for:', appointment.customers?.email);
       }
