@@ -280,7 +280,9 @@ async function processJWTWebhook(event, eventData) {
   
   const eventType = (event?.entityFqdn || 'unknown') + '.' + (event?.slug || 'unknown');
   
-  if (event?.entityFqdn === 'wix.contacts.v4.contact') {
+  if (event?.eventType === 'com.wix.payment.api.pay.v3.PaymentEvent') {
+    return await processPaymentEventJWT(event, eventData);
+  } else if (event?.entityFqdn === 'wix.contacts.v4.contact') {
     return await processContactEventJWT(event, eventData);
   } else if (event?.entityFqdn === 'wix.bookings.v2.booking') {
     return await processBookingEventJWT(event, eventData);
@@ -444,6 +446,67 @@ async function processOrderEventJWT(event, eventData = null) {
 
   } catch (error) {
     console.error('❌ Order processing failed:', error);
+    throw error;
+  }
+}
+
+// === PAYMENT EVENT PROCESSING ===
+async function processPaymentEventJWT(event, eventData = null) {
+  try {
+    console.log('💸 Processing payment event...');
+
+    const payment = eventData || event;
+
+    const paymentRecord = {
+      wix_payment_id: payment.id || payment.paymentId,
+      wix_order_id: payment.orderId || payment.order_id,
+      wix_booking_id: payment.bookingId || payment.booking_id,
+      amount:
+        payment.amount?.amount || payment.amount || payment.totalAmount,
+      currency: payment.amount?.currency || payment.currency || 'USD',
+      status: payment.status || payment.paymentStatus || 'UNKNOWN',
+      payload: payment,
+      processed_at: new Date().toISOString()
+    };
+
+    Object.keys(paymentRecord).forEach(key => {
+      if (paymentRecord[key] === undefined) delete paymentRecord[key];
+    });
+
+    const { data: paymentRow, error } = await supabase
+      .from('wix_payments')
+      .upsert(paymentRecord, { onConflict: 'wix_payment_id', ignoreDuplicates: false })
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.error('❌ Payment upsert error:', error);
+      throw error;
+    }
+
+    if (paymentRecord.wix_order_id) {
+      await supabase
+        .from('orders')
+        .update({ payment_status: 'paid', updated_at: new Date().toISOString() })
+        .eq('wix_order_id', paymentRecord.wix_order_id);
+    }
+
+    if (paymentRecord.wix_booking_id) {
+      await supabase
+        .from('bookings')
+        .update({ payment_status: 'paid', updated_at: new Date().toISOString() })
+        .eq('wix_booking_id', paymentRecord.wix_booking_id);
+    }
+
+    console.log('✅ Payment event processed:', paymentRow?.id);
+
+    return {
+      type: 'payment_event',
+      payment_id: paymentRow?.id,
+      wix_payment_id: paymentRecord.wix_payment_id
+    };
+  } catch (error) {
+    console.error('❌ Payment event processing failed:', error);
     throw error;
   }
 }
