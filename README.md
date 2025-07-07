@@ -28,6 +28,8 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 | `sessions` | Website analytics | Visitor behavior, engagement metrics |
 | `webhook_logs` | System monitoring | All webhook events and debugging |
 | `staff_chat_messages` | Internal staff chat | Message content and timestamps |
+| `purchase_orders` | Supply ordering | Vendor info, totals, status |
+| `purchase_order_items` | Items on a purchase order | Product ID, quantity, cost |
 
 ## 🔗 API Endpoints
 
@@ -58,6 +60,14 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 - `POST /api/create-checkout` - Generate a Wix checkout session for payments
 - `GET /api/staff-chat` - Retrieve recent staff chat messages
 - `POST /api/staff-chat` - Post a new staff chat message
+- `GET /api/purchase-orders` - Retrieve purchase orders
+- `POST /api/purchase-orders` - Create a new purchase order
+- `PUT /api/purchase-orders` - Update a purchase order
+- `DELETE /api/purchase-orders` - Remove a purchase order
+- `GET /api/purchase-order-items` - Retrieve items for a purchase order
+- `POST /api/purchase-order-items` - Add an item to a purchase order
+- `PUT /api/purchase-order-items` - Update a purchase order item
+- `DELETE /api/purchase-order-items` - Delete a purchase order item
 
 Example usage:
 
@@ -67,6 +77,11 @@ curl '/api/get-orders?limit=10'
 
 # Search for customers by name
 curl '/api/get-customers?search=jane'
+
+# Create a purchase order
+curl -X POST -H 'Content-Type: application/json' \
+  -d '{"vendor_id":"123","order_date":"2024-01-01"}' \
+  /api/purchase-orders
 ```
 
 ### Dashboard Metrics
