@@ -106,6 +106,32 @@ export default async function handler(req, res) {
     }
 
     console.log('✅ Booking Updated Successfully:', data);
+
+    // Update upcoming bookings cache
+    try {
+      const now = new Date();
+      const nextWeek = new Date();
+      nextWeek.setDate(now.getDate() + 7);
+      const apptDate = new Date(data.appointment_date);
+      if (apptDate >= now && apptDate < nextWeek) {
+        await supabase
+          .from('upcoming_bookings')
+          .upsert(
+            {
+              booking_id: data.id,
+              appointment_date: data.appointment_date,
+              staff_id: data.staff_id,
+              status: data.status,
+              payment_status: data.payment_status
+            },
+            { onConflict: 'booking_id', ignoreDuplicates: false }
+          );
+      } else {
+        await supabase.from('upcoming_bookings').delete().eq('booking_id', data.id);
+      }
+    } catch (cacheErr) {
+      console.error('Upcoming bookings cache error:', cacheErr);
+    }
     try {
       await addNotification({
         type: 'appointment',

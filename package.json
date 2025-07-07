@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "deploy": "vercel --prod",
-    "test": "jest"
+    "test": "jest",
+    "refresh-upcoming": "node scripts/refresh-upcoming-bookings.js"
   },
   "dependencies": {
     "next": "^14.0.0",
