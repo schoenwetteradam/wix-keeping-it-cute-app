@@ -155,6 +155,30 @@ export default async function handler(req, res) {
    
   console.log('✅ Booking created successfully:', booking.id);
 
+  // Cache near-term appointment
+  try {
+    const now = new Date();
+    const nextWeek = new Date();
+    nextWeek.setDate(now.getDate() + 7);
+    const appt = new Date(booking.appointment_date);
+    if (appt >= now && appt < nextWeek) {
+      await supabase
+        .from('upcoming_bookings')
+        .upsert(
+          {
+            booking_id: booking.id,
+            appointment_date: booking.appointment_date,
+            staff_id: booking.staff_id,
+            status: booking.status,
+            payment_status: booking.payment_status
+          },
+          { onConflict: 'booking_id', ignoreDuplicates: false }
+        );
+    }
+  } catch (cacheErr) {
+    console.error('Upcoming bookings cache error:', cacheErr);
+  }
+
   // Store appointment notification
   try {
     await addNotification({

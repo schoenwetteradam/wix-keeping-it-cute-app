@@ -43,6 +43,37 @@ export default async function handler(req, res) {
     }
     
     const { data: appointments, error } = await query;
+
+    // Cache upcoming bookings for the next week
+    if (appointments) {
+      const now = new Date();
+      const nextWeek = new Date();
+      nextWeek.setDate(now.getDate() + 7);
+
+      const upcoming = appointments.filter(a => {
+        const dt = new Date(a.appointment_date);
+        return dt >= now && dt < nextWeek;
+      });
+
+      if (upcoming.length) {
+        try {
+          await supabase
+            .from('upcoming_bookings')
+            .upsert(
+              upcoming.map(a => ({
+                booking_id: a.id,
+                appointment_date: a.appointment_date,
+                staff_id: a.staff_id,
+                status: a.status,
+                payment_status: a.payment_status
+              })),
+              { onConflict: 'booking_id', ignoreDuplicates: false }
+            );
+        } catch (cacheErr) {
+          console.error('❌ Upcoming bookings cache error:', cacheErr);
+        }
+      }
+    }
     
     if (error) {
       console.error('❌ Appointments fetch error:', error);
