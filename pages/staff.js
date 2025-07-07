@@ -28,6 +28,7 @@ export default function StaffPortal() {
   const [alerts, setAlerts] = useState([])
   const [notifications, setNotifications] = useState([])
   const [branding, setBranding] = useState(null)
+  const [dashboardMetrics, setDashboardMetrics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('inventory')
@@ -107,6 +108,14 @@ export default function StaffPortal() {
       if (notificationsRes.ok) {
         const nData = await notificationsRes.json()
         setNotifications(nData.notifications || [])
+      }
+
+      const metricsRes = await fetchWithAuth('/api/get-dashboard-metrics')
+      if (metricsRes.ok) {
+        const mData = await metricsRes.json()
+        setDashboardMetrics(mData.metrics || null)
+      } else {
+        setDashboardMetrics(null)
       }
 
       setProducts(productsData.products || [])
@@ -405,6 +414,11 @@ export default function StaffPortal() {
     return acc
   }, {})
 
+  const upcomingCount = dashboardMetrics?.upcoming_appointments || 0
+  const productUsageNeeded = dashboardMetrics?.product_usage_needed || 0
+  const lowStockMetric = dashboardMetrics?.low_stock || 0
+  const ordersToday = dashboardMetrics?.orders_today || 0
+
   // Appointment list helpers
   const term = appointmentSearch.toLowerCase()
   const filtered = appointments.filter(
@@ -534,6 +548,60 @@ export default function StaffPortal() {
               <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '0.9em' }}>Recent Bookings</p>
             </div>
           </div>
+
+          {dashboardMetrics && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '20px',
+              marginBottom: '30px'
+            }}>
+              <div style={{
+                background: 'white',
+                padding: '25px',
+                borderRadius: '12px',
+                textAlign: 'center',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                border: '1px solid #e9ecef'
+              }}>
+                <h3 style={{ margin: '0 0 10px', color: '#1976d2', fontSize: '1.1em' }}>📅 Upcoming Appointments</h3>
+                <p style={{ fontSize: '2.5em', margin: 0, fontWeight: 'bold', color: '#333' }}>{upcomingCount}</p>
+              </div>
+              <div style={{
+                background: 'white',
+                padding: '25px',
+                borderRadius: '12px',
+                textAlign: 'center',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                border: '1px solid #e9ecef'
+              }}>
+                <h3 style={{ margin: '0 0 10px', color: '#f57c00', fontSize: '1.1em' }}>📝 Usage Forms Needed</h3>
+                <p style={{ fontSize: '2.5em', margin: 0, fontWeight: 'bold', color: '#333' }}>{productUsageNeeded}</p>
+              </div>
+              <div style={{
+                background: 'white',
+                padding: '25px',
+                borderRadius: '12px',
+                textAlign: 'center',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                border: '1px solid #e9ecef'
+              }}>
+                <h3 style={{ margin: '0 0 10px', color: '#d32f2f', fontSize: '1.1em' }}>🚨 Low Stock</h3>
+                <p style={{ fontSize: '2.5em', margin: 0, fontWeight: 'bold', color: '#d32f2f' }}>{lowStockMetric}</p>
+              </div>
+              <div style={{
+                background: 'white',
+                padding: '25px',
+                borderRadius: '12px',
+                textAlign: 'center',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                border: '1px solid #e9ecef'
+              }}>
+                <h3 style={{ margin: '0 0 10px', color: '#9c27b0', fontSize: '1.1em' }}>💳 Orders Today</h3>
+                <p style={{ fontSize: '2.5em', margin: 0, fontWeight: 'bold', color: '#333' }}>{ordersToday}</p>
+              </div>
+            </div>
+          )}
 
           {/* Tab Content */}
           {activeTab === 'alerts' && (alerts.length > 0 || notifications.length > 0) && (
