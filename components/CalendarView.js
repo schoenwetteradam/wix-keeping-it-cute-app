@@ -83,10 +83,22 @@ export default function CalendarView({ appointments, onAppointmentClick }) {
                   {day.appointments.map(a => (
                     <div
                       key={a.id}
-                      onClick={() => onAppointmentClick && onAppointmentClick(a)}
-                      style={{ cursor: 'pointer', marginBottom: '2px', textAlign: 'left' }}
+                      onClick={() =>
+                        onAppointmentClick && onAppointmentClick(a)
+                      }
+                      style={{
+                        cursor: 'pointer',
+                        marginBottom: '4px',
+                        textAlign: 'left',
+                        background: 'rgba(25, 118, 210, 0.15)',
+                        borderRadius: '6px',
+                        padding: '4px 6px'
+                      }}
                     >
-                      {new Date(a.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{' '}
+                      {new Date(a.appointment_date).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}{' '}
                       {a.customer_name || ''}
                     </div>
                   ))}
