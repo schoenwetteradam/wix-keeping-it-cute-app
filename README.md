@@ -119,7 +119,7 @@ END;
 $$ LANGUAGE plpgsql STABLE;
 ```
 
-The frontend calls `/api/get-dashboard-metrics` which executes this function and returns the results.
+The frontend calls `/api/get-dashboard-metrics` which executes this function and returns the results. By default each staff member can view only their own metrics. User IDs listed in the `ADMIN_USER_IDS` variable are allowed to request metrics for any staff member or for the entire business.
 
 ### Booking & Payments
 
@@ -219,6 +219,7 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 - `SUPABASE_RECEIPTS_BUCKET` bucket for product usage receipts
 - `WIX_API_TOKEN` Wix API token used for booking operations
 - `WIX_WEBHOOK_SECRET` secret used to verify Wix webhooks
+- `ADMIN_USER_IDS` comma-separated Supabase user IDs allowed to view all staff metrics
 
 Generate these values in the **Wix Developer Center** by creating (or selecting)
 an app and navigating to **API Keys**. Create a new API key for server-to-server
