@@ -219,6 +219,7 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 - `SUPABASE_RECEIPTS_BUCKET` bucket for product usage receipts
 - `WIX_API_TOKEN` Wix API token used for booking operations
 - `WIX_WEBHOOK_SECRET` secret used to verify Wix webhooks
+- `ADMIN_USER_IDS` comma-separated Supabase user IDs allowed to view all staff metrics
 
 Generate these values in the **Wix Developer Center** by creating (or selecting)
 an app and navigating to **API Keys**. Create a new API key for server-to-server

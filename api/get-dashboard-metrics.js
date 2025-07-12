@@ -3,6 +3,11 @@ import { createClient } from '@supabase/supabase-js'
 import { setCorsHeaders } from '../utils/cors'
 import requireAuth from '../utils/requireAuth'
 
+const ADMIN_IDS = (process.env.ADMIN_USER_IDS || '')
+  .split(',')
+  .map((id) => id.trim())
+  .filter(Boolean)
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -24,8 +29,10 @@ export default async function handler(req, res) {
     const user = await requireAuth(req, res)
     if (!user) return
 
+    const isAdmin = ADMIN_IDS.includes(user.id)
+
     let staffId = req.query.staff_id
-    if (staffId === undefined) {
+    if (!isAdmin || staffId === undefined) {
       staffId = user.id
     } else if (staffId === '' || staffId === 'null') {
       staffId = null
