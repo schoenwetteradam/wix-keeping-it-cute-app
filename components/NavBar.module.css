@@ -1,12 +1,14 @@
 .navbar {
-  background: #fff;
-  border-bottom: 1px solid #e9ecef;
+  background: var(--color-soft-lavender);
+  border-bottom: 1px solid var(--color-pastel-lilac);
   padding: 0 20px;
+  color: var(--color-soft-white);
 }
 
 .brand {
   font-weight: bold;
   font-size: 1.25rem;
+  color: inherit;
 }
 
 .links {
@@ -28,8 +30,8 @@
   position: absolute;
   top: 100%;
   left: 0;
-  background: #fff;
-  border: 1px solid #e9ecef;
+  background: var(--color-soft-white);
+  border: 1px solid var(--color-pastel-lilac);
   border-radius: 4px;
   padding: 0.5rem;
   display: none;
@@ -46,15 +48,15 @@
   padding: 15px 25px;
   border: none;
   background: transparent;
-  color: #666;
+  color: var(--color-soft-white);
   cursor: pointer;
   font-size: 16px;
   text-transform: capitalize;
 }
 
 .action {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--color-blush-pink) 0%, var(--color-gold) 100%);
+  color: var(--color-charcoal);
   border: none;
   padding: 12px 20px;
   border-radius: 6px;
@@ -66,11 +68,11 @@
 }
 
 .beige {
-  background: linear-gradient(135deg, #e0cdbb 0%, #eee4da 100%);
+  background: linear-gradient(135deg, var(--color-cream) 0%, var(--color-soft-white) 100%);
 }
 
 .green {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  background: linear-gradient(135deg, var(--color-pastel-lilac) 0%, var(--color-deep-plum) 100%);
 }
 
 .right {
@@ -98,7 +100,7 @@
     top: 56px;
     left: 0;
     right: 0;
-    background: #fff;
+    background: var(--color-soft-lavender);
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
