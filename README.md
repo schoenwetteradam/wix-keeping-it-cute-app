@@ -119,7 +119,7 @@ END;
 $$ LANGUAGE plpgsql STABLE;
 ```
 
-The frontend calls `/api/get-dashboard-metrics` which executes this function and returns the results.
+The frontend calls `/api/get-dashboard-metrics` which executes this function and returns the results. By default each staff member can view only their own metrics. User IDs listed in the `ADMIN_USER_IDS` variable are allowed to request metrics for any staff member or for the entire business.
 
 ### Booking & Payments
 
