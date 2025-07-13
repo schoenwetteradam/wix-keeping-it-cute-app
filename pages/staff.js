@@ -447,7 +447,7 @@ export default function StaffPortal() {
         <header style={{
           background: '#F7F2ED',
           padding: '30px 20px',
-          color: 'white',
+          color: '#8A6780',
           textAlign: 'center',
           boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
         }}>
