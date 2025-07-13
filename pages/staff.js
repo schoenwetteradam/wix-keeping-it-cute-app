@@ -444,10 +444,10 @@ export default function StaffPortal() {
 
       <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
         {/* Header with Logo */}
-        <header style={{ 
-          background: `linear-gradient(135deg, ${branding?.primary_color || '#e0cdbb'} 0%, ${branding?.secondary_color || '#eee4da'} 100%)`,
+        <header style={{
+          background: '#F7F2ED',
           padding: '30px 20px',
-          color: 'white',
+          color: '#8A6780',
           textAlign: 'center',
           boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
         }}>
