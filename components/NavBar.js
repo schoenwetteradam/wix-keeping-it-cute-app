@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import { createClient } from '@supabase/supabase-js'
 import styles from './NavBar.module.css'
 
 export default function NavBar() {
   const [open, setOpen] = useState(false)
   const [toolsOpen, setToolsOpen] = useState(false)
+  const [user, setUser] = useState(null)
   const router = useRouter()
 
   // Close menus on route change
@@ -19,6 +21,20 @@ export default function NavBar() {
       router.events.off('routeChangeComplete', handleRouteChange)
     }
   }, [router.events])
+
+  useEffect(() => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!url || !key) return
+    const supabase = createClient(url, key)
+    supabase.auth.getUser().then(({ data }) => setUser(data?.user || null))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user || null)
+    })
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
 
   return (
     <nav className={styles.navbar}>
@@ -74,10 +90,31 @@ export default function NavBar() {
             <Link href="/upload-product-images" className={`${styles.action} ${styles.green}`}>
               📸 Upload Images
             </Link>
-            <Link href="/loyalty-dashboard" className={styles.action}>
-              💎 Loyalty Points
-            </Link>
-          </div>
+        <Link href="/loyalty-dashboard" className={styles.action}>
+          💎 Loyalty Points
+        </Link>
+      </div>
+    </div>
+        <div className={styles.right}>
+          {user && (
+            <>
+              <span className={styles.user}>{user.email}</span>
+              <Link href="/profile" className={styles.tab}>
+                Profile
+              </Link>
+              <button onClick={async () => {
+                const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+                const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+                if (url && key) {
+                  const supabase = createClient(url, key)
+                  await supabase.auth.signOut()
+                }
+                router.push('/login')
+              }} className={styles.tab}>
+                Logout
+              </button>
+            </>
+          )}
         </div>
       </div>
     </nav>

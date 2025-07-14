@@ -1,0 +1,93 @@
+import { useState, useEffect } from 'react'
+import Head from 'next/head'
+import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
+import { fetchWithAuth } from '../utils/api'
+
+export default function Profile() {
+  useRequireSupabaseAuth()
+  const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState(null)
+  const [form, setForm] = useState({ full_name: '', phone: '', address: '', gender: '' })
+  const [message, setMessage] = useState('')
+
+  useEffect(() => { loadProfile() }, [])
+
+  const loadProfile = async () => {
+    try {
+      const res = await fetchWithAuth('/api/profile')
+      if (res.ok) {
+        const data = await res.json()
+        setProfile(data.profile)
+        setForm({
+          full_name: data.profile.full_name || '',
+          phone: data.profile.phone || '',
+          address: data.profile.address || '',
+          gender: data.profile.gender || ''
+        })
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setMessage('')
+    const res = await fetchWithAuth('/api/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form)
+    })
+    if (res.ok) {
+      setMessage('Profile saved')
+    } else {
+      const err = await res.json().catch(() => ({}))
+      setMessage(err.error || 'Failed to save')
+    }
+  }
+
+  if (loading) {
+    return <p style={{ padding: '2rem' }}>Loading profile...</p>
+  }
+
+  return (
+    <>
+      <Head>
+        <title>My Profile - Keeping It Cute Salon</title>
+      </Head>
+      <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
+        <h1>My Profile</h1>
+        {message && <p>{message}</p>}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <label>
+            Full Name
+            <input type="text" name="full_name" value={form.full_name} onChange={handleChange} style={{ width: '100%', padding: '8px' }} />
+          </label>
+          <label>
+            Address
+            <input type="text" name="address" value={form.address} onChange={handleChange} style={{ width: '100%', padding: '8px' }} />
+          </label>
+          <label>
+            Phone
+            <input type="text" name="phone" value={form.phone} onChange={handleChange} style={{ width: '100%', padding: '8px' }} />
+          </label>
+          <label>
+            Gender
+            <input type="text" name="gender" value={form.gender} onChange={handleChange} style={{ width: '100%', padding: '8px' }} />
+          </label>
+          <label>
+            Email
+            <input type="email" value={profile?.email || ''} disabled style={{ width: '100%', padding: '8px' }} />
+          </label>
+          <button type="submit" style={{ padding: '10px', background: '#e0cdbb', border: 'none', borderRadius: '4px', color: 'white' }}>
+            Save
+          </button>
+        </form>
+      </div>
+    </>
+  )
+}
