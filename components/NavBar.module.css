@@ -82,6 +82,11 @@
   align-items: center;
 }
 
+.user {
+  font-weight: bold;
+  color: var(--color-soft-white);
+}
+
 .toggle {
   display: none;
   background: none;
