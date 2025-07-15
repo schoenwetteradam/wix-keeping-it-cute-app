@@ -15,7 +15,7 @@ BEGIN
   SELECT COUNT(*)
     INTO product_usage_needed
     FROM product_usage_sessions
-    WHERE completed = false;
+    WHERE is_completed = false;
 
   SELECT COUNT(*)
     INTO low_stock

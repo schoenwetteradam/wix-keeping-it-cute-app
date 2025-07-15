@@ -14,7 +14,7 @@ BEGIN
            AND appointment_date < NOW() + INTERVAL '7 days'),
       (SELECT COUNT(*) FROM product_usage_sessions
          WHERE (p_staff_id IS NULL OR staff_id = p_staff_id)
-           AND completed = false),
+           AND is_completed = false),
       (SELECT COUNT(*) FROM products
          WHERE is_active = true
            AND current_stock <= min_threshold),
