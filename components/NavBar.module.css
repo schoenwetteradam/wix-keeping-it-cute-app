@@ -87,6 +87,12 @@
   color: var(--color-soft-white);
 }
 
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
 .toggle {
   display: none;
   background: none;

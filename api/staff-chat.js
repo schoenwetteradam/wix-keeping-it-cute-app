@@ -1,6 +1,7 @@
 // api/staff-chat.js - Staff chat messages API
 import { createClient } from '@supabase/supabase-js'
 import { setCorsHeaders } from '../utils/cors'
+import requireAuth from '../utils/requireAuth'
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -37,14 +38,22 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     try {
-      const { content, username } = req.body || {}
+      const user = await requireAuth(req, res)
+      if (!user) return
+
+      const { content, username, avatar_url } = req.body || {}
       if (!content) {
         return res.status(400).json({ error: 'Message content required' })
       }
 
       const { data, error } = await supabase
         .from('staff_chat_messages')
-        .insert({ content, username })
+        .insert({
+          content,
+          username,
+          user_id: user.id,
+          avatar_url
+        })
         .select()
         .single()
 
