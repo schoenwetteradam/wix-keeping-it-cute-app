@@ -64,16 +64,22 @@ describe('staff-chat handler', () => {
     const from = jest.fn(() => query)
     jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
+    jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'u1' })))
 
     const { default: handler } = await import('../api/staff-chat.js')
 
-    const req = { method: 'POST', body: { content: 'hi' } }
+    const req = { method: 'POST', body: { content: 'hi', username: 'me', avatar_url: 'a' } }
     const res = createRes()
 
     await handler(req, res)
 
     expect(from).toHaveBeenCalledWith('staff_chat_messages')
-    expect(query.insert).toHaveBeenCalledWith({ content: 'hi', username: undefined })
+    expect(query.insert).toHaveBeenCalledWith({
+      content: 'hi',
+      username: 'me',
+      user_id: 'u1',
+      avatar_url: 'a'
+    })
     expect(query.select).toHaveBeenCalled()
     expect(query.single).toHaveBeenCalled()
     const response = res.json.mock.calls[0][0]

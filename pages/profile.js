@@ -7,6 +7,7 @@ export default function Profile() {
   useRequireSupabaseAuth()
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
+  const [avatarFile, setAvatarFile] = useState(null)
   const [form, setForm] = useState({ full_name: '', phone: '', address: '', gender: '' })
   const [message, setMessage] = useState('')
 
@@ -44,9 +45,25 @@ export default function Profile() {
     })
     if (res.ok) {
       setMessage('Profile saved')
+      if (avatarFile) await uploadAvatar()
     } else {
       const err = await res.json().catch(() => ({}))
       setMessage(err.error || 'Failed to save')
+    }
+  }
+
+  const uploadAvatar = async () => {
+    if (!avatarFile) return
+    const fd = new FormData()
+    fd.append('avatar', avatarFile)
+    const res = await fetchWithAuth('/api/upload-staff-avatar', {
+      method: 'POST',
+      body: fd
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setProfile(data.profile)
+      setAvatarFile(null)
     }
   }
 
@@ -63,6 +80,10 @@ export default function Profile() {
         <h1>My Profile</h1>
         {message && <p>{message}</p>}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <img src={profile?.avatar_url || '/images/avatar-placeholder.svg'} alt="avatar" style={{ width: '80px', height: '80px', borderRadius: '50%' }} />
+            <input type="file" accept="image/*" onChange={e => setAvatarFile(e.target.files[0])} />
+          </div>
           <label>
             Full Name
             <input type="text" name="full_name" value={form.full_name} onChange={handleChange} style={{ width: '100%', padding: '8px' }} />

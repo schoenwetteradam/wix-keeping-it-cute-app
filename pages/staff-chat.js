@@ -23,11 +23,16 @@ export default function StaffChat() {
   const [branding, setBranding] = useState(null)
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
+  const [profile, setProfile] = useState(null)
   const bottomRef = useRef(null)
 
   useEffect(() => {
     loadBranding()
     fetchMessages()
+    fetch('/api/profile')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => setProfile(data?.profile || null))
+      .catch(() => {})
 
     const channel = supabase
       .channel('staff_chat')
@@ -75,7 +80,11 @@ export default function StaffChat() {
       await fetchWithAuth('/api/staff-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newMessage })
+        body: JSON.stringify({
+          content: newMessage,
+          username: profile?.full_name,
+          avatar_url: profile?.avatar_url
+        })
       })
       setNewMessage('')
     } catch (err) {
@@ -97,8 +106,11 @@ export default function StaffChat() {
           <h1 style={{ marginTop: 0 }}>💬 Staff Chat</h1>
           <div style={{ maxHeight: '60vh', overflowY: 'auto', marginBottom: '20px' }}>
             {messages.map(msg => (
-              <div key={msg.id} style={{ marginBottom: '10px' }}>
-                <strong>{msg.username || 'Staff'}:</strong> {msg.content}
+              <div key={msg.id} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <img src={msg.avatar_url || '/images/avatar-placeholder.svg'} alt="avatar" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                <div>
+                  <strong>{msg.username || 'Staff'}:</strong> {msg.content}
+                </div>
               </div>
             ))}
             <div ref={bottomRef} />

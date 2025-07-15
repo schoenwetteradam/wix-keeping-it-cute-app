@@ -8,6 +8,7 @@ export default function NavBar() {
   const [open, setOpen] = useState(false)
   const [toolsOpen, setToolsOpen] = useState(false)
   const [user, setUser] = useState(null)
+  const [profile, setProfile] = useState(null)
   const router = useRouter()
 
   // Close menus on route change
@@ -35,6 +36,14 @@ export default function NavBar() {
       subscription.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    if (!user) return
+    fetch('/api/profile')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => setProfile(data?.profile || null))
+      .catch(() => {})
+  }, [user])
 
   return (
     <nav className={styles.navbar}>
@@ -98,6 +107,11 @@ export default function NavBar() {
         <div className={styles.right}>
           {user && (
             <>
+              <img
+                src={profile?.avatar_url || '/images/avatar-placeholder.svg'}
+                alt="avatar"
+                className={styles.avatar}
+              />
               <span className={styles.user}>{user.email}</span>
               <Link href="/profile" className={styles.tab}>
                 Profile
