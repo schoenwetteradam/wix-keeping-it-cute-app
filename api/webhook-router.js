@@ -396,6 +396,7 @@ async function processOrderEventJWT(event, eventData = null) {
       eventData ||
       event?.updatedEvent?.currentEntity ||
       event?.createdEvent?.entity ||
+      event?.actionEvent?.body?.order ||
       event;
 
     const orderRecord = {
@@ -412,6 +413,8 @@ async function processOrderEventJWT(event, eventData = null) {
         orderData.total,
       currency: orderData.currency || 'USD',
       payment_status: orderData.paymentStatus || 'NOT_PAID',
+      previous_payment_status:
+        event?.actionEvent?.body?.previousPaymentStatus,
       fulfillment_status: orderData.fulfillmentStatus || orderData.status,
       items: orderData.lineItems || orderData.items,
       billing_info: orderData.billingInfo,
