@@ -49,6 +49,7 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 - `POST /api/order-paid` - Purchase completions
 - `POST /api/invoice-paid` - Invoice payments
 - `POST /api/payment-approved` - Wix Cashier payment events
+- `payment_status_updated` events are handled via `/api/webhook-router`
 
 ### Analytics Webhooks
 - `POST /api/session-ended` - Website visitor sessions
