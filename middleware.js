@@ -8,6 +8,12 @@ export async function middleware(req) {
     return NextResponse.next()
   }
 
+  // Bypass authentication for Wix webhook router and log incoming headers
+  if (pathname.startsWith('/api/webhook-router')) {
+    console.log('Bypassing middleware for webhook-router. Headers:', Object.fromEntries(req.headers))
+    return NextResponse.next()
+  }
+
   const authHeader = req.headers.get('authorization')
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return new NextResponse('Unauthorized', { status: 401 })
