@@ -690,7 +690,11 @@ async function processBookingUpdated(webhookData) {
   try {
     console.log('🔄 Processing booking updated');
     
-    const booking = webhookData.updatedEvent?.entity || webhookData.createdEvent?.entity || webhookData;
+    const booking =
+      webhookData.updatedEvent?.currentEntity ||
+      webhookData.updatedEvent?.entity ||
+      webhookData.createdEvent?.entity ||
+      webhookData;
     
     const updateData = {
       customer_email: booking.contactDetails?.email,
