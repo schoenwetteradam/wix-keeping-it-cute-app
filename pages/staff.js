@@ -439,7 +439,7 @@ export default function StaffPortal() {
     <>
       <Head>
         <title>Staff Portal - {branding?.salon_name || 'Keeping It Cute Salon & Spa'}</title>
-        <link rel="icon" href={branding?.logo_url || '/favicon.ico'} />
+        <link rel="icon" href={branding?.favicon_url || branding?.logo_url || '/favicon.ico'} />
       </Head>
 
       <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>

@@ -7,12 +7,15 @@ import { fetchWithAuth } from '../utils/api'
 
 const BASE_STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET}`
 const DEFAULT_LOGO = `${BASE_STORAGE_URL}/logo/salon-logo.png`
+const DEFAULT_FAVICON = `${BASE_STORAGE_URL}/logo/favicon.ico`
 
 export default function LogoManagement() {
   const router = useRouter()
   const [branding, setBranding] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [uploadResult, setUploadResult] = useState(null)
+  const [faviconUploading, setFaviconUploading] = useState(false)
+  const [faviconUploadResult, setFaviconUploadResult] = useState(null)
   const [dragOver, setDragOver] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -120,6 +123,45 @@ export default function LogoManagement() {
     }
   }
 
+  const handleFaviconUpload = async (file) => {
+    if (!file) return
+    if (!['image/png', 'image/x-icon', 'image/vnd.microsoft.icon', 'image/svg+xml'].includes(file.type)) {
+      alert('Please select a valid favicon file (ICO, PNG, or SVG)')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Favicon file size must be less than 2MB')
+      return
+    }
+
+    setFaviconUploading(true)
+    setFaviconUploadResult(null)
+
+    try {
+      const fd = new FormData()
+      fd.append('favicon', file)
+      const res = await fetchWithAuth('/api/upload-favicon', { method: 'POST', body: fd })
+      const result = await res.json()
+      if (result.success) {
+        setFaviconUploadResult(result)
+        await loadBranding()
+        setTimeout(() => setFaviconUploadResult(null), 5000)
+      } else {
+        throw new Error(result.error || 'Favicon upload failed')
+      }
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setFaviconUploading(false)
+    }
+  }
+
+  const handleFaviconInputChange = (e) => {
+    if (e.target.files[0]) {
+      handleFaviconUpload(e.target.files[0])
+    }
+  }
+
   // Fixed image error handler
   const handleImageError = (e) => {
     if (e.target.dataset.fallbackSet === 'true') return;
@@ -215,7 +257,7 @@ export default function LogoManagement() {
 
           {/* Success Display */}
           {uploadResult && (
-            <div style={{ 
+            <div style={{
               background: '#d4edda',
               color: '#155724',
               padding: '15px',
@@ -224,6 +266,18 @@ export default function LogoManagement() {
               border: '1px solid #c3e6cb'
             }}>
               ✅ Success: {uploadResult.message}
+            </div>
+          )}
+          {faviconUploadResult && (
+            <div style={{
+              background: '#d4edda',
+              color: '#155724',
+              padding: '15px',
+              borderRadius: '6px',
+              marginBottom: '20px',
+              border: '1px solid #c3e6cb'
+            }}>
+              ✅ Success: {faviconUploadResult.message}
             </div>
           )}
 
@@ -337,6 +391,27 @@ export default function LogoManagement() {
             </div>
           </div>
 
+          {/* Current Favicon */}
+          <div style={{
+            background: 'white',
+            padding: '25px',
+            borderRadius: '12px',
+            marginBottom: '25px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{ margin: '0 0 20px 0', color: '#333' }}>Current Favicon</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <img
+                src={branding?.favicon_url || DEFAULT_FAVICON}
+                alt="Favicon"
+                style={{ height: '32px', width: '32px' }}
+              />
+              <span style={{ fontFamily: 'monospace', fontSize: '0.9em' }}>
+                {branding?.favicon_url || DEFAULT_FAVICON}
+              </span>
+            </div>
+          </div>
+
           {/* Upload New Logo */}
           <div style={{ 
             background: 'white',
@@ -408,6 +483,39 @@ export default function LogoManagement() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Upload New Favicon */}
+          <div style={{
+            background: 'white',
+            padding: '25px',
+            borderRadius: '12px',
+            marginBottom: '25px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{ margin: '0 0 20px 0', color: '#333' }}>Upload New Favicon</h3>
+            {faviconUploading ? (
+              <p>Uploading favicon...</p>
+            ) : (
+              <input
+                type="file"
+                accept="image/x-icon,image/png,image/svg+xml"
+                onChange={handleFaviconInputChange}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#e0cdbb',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold'
+                }}
+              />
+            )}
+            {faviconUploadResult && (
+              <p style={{ color: '#155724', marginTop: '10px' }}>{faviconUploadResult.message}</p>
+            )}
           </div>
 
           {/* Logo Guidelines */}
