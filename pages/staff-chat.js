@@ -29,8 +29,8 @@ export default function StaffChat() {
   useEffect(() => {
     loadBranding()
     fetchMessages()
-    fetch('/api/profile')
-      .then(res => res.ok ? res.json() : null)
+    fetchWithAuth('/api/profile')
+      .then(res => (res.ok ? res.json() : null))
       .then(data => setProfile(data?.profile || null))
       .catch(() => {})
 

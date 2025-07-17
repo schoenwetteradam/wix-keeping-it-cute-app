@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { createClient } from '@supabase/supabase-js'
+import { fetchWithAuth } from '../utils/api'
 import styles from './NavBar.module.css'
 
 export default function NavBar() {
@@ -39,8 +40,8 @@ export default function NavBar() {
 
   useEffect(() => {
     if (!user) return
-    fetch('/api/profile')
-      .then(res => res.ok ? res.json() : null)
+    fetchWithAuth('/api/profile')
+      .then(res => (res.ok ? res.json() : null))
       .then(data => setProfile(data?.profile || null))
       .catch(() => {})
   }, [user])
