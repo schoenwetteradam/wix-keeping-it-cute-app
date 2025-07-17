@@ -64,8 +64,10 @@ export default async function handler(req, res) {
       console.log('📝 Creating default branding record...')
       
       const { data: defaultUrlData } = supabase.storage.from(BUCKET).getPublicUrl('logo/salon-logo.svg')
+      const { data: defaultFaviconData } = supabase.storage.from(BUCKET).getPublicUrl('logo/favicon.ico')
       const defaultBranding = {
         logo_url: defaultUrlData.publicUrl,
+        favicon_url: defaultFaviconData.publicUrl,
         primary_color: '#e0cdbb',
         secondary_color: '#eee4da',
         salon_name: 'Keeping It Cute Salon & Spa',
@@ -106,8 +108,10 @@ export default async function handler(req, res) {
     
     // Return defaults if everything fails
     const { data: fallbackUrlData } = supabase.storage.from(BUCKET).getPublicUrl('logo/salon-logo.png')
+    const { data: fallbackFaviconData } = supabase.storage.from(BUCKET).getPublicUrl('logo/favicon.ico')
     const fallbackBranding = {
       logo_url: fallbackUrlData.publicUrl,
+      favicon_url: fallbackFaviconData.publicUrl,
       primary_color: '#e0cdbb',
       secondary_color: '#eee4da',
       salon_name: 'Keeping It Cute Salon & Spa',
