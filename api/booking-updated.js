@@ -59,14 +59,63 @@ export default async function handler(req, res) {
         console.error('Service lookup error:', svcError.message);
       }
 
-      if (svc) {
-        updateData.service_id = svc.id;
-        if (!updateData.service_duration) {
-          updateData.service_duration = svc.duration_minutes;
-        }
-        if (!updateData.total_price) {
-          updateData.total_price = svc.price;
-        }
+    if (svc) {
+      updateData.service_id = svc.id;
+      if (!updateData.service_duration) {
+        updateData.service_duration = svc.duration_minutes;
+      }
+      if (!updateData.total_price) {
+        updateData.total_price = svc.price;
+      }
+    }
+  }
+
+    // Link to contact/customer record
+    if (bookingData.contactDetails?.contactId || updateData.customer_email) {
+      const { data: contact } = await supabase
+        .from('contacts')
+        .select('id')
+        .or(
+          [
+            bookingData.contactDetails?.contactId
+              ? `wix_contact_id.eq.${bookingData.contactDetails.contactId}`
+              : null,
+            updateData.customer_email
+              ? `email.eq.${updateData.customer_email}`
+              : null
+          ]
+            .filter(Boolean)
+            .join(',')
+        )
+        .maybeSingle();
+      if (contact) {
+        updateData.customer_id = contact.id;
+      }
+    }
+
+    // Link to staff profile
+    if (updateData.staff_member) {
+      const { data: staff } = await supabase
+        .from('staff_profiles')
+        .select('id')
+        .ilike('full_name', updateData.staff_member)
+        .maybeSingle();
+      if (staff) {
+        updateData.staff_id = staff.id;
+      }
+    }
+
+    // Link to order if provided
+    const wixOrderId = bookingData.order_id || bookingData.orderId;
+    if (wixOrderId) {
+      updateData.wix_order_id = wixOrderId;
+      const { data: order } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('wix_order_id', wixOrderId)
+        .maybeSingle();
+      if (order) {
+        updateData.order_id = order.id;
       }
     }
 
