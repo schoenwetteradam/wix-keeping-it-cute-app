@@ -31,6 +31,7 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 | `staff_chat_messages` | Internal staff chat | Message content and timestamps |
 | `purchase_orders` | Supply ordering | Vendor info, totals, status |
 | `purchase_order_items` | Items on a purchase order | Product ID, quantity, cost |
+| `purchase_receipts` | Uploaded receipts | File URLs linked to purchase orders |
 
 ## 🔗 API Endpoints
 
@@ -71,6 +72,8 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 - `POST /api/purchase-order-items` - Add an item to a purchase order
 - `PUT /api/purchase-order-items` - Update a purchase order item
 - `DELETE /api/purchase-order-items` - Delete a purchase order item
+- `GET /api/get-purchase-receipts/[purchaseOrderId]` - List receipts for a purchase order
+- `POST /api/upload-purchase-receipt` - Upload a receipt image and record it
 
 Example usage:
 
@@ -85,6 +88,11 @@ curl '/api/get-customers?search=jane'
 curl -X POST -H 'Content-Type: application/json' \
   -d '{"vendor_id":"123","order_date":"2024-01-01"}' \
   /api/purchase-orders
+
+# Upload a receipt for a purchase order
+curl -X POST -H 'Authorization: Bearer YOUR_TOKEN' \
+  -F purchase_order_id=123 -F receipt=@path/to/file.jpg \
+  /api/upload-purchase-receipt
 ```
 
 ### Dashboard Metrics
@@ -217,7 +225,7 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 - `SUPABASE_STORAGE_BUCKET` (e.g., `salon-images`)
 - `NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET` (same as above for the browser)
 - `SUPABASE_CLIENT_UPLOADS_BUCKET` bucket for before/after service photos
-- `SUPABASE_RECEIPTS_BUCKET` bucket for product usage receipts
+- `SUPABASE_RECEIPTS_BUCKET` bucket for uploaded receipts
 - `WIX_API_TOKEN` Wix API token used for booking operations
 - `WIX_WEBHOOK_SECRET` secret used to verify Wix webhooks
 - `ADMIN_USER_IDS` comma-separated Supabase user IDs allowed to view all staff metrics
