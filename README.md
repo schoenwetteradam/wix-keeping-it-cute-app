@@ -74,6 +74,7 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 - `DELETE /api/purchase-order-items` - Delete a purchase order item
 - `GET /api/get-purchase-receipts/[purchaseOrderId]` - List receipts for a purchase order
 - `POST /api/upload-purchase-receipt` - Upload a receipt image and record it
+- `GET /api/get-site-analytics` - Query Wix site analytics metrics
 
 Example usage:
 
@@ -228,6 +229,7 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 - `SUPABASE_RECEIPTS_BUCKET` bucket for uploaded receipts
 - `WIX_API_TOKEN` Wix API token used for booking operations
 - `WIX_WEBHOOK_SECRET` secret used to verify Wix webhooks
+- `WIX_API_AUTH` Authorization header value for Wix analytics requests
 - `ADMIN_USER_IDS` comma-separated Supabase user IDs allowed to view all staff metrics
 
 Generate these values in the **Wix Developer Center** by creating (or selecting)
