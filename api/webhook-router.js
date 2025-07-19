@@ -267,6 +267,8 @@ async function processNewFormatWebhook(webhookData) {
     return await processBookingEventNewFormat(webhookData);
   } else if (webhookData.entityFqdn === 'wix.ecom.v1.order') {
     return await processOrderEvent(webhookData);
+  } else if (webhookData.entityFqdn === 'wix.loyalty.v1.account') {
+    return await processLoyaltyEvent(webhookData);
   } else {
     return await logUnknownEvent(eventType, webhookData);
   }
@@ -288,6 +290,8 @@ async function processJWTWebhook(event, eventData) {
     return await processBookingEventJWT(event, eventData);
   } else if (event?.entityFqdn === 'wix.ecom.v1.order') {
     return await processOrderEventJWT(event, eventData);
+  } else if (event?.entityFqdn === 'wix.loyalty.v1.account') {
+    return await processLoyaltyEventJWT(event, eventData);
   } else {
     return await logUnknownEvent(eventType, event);
   }
@@ -449,6 +453,53 @@ async function processOrderEventJWT(event, eventData = null) {
 
   } catch (error) {
     console.error('❌ Order processing failed:', error);
+    throw error;
+  }
+}
+
+// === LOYALTY PROCESSING ===
+async function processLoyaltyEvent(webhookData) {
+  return await processLoyaltyEventJWT(
+    webhookData,
+    webhookData.updatedEvent?.currentEntity || webhookData.createdEvent?.entity || webhookData
+  );
+}
+
+async function processLoyaltyEventJWT(event, eventData = null) {
+  try {
+    console.log('🏆 Processing loyalty event...');
+
+    const loyalty = eventData || event;
+
+    const loyaltyRecord = {
+      contact_id: loyalty.contactId,
+      name: loyalty.contact?.name || loyalty.contact?.displayName,
+      email: loyalty.contact?.email,
+      points_balance: loyalty.points?.balance,
+      redeemed_points: loyalty.points?.redeemed,
+      last_activity: loyalty.lastActivityDate || loyalty.updatedDate
+    };
+
+    Object.keys(loyaltyRecord).forEach(key => {
+      if (loyaltyRecord[key] === undefined) delete loyaltyRecord[key];
+    });
+
+    const { data, error } = await supabase
+      .from('loyalty')
+      .upsert(loyaltyRecord, { onConflict: 'contact_id', ignoreDuplicates: false })
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.error('❌ Loyalty upsert error:', error);
+      throw error;
+    }
+
+    console.log('✅ Loyalty event processed:', data?.id);
+
+    return { type: 'loyalty_processed', loyalty_id: data?.id, contact_id: loyaltyRecord.contact_id };
+  } catch (error) {
+    console.error('❌ Loyalty processing failed:', error);
     throw error;
   }
 }
