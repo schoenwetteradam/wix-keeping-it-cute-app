@@ -45,11 +45,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid page or limit parameter' });
     }
     
-    let staffId = staff_id
-    if (!isAdmin || staffId === undefined) {
+    let staffId
+    if (isAdmin) {
+      staffId = staff_id
+      if (staffId === undefined || staffId === '' || staffId === 'null') {
+        staffId = null
+      }
+    } else {
       staffId = user.id
-    } else if (staffId === '' || staffId === 'null') {
-      staffId = null
     }
 
     let query = supabase

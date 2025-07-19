@@ -89,4 +89,38 @@ describe('get-appointments handler', () => {
 
     expect(query.eq).toHaveBeenCalledWith('staff_id', 'staff2')
   })
+
+  test('admin defaults to all staff when no staff_id provided', async () => {
+    const query = createQuery({ data: [], error: null })
+    const from = jest.fn(() => query)
+    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
+    jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'admin1' })))
+
+    const { default: handler } = await import('../api/get-appointments.js')
+
+    const req = { method: 'GET', query: {} }
+    const res = createRes()
+
+    await handler(req, res)
+
+    expect(query.eq).not.toHaveBeenCalledWith('staff_id', expect.anything())
+  })
+
+  test('admin can request all staff using null value', async () => {
+    const query = createQuery({ data: [], error: null })
+    const from = jest.fn(() => query)
+    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
+    jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'admin1' })))
+
+    const { default: handler } = await import('../api/get-appointments.js')
+
+    const req = { method: 'GET', query: { staff_id: 'null' } }
+    const res = createRes()
+
+    await handler(req, res)
+
+    expect(query.eq).not.toHaveBeenCalledWith('staff_id', expect.anything())
+  })
 });
