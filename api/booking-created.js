@@ -106,6 +106,55 @@ export default async function handler(req, res) {
       bookingRecord.total_price = serviceLookup.price;
     }
   }
+
+  // Link to contact/customer record
+  if (bookingRecord.wix_contact_id || bookingRecord.customer_email) {
+    const { data: contact } = await supabase
+      .from('contacts')
+      .select('id')
+      .or(
+        [
+          bookingRecord.wix_contact_id
+            ? `wix_contact_id.eq.${bookingRecord.wix_contact_id}`
+            : null,
+          bookingRecord.customer_email
+            ? `email.eq.${bookingRecord.customer_email}`
+            : null
+        ]
+          .filter(Boolean)
+          .join(',')
+      )
+      .maybeSingle();
+    if (contact) {
+      bookingRecord.customer_id = contact.id;
+    }
+  }
+
+  // Link to staff profile
+  if (bookingRecord.staff_member) {
+    const { data: staff } = await supabase
+      .from('staff_profiles')
+      .select('id')
+      .ilike('full_name', bookingRecord.staff_member)
+      .maybeSingle();
+    if (staff) {
+      bookingRecord.staff_id = staff.id;
+    }
+  }
+
+  // Link to order if provided
+  const wixOrderId = bookingData.order_id || bookingData.orderId;
+  if (wixOrderId) {
+    bookingRecord.wix_order_id = wixOrderId;
+    const { data: order } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('wix_order_id', wixOrderId)
+      .maybeSingle();
+    if (order) {
+      bookingRecord.order_id = order.id;
+    }
+  }
    
    // Remove undefined values to prevent database errors
    Object.keys(bookingRecord).forEach(key => {
