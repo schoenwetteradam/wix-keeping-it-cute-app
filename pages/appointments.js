@@ -85,6 +85,45 @@ export default function AppointmentsPage() {
     }
   }
 
+  const markPaid = async (apt) => {
+    if (!confirm('Mark this appointment as paid?')) return
+    try {
+      const res = await fetchWithAuth(`/api/mark-booking-paid/${apt.id}`, {
+        method: 'POST'
+      })
+      if (!res.ok) throw new Error('Mark paid failed')
+      setAppointments(
+        appointments.map(a =>
+          a.id === apt.id ? { ...a, payment_status: 'paid' } : a
+        )
+      )
+    } catch (err) {
+      alert('Failed to mark paid')
+      console.error('Mark paid error:', err)
+    }
+  }
+
+  const editNotes = async (apt) => {
+    const newNotes = prompt('Appointment notes', apt.notes || '')
+    if (newNotes === null) return
+    try {
+      const res = await fetchWithAuth('/api/update-appointment-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appointment_id: apt.id, notes: newNotes })
+      })
+      if (!res.ok) throw new Error('Failed to update notes')
+      setAppointments(
+        appointments.map(a =>
+          a.id === apt.id ? { ...a, notes: newNotes } : a
+        )
+      )
+    } catch (err) {
+      alert('Failed to save notes')
+      console.error('Update notes error:', err)
+    }
+  }
+
   if (loading) return <p style={{padding:'20px'}}>Loading appointments...</p>
   if (error) return <p style={{padding:'20px',color:'red'}}>Error: {error}</p>
 
@@ -101,6 +140,10 @@ export default function AppointmentsPage() {
               <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Service</th>
               <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Time</th>
               <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Status</th>
+              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Payment</th>
+              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Price</th>
+              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Staff</th>
+              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Notes</th>
               <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Actions</th>
             </tr>
           </thead>
@@ -111,10 +154,21 @@ export default function AppointmentsPage() {
                 <td>{apt.service_name || 'Service'}</td>
                 <td>{apt.appointment_date ? new Date(apt.appointment_date).toLocaleString() : ''}</td>
                 <td>{apt.status}</td>
+                <td>{apt.payment_status || 'pending'}</td>
+                <td>{apt.total_price ? `$${parseFloat(apt.total_price).toFixed(2)}` : ''}</td>
+                <td>{apt.staff_member || ''}</td>
+                <td>{apt.notes ? apt.notes.substring(0, 40) : ''}</td>
                 <td>
                   <button onClick={() => completeAppointment(apt)} style={{ marginRight: '8px' }}>Complete</button>
                   <button onClick={() => cancelAppointment(apt)} style={{ marginRight: '8px' }}>Cancel</button>
-                  <button onClick={() => rescheduleAppointment(apt)}>Reschedule</button>
+                  <button onClick={() => rescheduleAppointment(apt)} style={{ marginRight: '8px' }}>Reschedule</button>
+                  {apt.payment_status !== 'paid' && (
+                    <button onClick={() => markPaid(apt)} style={{ marginRight: '8px' }}>Mark Paid</button>
+                  )}
+                  <button onClick={() => editNotes(apt)} style={{ marginRight: '8px' }}>Notes</button>
+                  <button onClick={() => window.open(`/product-usage/${apt.id}`, '_blank')} style={{ marginRight: '8px' }}>Usage</button>
+                  <button onClick={() => window.open(`/booking-images/${apt.id}`, '_blank')} style={{ marginRight: '8px' }}>Images</button>
+                  <button onClick={() => window.open(`/collect-payment/${apt.id}`, '_blank')}>Collect</button>
                 </td>
               </tr>
             ))}
