@@ -343,12 +343,14 @@ npm install
 npm test
 ```
 
-The repository contains three tests across two files. When they all pass you should see output similar to:
+The repository contains a comprehensive suite of around 22 test files. When they all pass you should see output similar to:
 
 ```text
  PASS  tests/auth.test.js
  PASS  tests/supabaseClient.test.js
-
-Test Suites: 2 passed, 2 total
-Tests:       3 passed, 3 total
+ PASS  tests/get-appointments.test.js
+ PASS  tests/webhook-router-booking-updated.test.js
+ ...
+Test Suites: 22 passed, 22 total
+Tests:       47 passed, 47 total
 ```
