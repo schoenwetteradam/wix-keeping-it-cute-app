@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createClient } from '@supabase/supabase-js'
 import CalendarView from '../components/CalendarView'
 import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
 import { fetchWithAuth } from '../utils/api'
@@ -15,10 +16,17 @@ export default function AppointmentsPage() {
   const loadAppointments = async () => {
     setLoading(true)
     try {
-      const res = await fetchWithAuth('/api/get-appointments')
-      if (!res.ok) throw new Error('Failed to load appointments')
-      const data = await res.json()
-      setAppointments(data.appointments || [])
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      if (!url || !key) throw new Error('Missing Supabase env vars')
+      const supabase = createClient(url, key)
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*, salon_services(*)')
+        .order('appointment_date', { ascending: false })
+        .limit(50)
+      if (error) throw error
+      setAppointments(data || [])
       setError(null)
     } catch (err) {
       setError(err.message)
@@ -163,7 +171,9 @@ export default function AppointmentsPage() {
         <button onClick={() => setAppointmentView(appointmentView === 'list' ? 'calendar' : 'list')} style={{ padding: '10px', borderRadius: '4px', cursor: 'pointer' }}>
           {appointmentView === 'list' ? 'Calendar View' : 'List View'}
         </button>
-        <span style={{ alignSelf: 'center', fontWeight: 'bold' }}>Appointments: {sorted.length}</span>
+        <span style={{ alignSelf: 'center', fontWeight: 'bold' }}>
+          Appointments: {appointments.length}
+        </span>
       </div>
       {appointments.length === 0 ? (
         <p>No appointments found.</p>
