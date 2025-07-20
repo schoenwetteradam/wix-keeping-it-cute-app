@@ -215,6 +215,7 @@ export default function AppointmentsPage() {
                   <button onClick={() => editNotes(apt)} style={{ marginRight: '8px' }}>Notes</button>
                   <button onClick={() => window.open(`/product-usage/${apt.id}`, '_blank')} style={{ marginRight: '8px' }}>Usage</button>
                   <button onClick={() => window.open(`/booking-images/${apt.id}`, '_blank')} style={{ marginRight: '8px' }}>Images</button>
+                  <button onClick={() => window.open(`/booking-details/${apt.id}`, '_blank')} style={{ marginRight: '8px' }}>Details</button>
                   <button onClick={() => window.open(`/collect-payment/${apt.id}`, '_blank')}>Collect</button>
                 </td>
               </tr>
