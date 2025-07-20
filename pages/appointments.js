@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import CalendarView from '../components/CalendarView'
 import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
 import { fetchWithAuth } from '../utils/api'
 
@@ -7,6 +8,9 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [appointmentSearch, setAppointmentSearch] = useState('')
+  const [appointmentSort, setAppointmentSort] = useState('newest')
+  const [appointmentView, setAppointmentView] = useState('list')
 
   const loadAppointments = async () => {
     setLoading(true)
@@ -124,14 +128,47 @@ export default function AppointmentsPage() {
     }
   }
 
+  const term = appointmentSearch.toLowerCase()
+  const filtered = appointments.filter(
+    (a) =>
+      (a.customer_name || '').toLowerCase().includes(term) ||
+      (a.customer_email || '').toLowerCase().includes(term)
+  )
+  const sorted = filtered.sort((a, b) => {
+    if (appointmentSort === 'oldest') {
+      return new Date(a.appointment_date) - new Date(b.appointment_date)
+    }
+    return new Date(b.appointment_date) - new Date(a.appointment_date)
+  })
+
+
   if (loading) return <p style={{padding:'20px'}}>Loading appointments...</p>
   if (error) return <p style={{padding:'20px',color:'red'}}>Error: {error}</p>
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h1 style={{ marginBottom: '20px' }}>Appointments</h1>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          placeholder="Search appointments..."
+          value={appointmentSearch}
+          onChange={(e) => setAppointmentSearch(e.target.value)}
+          style={{ flex: '2', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', minWidth: '200px' }}
+        />
+        <select value={appointmentSort} onChange={(e) => setAppointmentSort(e.target.value)} style={{ padding: '10px', borderRadius: '4px' }}>
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+        </select>
+        <button onClick={() => setAppointmentView(appointmentView === 'list' ? 'calendar' : 'list')} style={{ padding: '10px', borderRadius: '4px', cursor: 'pointer' }}>
+          {appointmentView === 'list' ? 'Calendar View' : 'List View'}
+        </button>
+        <span style={{ alignSelf: 'center', fontWeight: 'bold' }}>Appointments: {sorted.length}</span>
+      </div>
       {appointments.length === 0 ? (
         <p>No appointments found.</p>
+      ) : appointmentView === 'calendar' ? (
+        <CalendarView appointments={appointments} onAppointmentClick={() => {}} />
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
@@ -148,7 +185,7 @@ export default function AppointmentsPage() {
             </tr>
           </thead>
           <tbody>
-            {appointments.map(apt => (
+            {sorted.map(apt => (
               <tr key={apt.id} style={{ borderBottom: '1px solid #eee' }}>
                 <td>{apt.customer_name || 'Customer'}</td>
                 <td>{apt.service_name || 'Service'}</td>
