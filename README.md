@@ -75,6 +75,8 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 - `GET /api/get-purchase-receipts/[purchaseOrderId]` - List receipts for a purchase order
 - `POST /api/upload-purchase-receipt` - Upload a receipt image and record it
 - `GET /api/get-site-analytics` - Query Wix site analytics metrics
+  (see `pages/site-analytics.js` for the full list of supported reports)
+- `/site-analytics` - Run analytics queries from the dashboard
 
 Example usage:
 
