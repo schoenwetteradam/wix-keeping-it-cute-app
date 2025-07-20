@@ -293,6 +293,37 @@ export default function StaffPortal() {
     }
   }
 
+  const markAppointmentPaid = async (appointment) => {
+    if (!appointment) return
+    if (!confirm('Mark this appointment as paid?')) return
+
+    try {
+      const response = await fetchWithAuth(`/api/mark-booking-paid/${appointment.id}`, {
+        method: 'POST'
+      })
+
+      if (!response.ok) throw new Error('Mark paid failed')
+
+      setAppointments(
+        appointments.map((a) =>
+          a.id === appointment.id ? { ...a, payment_status: 'paid' } : a
+        )
+      )
+
+      if (selectedAppointment?.id === appointment.id) {
+        setSelectedAppointment({
+          ...selectedAppointment,
+          payment_status: 'paid'
+        })
+      }
+
+      alert('Appointment marked as paid')
+    } catch (error) {
+      console.error('Error marking appointment paid:', error)
+      alert('Failed to mark appointment as paid')
+    }
+  }
+
   const navigateToAudit = () => {
     router.push('/inventory-audit')
   }
@@ -1645,6 +1676,22 @@ export default function StaffPortal() {
                         }}
                       >
                         Collect Payment
+                      </button>
+                    )}
+                    {selectedAppointment.payment_status !== 'paid' && (
+                      <button
+                        onClick={() => markAppointmentPaid(selectedAppointment)}
+                        style={{
+                          background: '#2e7d32',
+                          color: 'white',
+                          border: 'none',
+                          padding: '12px 20px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        Mark Paid
                       </button>
                     )}
                   </>
