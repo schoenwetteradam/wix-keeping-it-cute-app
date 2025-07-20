@@ -113,6 +113,7 @@ export default function Dashboard() {
           <Link href="/product-usage-dashboard" style={{ padding: '10px 15px', background: '#e0cdbb', color: 'white', borderRadius: '6px', textDecoration: 'none' }}>Log Product Usage</Link>
           <Link href="/staff?tab=appointments" style={{ padding: '10px 15px', background: '#667eea', color: 'white', borderRadius: '6px', textDecoration: 'none' }}>View All Appointments</Link>
           <Link href="/alerts" style={{ padding: '10px 15px', background: '#d32f2f', color: 'white', borderRadius: '6px', textDecoration: 'none' }}>Restock Inventory</Link>
+          <Link href="/site-analytics" style={{ padding: '10px 15px', background: '#1976d2', color: 'white', borderRadius: '6px', textDecoration: 'none' }}>Site Analytics</Link>
         </div>
       </div>
     </>
