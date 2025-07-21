@@ -3,7 +3,7 @@ const createQuery = (result) => {
   const promise = Promise.resolve(result);
   promise.select = jest.fn(() => promise);
   promise.order = jest.fn(() => promise);
-  promise.limit = jest.fn(() => promise);
+  promise.range = jest.fn(() => promise);
   promise.eq = jest.fn(() => promise);
   return promise;
 };
