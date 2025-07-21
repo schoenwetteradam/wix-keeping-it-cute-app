@@ -1,12 +1,6 @@
 // api/get-appointments.js
 import { createClient } from '@supabase/supabase-js'
 import { setCorsHeaders } from '../utils/cors'
-import requireAuth from '../utils/requireAuth'
-
-const ADMIN_IDS = (process.env.ADMIN_USER_IDS || '')
-  .split(',')
-  .map((id) => id.trim())
-  .filter(Boolean)
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -26,18 +20,7 @@ export default async function handler(req, res) {
   }
   
   try {
-    const user = await requireAuth(req, res)
-    if (!user) return
-
-    const isAdmin = ADMIN_IDS.includes(user.id)
-
-    const {
-      page = '1',
-      limit = '50',
-      status,
-      payment_status,
-      staff_id
-    } = req.query
+    const { page = '1', limit = '50', status, payment_status } = req.query
 
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
@@ -45,13 +28,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid page or limit parameter' });
     }
     
-    let staffId = staff_id
-    if (!isAdmin || staffId === undefined) {
-      staffId = user.id
-    } else if (staffId === '' || staffId === 'null') {
-      staffId = null
-    }
-
     let query = supabase
       .from('bookings')
       .select('*, salon_services(*)')
@@ -66,9 +42,6 @@ export default async function handler(req, res) {
       query = query.eq('payment_status', payment_status);
     }
 
-    if (staffId) {
-      query = query.eq('staff_id', staffId)
-    }
     
     const { data: appointments, error } = await query;
 
