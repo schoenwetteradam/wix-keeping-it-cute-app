@@ -428,6 +428,46 @@ async function processOrderEventJWT(event, eventData = null) {
       updated_at: orderData.updatedDate || new Date().toISOString()
     };
 
+    const wixBookingId =
+      orderData.bookingId ||
+      orderData.wixBookingId ||
+      orderData.wixAppBookingId ||
+      orderData.bookings?.[0]?.bookingId;
+
+    if (wixBookingId) {
+      orderRecord.wix_booking_id = wixBookingId;
+      const { data: booking } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('wix_booking_id', wixBookingId)
+        .maybeSingle();
+      if (booking) {
+        orderRecord.booking_id = booking.id;
+      }
+    }
+
+    if (orderData.buyerInfo?.contactId || orderRecord.customer_email) {
+      const { data: contact } = await supabase
+        .from('contacts')
+        .select('id')
+        .or(
+          [
+            orderData.buyerInfo?.contactId
+              ? `wix_contact_id.eq.${orderData.buyerInfo.contactId}`
+              : null,
+            orderRecord.customer_email
+              ? `email.eq.${orderRecord.customer_email}`
+              : null
+          ]
+            .filter(Boolean)
+            .join(',')
+        )
+        .maybeSingle();
+      if (contact) {
+        orderRecord.customer_id = contact.id;
+      }
+    }
+
     Object.keys(orderRecord).forEach(key => {
       if (orderRecord[key] === undefined) delete orderRecord[key];
     });

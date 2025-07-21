@@ -16,8 +16,14 @@ export default async function handler(req, res) {
 
     const updateData = {
       order_number: orderData.number || orderData.orderNumber,
-      customer_email: orderData.buyerInfo?.email || orderData.billingInfo?.email || orderData.contactDetails?.email,
-      total_amount: orderData.totals?.total || orderData.pricing?.total || orderData.price?.total,
+      customer_email:
+        orderData.buyerInfo?.email ||
+        orderData.billingInfo?.email ||
+        orderData.contactDetails?.email,
+      total_amount:
+        orderData.totals?.total ||
+        orderData.pricing?.total ||
+        orderData.price?.total,
       currency: orderData.currency || 'USD',
       payment_status: orderData.paymentStatus,
       fulfillment_status: orderData.fulfillmentStatus || orderData.status,
@@ -26,7 +32,47 @@ export default async function handler(req, res) {
       shipping_info: orderData.shippingInfo,
       status: orderData.status,
       payload: orderData,
-      updated_at: new Date().toISOString()
+      updated_at: orderData.updatedDate || new Date().toISOString()
+    }
+
+    const wixBookingId =
+      orderData.bookingId ||
+      orderData.wixBookingId ||
+      orderData.wixAppBookingId ||
+      orderData.bookings?.[0]?.bookingId
+
+    if (wixBookingId) {
+      updateData.wix_booking_id = wixBookingId
+      const { data: booking } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('wix_booking_id', wixBookingId)
+        .maybeSingle()
+      if (booking) {
+        updateData.booking_id = booking.id
+      }
+    }
+
+    if (orderData.buyerInfo?.contactId || updateData.customer_email) {
+      const { data: contact } = await supabase
+        .from('contacts')
+        .select('id')
+        .or(
+          [
+            orderData.buyerInfo?.contactId
+              ? `wix_contact_id.eq.${orderData.buyerInfo.contactId}`
+              : null,
+            updateData.customer_email
+              ? `email.eq.${updateData.customer_email}`
+              : null
+          ]
+            .filter(Boolean)
+            .join(',')
+        )
+        .maybeSingle()
+      if (contact) {
+        updateData.customer_id = contact.id
+      }
     }
 
     Object.keys(updateData).forEach(key => {
