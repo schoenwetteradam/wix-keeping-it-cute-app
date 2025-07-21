@@ -28,11 +28,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid page or limit parameter' });
     }
     
+    const from = (pageNum - 1) * limitNum;
+    const to = from + limitNum - 1;
+
     let query = supabase
       .from('bookings')
       .select('*, salon_services(*)')
       .order('appointment_date', { ascending: false })
-      .limit(limitNum);
+      .range(from, to);
     
     if (status) {
       query = query.eq('status', status);
