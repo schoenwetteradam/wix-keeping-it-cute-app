@@ -17,8 +17,14 @@ export default async function handler(req, res) {
     const orderRecord = {
       wix_order_id: orderData.id || orderData.orderId,
       order_number: orderData.number || orderData.orderNumber,
-      customer_email: orderData.buyerInfo?.email || orderData.billingInfo?.email || orderData.contactDetails?.email,
-      total_amount: orderData.totals?.total || orderData.pricing?.total || orderData.price?.total,
+      customer_email:
+        orderData.buyerInfo?.email ||
+        orderData.billingInfo?.email ||
+        orderData.contactDetails?.email,
+      total_amount:
+        orderData.totals?.total ||
+        orderData.pricing?.total ||
+        orderData.price?.total,
       currency: orderData.currency || 'USD',
       payment_status: orderData.paymentStatus || 'paid',
       fulfillment_status: orderData.fulfillmentStatus || 'pending',
@@ -26,8 +32,51 @@ export default async function handler(req, res) {
       billing_info: orderData.billingInfo,
       shipping_info: orderData.shippingInfo,
       payload: orderData,
-      updated_at: new Date().toISOString()
+      created_at: orderData.createdDate || new Date().toISOString(),
+      updated_at: orderData.updatedDate || new Date().toISOString()
     };
+
+    // Attempt to link to related booking if present
+    const wixBookingId =
+      orderData.bookingId ||
+      orderData.wixBookingId ||
+      orderData.wixAppBookingId ||
+      orderData.bookings?.[0]?.bookingId;
+
+    if (wixBookingId) {
+      orderRecord.wix_booking_id = wixBookingId;
+      const { data: booking } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('wix_booking_id', wixBookingId)
+        .maybeSingle();
+      if (booking) {
+        orderRecord.booking_id = booking.id;
+      }
+    }
+
+    // Link to existing customer if possible
+    if (orderData.buyerInfo?.contactId || orderRecord.customer_email) {
+      const { data: contact } = await supabase
+        .from('contacts')
+        .select('id')
+        .or(
+          [
+            orderData.buyerInfo?.contactId
+              ? `wix_contact_id.eq.${orderData.buyerInfo.contactId}`
+              : null,
+            orderRecord.customer_email
+              ? `email.eq.${orderRecord.customer_email}`
+              : null
+          ]
+            .filter(Boolean)
+            .join(',')
+        )
+        .maybeSingle();
+      if (contact) {
+        orderRecord.customer_id = contact.id;
+      }
+    }
 
     // Remove undefined values
     Object.keys(orderRecord).forEach(key => {
