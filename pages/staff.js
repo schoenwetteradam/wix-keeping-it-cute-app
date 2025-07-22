@@ -958,11 +958,8 @@ export default function StaffPortal() {
                               fontStyle: 'italic'
                             }}
                           >
-                            💬 {
-                              `${appointment.notes.substring(0, 50)}${
-                                appointment.notes.length > 50 ? '...' : ''
-                              }`
-                            }
+                            💬 {appointment.notes.substring(0, 50)}
+                            {appointment.notes.length > 50 ? '...' : ''}
                           </div>
                         )}
                     </div>
