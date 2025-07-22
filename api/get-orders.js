@@ -20,13 +20,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { limit = '50', payment_status, fulfillment_status } = req.query;
+    const { page = '1', limit = '50', payment_status, fulfillment_status } = req.query;
+
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    if (!Number.isFinite(pageNum) || pageNum < 1 || !Number.isFinite(limitNum) || limitNum < 1) {
+      return res.status(400).json({ error: 'Invalid page or limit parameter' });
+    }
+
+    const start = (pageNum - 1) * limitNum;
+    const end = start + limitNum - 1;
 
     let query = supabase
       .from('orders')
-      .select('*')
+      .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
-      .limit(parseInt(limit));
+      .range(start, end);
 
     if (payment_status) {
       query = query.eq('payment_status', payment_status);
@@ -36,7 +45,7 @@ export default async function handler(req, res) {
       query = query.eq('fulfillment_status', fulfillment_status);
     }
 
-    const { data: orders, error } = await query;
+    const { data: orders, error, count: totalCount } = await query;
 
     if (error) {
       console.error('❌ Orders fetch error:', error);
@@ -50,6 +59,9 @@ export default async function handler(req, res) {
       success: true,
       orders: orders || [],
       count: orders?.length || 0,
+      total_count: typeof totalCount === 'number' ? totalCount : null,
+      page: pageNum,
+      limit: limitNum,
       timestamp: new Date().toISOString()
     });
 

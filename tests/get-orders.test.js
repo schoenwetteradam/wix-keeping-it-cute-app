@@ -3,7 +3,7 @@ const createQuery = (result) => {
   const promise = Promise.resolve(result);
   promise.select = jest.fn(() => promise);
   promise.order = jest.fn(() => promise);
-  promise.limit = jest.fn(() => promise);
+  promise.range = jest.fn(() => promise);
   promise.eq = jest.fn(() => promise);
   return promise;
 };
@@ -37,6 +37,22 @@ describe('get-orders handler', () => {
     expect(res.json).toHaveBeenCalledWith({ error: 'Method Not Allowed' });
   });
 
+  test('rejects non-numeric or non-positive page/limit', async () => {
+    const from = jest.fn(() => createQuery({ data: [], error: null }));
+    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }));
+    jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
+
+    const { default: handler } = await import('../api/get-orders.js');
+
+    const req = { method: 'GET', query: { page: '0', limit: 'abc' } };
+    const res = createRes();
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid page or limit parameter' });
+  });
+
   test('passes query params to supabase and returns result shape', async () => {
     const ordersData = [{ id: 1 }];
     const query = createQuery({ data: ordersData, error: null });
@@ -48,16 +64,16 @@ describe('get-orders handler', () => {
 
     const req = {
       method: 'GET',
-      query: { limit: '10', payment_status: 'paid', fulfillment_status: 'fulfilled' }
+      query: { page: '2', limit: '10', payment_status: 'paid', fulfillment_status: 'fulfilled' }
     };
     const res = createRes();
 
     await handler(req, res);
 
     expect(from).toHaveBeenCalledWith('orders');
-    expect(query.select).toHaveBeenCalledWith('*');
+    expect(query.select).toHaveBeenCalledWith('*', { count: 'exact' });
     expect(query.order).toHaveBeenCalledWith('created_at', { ascending: false });
-    expect(query.limit).toHaveBeenCalledWith(10);
+    expect(query.range).toHaveBeenCalledWith(10, 19);
     expect(query.eq.mock.calls).toEqual(
       expect.arrayContaining([
         ['payment_status', 'paid'],
@@ -69,7 +85,10 @@ describe('get-orders handler', () => {
     expect(response).toMatchObject({
       success: true,
       orders: ordersData,
-      count: ordersData.length
+      count: ordersData.length,
+      total_count: null,
+      page: 2,
+      limit: 10
     });
     expect(typeof response.timestamp).toBe('string');
   });

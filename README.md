@@ -85,6 +85,9 @@ Example usage:
 # Fetch the 10 most recent orders
 curl '/api/get-orders?limit=10'
 
+# Fetch the next page of orders
+curl '/api/get-orders?page=2&limit=10'
+
 # Search for customers by name
 curl '/api/get-customers?search=jane'
 

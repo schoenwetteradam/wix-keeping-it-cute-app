@@ -14,15 +14,19 @@ export default function OrdersPage() {
   const [orderBookings, setOrderBookings] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [sortOption, setSortOption] = useState('newest')
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const LIMIT = 20
 
   useEffect(() => {
-    loadOrders()
-  }, [])
+    loadOrders(page)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page])
 
-  const loadOrders = async () => {
+  const loadOrders = async (pageToLoad = 1) => {
     try {
       setLoading(true)
-      const res = await fetchWithAuth('/api/get-orders?limit=100')
+      const res = await fetchWithAuth(`/api/get-orders?page=${pageToLoad}&limit=${LIMIT}`)
       if (!res.ok) throw new Error('Failed to load orders')
       const data = await res.json()
       const normalized = (data.orders || []).map(order => ({
@@ -33,7 +37,16 @@ export default function OrdersPage() {
         payment_status: toPlainString(order.payment_status),
         total_amount: toPlainString(order.total_amount)
       }))
-      setOrders(normalized)
+      if (pageToLoad === 1) {
+        setOrders(normalized)
+      } else {
+        setOrders(prev => [...prev, ...normalized])
+      }
+      if (data.total_count != null) {
+        setHasMore(pageToLoad * LIMIT < data.total_count)
+      } else {
+        setHasMore(normalized.length === LIMIT)
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -221,6 +234,24 @@ export default function OrdersPage() {
               </div>
               ))
             })()}
+          </div>
+        )}
+
+        {hasMore && !loading && (
+          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              style={{
+                background: '#e0cdbb',
+                color: '#333',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              Load More
+            </button>
           </div>
         )}
 
