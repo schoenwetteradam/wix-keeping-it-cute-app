@@ -12,6 +12,8 @@ export default function AppointmentsPage() {
   const [appointmentSearch, setAppointmentSearch] = useState('')
   const [appointmentSort, setAppointmentSort] = useState('newest')
   const [appointmentView, setAppointmentView] = useState('list')
+  const [currentPage, setCurrentPage] = useState(1)
+  const APPOINTMENTS_PER_PAGE = 25
 
   const loadAppointments = async () => {
     setLoading(true)
@@ -24,7 +26,6 @@ export default function AppointmentsPage() {
         .from('bookings')
         .select('*, salon_services(*)')
         .order('appointment_date', { ascending: false })
-        .limit(50)
       if (error) throw error
       setAppointments(data || [])
       setError(null)
@@ -149,6 +150,12 @@ export default function AppointmentsPage() {
     return new Date(b.appointment_date) - new Date(a.appointment_date)
   })
 
+  const totalPages = Math.ceil(sorted.length / APPOINTMENTS_PER_PAGE)
+  const paginated = sorted.slice(
+    (currentPage - 1) * APPOINTMENTS_PER_PAGE,
+    currentPage * APPOINTMENTS_PER_PAGE
+  )
+
 
   if (loading) return <p style={{padding:'20px'}}>Loading appointments...</p>
   if (error) return <p style={{padding:'20px',color:'red'}}>Error: {error}</p>
@@ -180,6 +187,7 @@ export default function AppointmentsPage() {
       ) : appointmentView === 'calendar' ? (
         <CalendarView appointments={appointments} onAppointmentClick={() => {}} />
       ) : (
+        <>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
@@ -195,7 +203,7 @@ export default function AppointmentsPage() {
             </tr>
           </thead>
           <tbody>
-            {sorted.map(apt => (
+            {paginated.map(apt => (
               <tr key={apt.id} style={{ borderBottom: '1px solid #eee' }}>
                 <td>{apt.customer_name || 'Customer'}</td>
                 <td>{apt.service_name || 'Service'}</td>
@@ -222,6 +230,24 @@ export default function AppointmentsPage() {
             ))}
           </tbody>
         </table>
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            style={{ marginRight: '10px' }}
+          >
+            Previous
+          </button>
+          <span>Page {currentPage} of {totalPages}</span>
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            style={{ marginLeft: '10px' }}
+          >
+            Next
+          </button>
+        </div>
+        </>
       )}
     </div>
   )
