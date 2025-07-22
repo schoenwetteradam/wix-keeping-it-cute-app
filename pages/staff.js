@@ -6,6 +6,8 @@ import slugify from '../utils/slugify'
 import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
 import { fetchWithAuth } from '../utils/api'
 
+const APPT_LIMIT = 50
+
 // Determine if a product image URL from Wix is unusable in the browser
 const isWixImage = (url) => url && url.startsWith('wix:image://')
 
@@ -45,6 +47,8 @@ export default function StaffPortal() {
   const [appointmentSearch, setAppointmentSearch] = useState('')
   const [appointmentSort, setAppointmentSort] = useState('newest')
   const [appointmentView, setAppointmentView] = useState('list')
+  const [appointmentsPage, setAppointmentsPage] = useState(0)
+  const [appointmentsHasMore, setAppointmentsHasMore] = useState(true)
 
   // Sync active tab with query string
   useEffect(() => {
@@ -88,12 +92,14 @@ export default function StaffPortal() {
       console.log('Services loaded:', servicesData.stats?.total_services)
 
       // Load appointments
-      const appointmentsResponse = await fetchWithAuth('/api/get-appointments')
+      const appointmentsResponse = await fetchWithAuth(`/api/get-appointments?page=1&limit=${APPT_LIMIT}`)
       if (!appointmentsResponse.ok) {
         throw new Error(`Appointments API Error: ${appointmentsResponse.status}`)
       }
       const appointmentsData = await appointmentsResponse.json()
       console.log('Appointments loaded:', appointmentsData.count)
+      setAppointmentsHasMore((appointmentsData.appointments?.length || 0) === APPT_LIMIT)
+      setAppointmentsPage(0)
 
       // Load alerts and notifications
       const alertsResponse = await fetchWithAuth('/api/get-inventory-alerts')
@@ -321,6 +327,21 @@ export default function StaffPortal() {
     } catch (error) {
       console.error('Error marking appointment paid:', error)
       alert('Failed to mark appointment as paid')
+    }
+  }
+
+  const loadMoreAppointments = async () => {
+    if (!appointmentsHasMore) return
+    const next = appointmentsPage + 1
+    try {
+      const response = await fetchWithAuth(`/api/get-appointments?page=${next + 1}&limit=${APPT_LIMIT}`)
+      if (!response.ok) throw new Error('Load more failed')
+      const data = await response.json()
+      setAppointments(prev => [...prev, ...(data.appointments || [])])
+      setAppointmentsPage(next)
+      setAppointmentsHasMore((data.appointments?.length || 0) === APPT_LIMIT)
+    } catch (err) {
+      console.error('Error loading more appointments:', err)
     }
   }
 
@@ -708,10 +729,10 @@ export default function StaffPortal() {
                       </li>
                     ))}
                   </ul>
-                </div>
-              )}
-            </div>
-          )}
+                  </div>
+                )}
+              </div>
+            )}
 
           {/* Appointments Tab */}
           {activeTab === 'appointments' && (
@@ -941,6 +962,11 @@ export default function StaffPortal() {
                     </div>
                   ))}
                 </div>
+                {appointmentsHasMore && (
+                  <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                    <button onClick={loadMoreAppointments}>Load More</button>
+                  </div>
+                )}
               )}
             </div>
           )}
