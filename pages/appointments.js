@@ -8,12 +8,16 @@ export default function AppointmentsPage() {
   useRequireSupabaseAuth()
   const [appointments, setAppointments] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
   const [error, setError] = useState(null)
   const [appointmentSearch, setAppointmentSearch] = useState('')
   const [appointmentSort, setAppointmentSort] = useState('newest')
   const [appointmentView, setAppointmentView] = useState('list')
 
-  const loadAppointments = async () => {
+  const limit = 50
+
+  const loadAppointments = async (p = 0) => {
     setLoading(true)
     try {
       const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -24,9 +28,15 @@ export default function AppointmentsPage() {
         .from('bookings')
         .select('*, salon_services(*)')
         .order('appointment_date', { ascending: false })
-        .limit(50)
+        .range(p * limit, p * limit + limit - 1)
       if (error) throw error
-      setAppointments(data || [])
+      if (p === 0) {
+        setAppointments(data || [])
+      } else {
+        setAppointments(prev => [...prev, ...(data || [])])
+      }
+      setHasMore((data?.length || 0) === limit)
+      setPage(p)
       setError(null)
     } catch (err) {
       setError(err.message)
@@ -36,8 +46,14 @@ export default function AppointmentsPage() {
   }
 
   useEffect(() => {
-    loadAppointments()
+    loadAppointments(0)
   }, [])
+
+  const loadMore = () => {
+    if (hasMore) {
+      loadAppointments(page + 1)
+    }
+  }
 
   const completeAppointment = async (apt) => {
     if (!confirm('Mark this appointment completed?')) return
@@ -222,6 +238,11 @@ export default function AppointmentsPage() {
             ))}
           </tbody>
         </table>
+        {hasMore && (
+          <div style={{ marginTop: '10px' }}>
+            <button onClick={loadMore}>Load More</button>
+          </div>
+        )}
       )}
     </div>
   )
