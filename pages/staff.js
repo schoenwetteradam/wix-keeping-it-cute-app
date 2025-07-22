@@ -946,19 +946,25 @@ export default function StaffPortal() {
                         </span>
                       </div>
 
-                      {appointment.notes && (
-                        <div style={{ 
-                          marginTop: '10px',
-                          padding: '8px',
-                          background: '#f8f9fa',
-                          borderRadius: '4px',
-                          fontSize: '0.85em',
-                          color: '#666',
-                          fontStyle: 'italic'
-                        }}>
-                          💬 "{appointment.notes.substring(0, 50)}{appointment.notes.length > 50 ? '...' : ''}"
-                        </div>
-                      )}
+                        {appointment.notes && (
+                          <div
+                            style={{
+                              marginTop: '10px',
+                              padding: '8px',
+                              background: '#f8f9fa',
+                              borderRadius: '4px',
+                              fontSize: '0.85em',
+                              color: '#666',
+                              fontStyle: 'italic'
+                            }}
+                          >
+                            💬 {
+                              `${appointment.notes.substring(0, 50)}${
+                                appointment.notes.length > 50 ? '...' : ''
+                              }`
+                            }
+                          </div>
+                        )}
                     </div>
                   ))}
                 </div>
