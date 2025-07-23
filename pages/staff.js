@@ -949,11 +949,26 @@ export default function StaffPortal() {
           {/* Inventory Tab with Images */}
           {activeTab === 'inventory' && (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, color: '#333' }}>📦 Inventory by Category</h2>
-                <p style={{ margin: 0, color: '#666', fontSize: '0.9em', fontStyle: 'italic' }}>
-                  Click on any product to view detailed information
-                </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+                <div>
+                  <h2 style={{ margin: 0, color: '#333' }}>📦 Inventory by Category</h2>
+                  <p style={{ margin: 0, color: '#666', fontSize: '0.9em', fontStyle: 'italic' }}>
+                    Click on any product to view detailed information
+                  </p>
+                </div>
+                <button
+                  onClick={() => router.push('/add-product')}
+                  style={{
+                    background: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '6px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  + Add Now
+                </button>
               </div>
 
               {Object.entries(productsByCategory).map(([category, categoryProducts]) => (
