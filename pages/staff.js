@@ -45,6 +45,11 @@ export default function StaffPortal() {
   const [appointmentSearch, setAppointmentSearch] = useState('')
   const [appointmentSort, setAppointmentSort] = useState('newest')
   const [appointmentView, setAppointmentView] = useState('list')
+  const [showFilters, setShowFilters] = useState(false)
+  const [staffFilter, setStaffFilter] = useState('')
+  const [paymentFilter, setPaymentFilter] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const APPOINTMENTS_PER_PAGE = 20
 
   // Sync active tab with query string
   useEffect(() => {
@@ -450,21 +455,30 @@ export default function StaffPortal() {
   const lowStockMetric = dashboardMetrics?.low_stock || 0
   const ordersToday = dashboardMetrics?.orders_today || 0
 
+  const staffOptions = Array.from(new Set(appointments.map(a => a.staff_member).filter(Boolean)))
+  const paymentOptions = Array.from(new Set(appointments.map(a => a.payment_status).filter(Boolean)))
+
   // Appointment list helpers
   const term = appointmentSearch.toLowerCase()
-  const filtered = appointments.filter(
-    (a) =>
+  const filtered = appointments.filter((a) => {
+    const matchesSearch =
       (a.customer_name || '').toLowerCase().includes(term) ||
       (a.customer_email || '').toLowerCase().includes(term)
+    const matchesStaff = staffFilter ? a.staff_member === staffFilter : true
+    const matchesPayment = paymentFilter ? a.payment_status === paymentFilter : true
+    return matchesSearch && matchesStaff && matchesPayment
+  })
+  const sorted = filtered.sort((a, b) => {
+    if (appointmentSort === 'oldest') {
+      return new Date(a.appointment_date) - new Date(b.appointment_date)
+    }
+    return new Date(b.appointment_date) - new Date(a.appointment_date)
+  })
+  const totalPages = Math.ceil(sorted.length / APPOINTMENTS_PER_PAGE)
+  const paginated = sorted.slice(
+    (currentPage - 1) * APPOINTMENTS_PER_PAGE,
+    currentPage * APPOINTMENTS_PER_PAGE
   )
-  const sorted = filtered
-    .sort((a, b) => {
-      if (appointmentSort === 'oldest') {
-        return new Date(a.appointment_date) - new Date(b.appointment_date)
-      }
-      return new Date(b.appointment_date) - new Date(a.appointment_date)
-    })
-    .slice(0, 20)
 
   return (
     <>
@@ -756,8 +770,30 @@ export default function StaffPortal() {
                 >
                   {appointmentView === 'list' ? 'Calendar View' : 'List View'}
                 </button>
+                <button
+                  onClick={() => setShowFilters(f => !f)}
+                  style={{ padding: '10px', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  {showFilters ? 'Hide Filters' : 'Show Filters'}
+                </button>
                 <span style={{ alignSelf: 'center', fontWeight: 'bold' }}>Appointments: {appointments.length}</span>
               </div>
+              {showFilters && (
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                  <select value={staffFilter} onChange={e => setStaffFilter(e.target.value)} style={{ padding: '10px', borderRadius: '4px' }}>
+                    <option value="">All Staff</option>
+                    {staffOptions.map(name => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                  <select value={paymentFilter} onChange={e => setPaymentFilter(e.target.value)} style={{ padding: '10px', borderRadius: '4px' }}>
+                    <option value="">All Payments</option>
+                    {paymentOptions.map(status => (
+                      <option key={status} value={status}>{status}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {appointments.length === 0 ? (
                 <div style={{
@@ -781,7 +817,7 @@ export default function StaffPortal() {
                   gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
                   gap: '20px'
                 }}>
-                  {sorted.map((appointment) => (
+                  {paginated.map((appointment) => (
                     <div
                       key={appointment.id}
                       onClick={() => handleAppointmentClick(appointment)}
@@ -941,6 +977,23 @@ export default function StaffPortal() {
                       )}
                     </div>
                   ))}
+                </div>
+                <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    style={{ marginRight: '10px' }}
+                  >
+                    Previous
+                  </button>
+                  <span>Page {currentPage} of {totalPages}</span>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    style={{ marginLeft: '10px' }}
+                  >
+                    Next Page
+                  </button>
                 </div>
               )}
             </div>
