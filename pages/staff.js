@@ -723,7 +723,8 @@ export default function StaffPortal() {
                     ))}
                   </ul>
                 </div>
-              )}
+              </>
+            )}
             </div>
           )}
 
@@ -812,43 +813,44 @@ export default function StaffPortal() {
               ) : appointmentView === 'calendar' ? (
                 <CalendarView appointments={appointments} onAppointmentClick={handleAppointmentClick} />
               ) : (
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-                  gap: '20px'
-                }}>
-                  {paginated.map((appointment) => (
-                    <div
-                      key={appointment.id}
-                      onClick={() => handleAppointmentClick(appointment)}
-                      style={{
-                        background: 'white',
-                        border: '1px solid #e9ecef', 
-                        borderRadius: '12px',
-                        padding: '20px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)'
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)'
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'
-                      }}
-                    >
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'flex-start',
-                        marginBottom: '15px'
-                      }}>
-                        <div style={{ flex: 1 }}>
-                          <h4 style={{ margin: '0 0 8px 0', color: '#333', fontSize: '1.2em' }}>
-                            {appointment.customer_name || 'Unknown Customer'}
-                          </h4>
+                <>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                    gap: '20px'
+                  }}>
+                    {paginated.map((appointment) => (
+                      <div
+                        key={appointment.id}
+                        onClick={() => handleAppointmentClick(appointment)}
+                        style={{
+                          background: 'white',
+                          border: '1px solid #e9ecef',
+                          borderRadius: '12px',
+                          padding: '20px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)'
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)'
+                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'
+                        }}
+                      >
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          marginBottom: '15px'
+                        }}>
+                          <div style={{ flex: 1 }}>
+                            <h4 style={{ margin: '0 0 8px 0', color: '#333', fontSize: '1.2em' }}>
+                              {appointment.customer_name || 'Unknown Customer'}
+                            </h4>
                           <p style={{ margin: '0 0 5px 0', color: '#666', fontSize: '1em' }}>
                             📧 {appointment.customer_email || 'No email'}
                           </p>
@@ -995,9 +997,10 @@ export default function StaffPortal() {
                     Next Page
                   </button>
                 </div>
-              )}
-            </div>
-          )}
+              </>
+            )}
+          </div>
+        )}
 
           {/* Inventory Tab with Images */}
           {activeTab === 'inventory' && (
