@@ -88,7 +88,7 @@ export default function StaffPortal() {
       console.log('Services loaded:', servicesData.stats?.total_services)
 
       // Load appointments
-      const appointmentsResponse = await fetchWithAuth('/api/get-appointments')
+      const appointmentsResponse = await fetchWithAuth('/api/get-appointments?limit=1000')
       if (!appointmentsResponse.ok) {
         throw new Error(`Appointments API Error: ${appointmentsResponse.status}`)
       }

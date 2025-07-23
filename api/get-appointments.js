@@ -20,7 +20,7 @@ export default async function handler(req, res) {
   }
   
   try {
-    const { page = '1', limit = '50', status, payment_status } = req.query
+    const { page = '1', limit = '1000', status, payment_status } = req.query
 
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
