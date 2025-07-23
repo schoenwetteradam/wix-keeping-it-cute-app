@@ -11,6 +11,7 @@ export default function AppointmentsPage() {
   const [error, setError] = useState(null)
   const [appointmentSearch, setAppointmentSearch] = useState('')
   const [appointmentSort, setAppointmentSort] = useState('newest')
+  const [staffFilter, setStaffFilter] = useState('')
   const [appointmentView, setAppointmentView] = useState('list')
   const [currentPage, setCurrentPage] = useState(1)
   const APPOINTMENTS_PER_PAGE = 25
@@ -138,12 +139,21 @@ export default function AppointmentsPage() {
   }
 
   const term = appointmentSearch.toLowerCase()
-  const filtered = appointments.filter(
-    (a) =>
+  const filtered = appointments.filter((a) => {
+    const matchesSearch =
       (a.customer_name || '').toLowerCase().includes(term) ||
       (a.customer_email || '').toLowerCase().includes(term)
-  )
+    const matchesStaff = staffFilter ? a.staff_member === staffFilter : true
+    return matchesSearch && matchesStaff
+  })
+
   const sorted = filtered.sort((a, b) => {
+    if (appointmentSort === 'created-oldest') {
+      return new Date(a.created_at) - new Date(b.created_at)
+    }
+    if (appointmentSort === 'created-newest') {
+      return new Date(b.created_at) - new Date(a.created_at)
+    }
     if (appointmentSort === 'oldest') {
       return new Date(a.appointment_date) - new Date(b.appointment_date)
     }
@@ -160,6 +170,8 @@ export default function AppointmentsPage() {
   if (loading) return <p style={{padding:'20px'}}>Loading appointments...</p>
   if (error) return <p style={{padding:'20px',color:'red'}}>Error: {error}</p>
 
+  const staffOptions = Array.from(new Set(appointments.map(a => a.staff_member).filter(Boolean)))
+
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h1 style={{ marginBottom: '20px' }}>Appointments</h1>
@@ -171,9 +183,17 @@ export default function AppointmentsPage() {
           onChange={(e) => setAppointmentSearch(e.target.value)}
           style={{ flex: '2', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', minWidth: '200px' }}
         />
+        <select value={staffFilter} onChange={e => setStaffFilter(e.target.value)} style={{ padding: '10px', borderRadius: '4px' }}>
+          <option value="">All Staff</option>
+          {staffOptions.map(name => (
+            <option key={name} value={name}>{name}</option>
+          ))}
+        </select>
         <select value={appointmentSort} onChange={(e) => setAppointmentSort(e.target.value)} style={{ padding: '10px', borderRadius: '4px' }}>
           <option value="newest">Newest</option>
           <option value="oldest">Oldest</option>
+          <option value="created-newest">Created Newest</option>
+          <option value="created-oldest">Created Oldest</option>
         </select>
         <button onClick={() => setAppointmentView(appointmentView === 'list' ? 'calendar' : 'list')} style={{ padding: '10px', borderRadius: '4px', cursor: 'pointer' }}>
           {appointmentView === 'list' ? 'Calendar View' : 'List View'}
@@ -194,6 +214,7 @@ export default function AppointmentsPage() {
               <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Customer</th>
               <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Service</th>
               <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Time</th>
+              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Created</th>
               <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Status</th>
               <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Payment</th>
               <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Price</th>
@@ -208,6 +229,7 @@ export default function AppointmentsPage() {
                 <td>{apt.customer_name || 'Customer'}</td>
                 <td>{apt.service_name || 'Service'}</td>
                 <td>{apt.appointment_date ? new Date(apt.appointment_date).toLocaleString() : ''}</td>
+                <td>{apt.created_at ? new Date(apt.created_at).toLocaleDateString() : ''}</td>
                 <td>{apt.status}</td>
                 <td>{apt.payment_status || 'pending'}</td>
                 <td>{apt.total_price ? `$${parseFloat(apt.total_price).toFixed(2)}` : ''}</td>
