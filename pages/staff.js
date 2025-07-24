@@ -464,7 +464,6 @@ export default function StaffPortal() {
       }
       return new Date(b.appointment_date) - new Date(a.appointment_date)
     })
-    .slice(0, 20)
 
   return (
     <>
@@ -736,6 +735,21 @@ export default function StaffPortal() {
                   }}
                 >
                   + Create Appointment
+                </button>
+                <button
+                  onClick={() => router.push('/appointments')}
+                  style={{
+                    background: '#667eea',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 16px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    marginLeft: '10px'
+                  }}
+                >
+                  View All Appointments
                 </button>
               </div>
               <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
