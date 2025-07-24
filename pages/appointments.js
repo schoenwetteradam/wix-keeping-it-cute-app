@@ -208,53 +208,68 @@ export default function AppointmentsPage() {
         <CalendarView appointments={appointments} onAppointmentClick={() => {}} />
       ) : (
         <>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Customer</th>
-              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Service</th>
-              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Time</th>
-              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Created</th>
-              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Status</th>
-              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Payment</th>
-              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Price</th>
-              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Staff</th>
-              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Notes</th>
-              <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginated.map(apt => (
-              <tr key={apt.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td>{apt.customer_name || 'Customer'}</td>
-                <td>{apt.service_name || 'Service'}</td>
-                <td>{apt.appointment_date ? new Date(apt.appointment_date).toLocaleString() : ''}</td>
-                <td>{apt.created_at ? new Date(apt.created_at).toLocaleDateString() : ''}</td>
-                <td>{apt.status}</td>
-                <td>{apt.payment_status || 'pending'}</td>
-                <td>{apt.total_price ? `$${parseFloat(apt.total_price).toFixed(2)}` : ''}</td>
-                <td>{apt.staff_member || ''}</td>
-                <td>{apt.notes ? apt.notes.substring(0, 40) : ''}</td>
-                <td>
-                  <button onClick={() => completeAppointment(apt)} style={{ marginRight: '8px' }}>Complete</button>
-                  <button onClick={() => cancelAppointment(apt)} style={{ marginRight: '8px' }}>Cancel</button>
-                  <button onClick={() => rescheduleAppointment(apt)} style={{ marginRight: '8px' }}>Reschedule</button>
-                  {apt.payment_status !== 'paid' && (
-                    <button onClick={() => markPaid(apt)} style={{ marginRight: '8px' }}>Mark Paid</button>
-                  )}
-                  <button onClick={() => editNotes(apt)} style={{ marginRight: '8px' }}>Notes</button>
-                  <button onClick={() => window.open(`/product-usage/${apt.id}`, '_blank')} style={{ marginRight: '8px' }}>Usage</button>
-                  <button onClick={() => window.open(`/booking-images/${apt.id}`, '_blank')} style={{ marginRight: '8px' }}>Images</button>
-                  <button onClick={() => window.open(`/booking-details/${apt.id}`, '_blank')} style={{ marginRight: '8px' }}>Details</button>
-                  <button onClick={() => window.open(`/collect-payment/${apt.id}`, '_blank')}>Collect</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '20px',
+          }}
+        >
+          {paginated.map((apt) => (
+            <div
+              key={apt.id}
+              style={{
+                background: 'white',
+                padding: '15px',
+                borderRadius: '8px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                border: '1px solid #e9ecef',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <strong>{apt.customer_name || 'Customer'}</strong>
+                  <div style={{ color: '#666', fontSize: '0.9em' }}>{apt.service_name || 'Service'}</div>
+                </div>
+                <span style={{ fontSize: '0.9em' }}>
+                  {apt.appointment_date ? new Date(apt.appointment_date).toLocaleString() : ''}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', fontSize: '0.85em', color: '#555' }}>
+                <span>Status: {apt.status}</span>
+                <span>Payment: {apt.payment_status || 'pending'}</span>
+                {apt.total_price && (
+                  <span>Price: ${parseFloat(apt.total_price).toFixed(2)}</span>
+                )}
+                {apt.staff_member && <span>Staff: {apt.staff_member}</span>}
+              </div>
+              {apt.notes && (
+                <div style={{ fontSize: '0.85em', color: '#666' }}>
+                  Notes: {apt.notes.substring(0, 80)}
+                </div>
+              )}
+              <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                <button onClick={() => completeAppointment(apt)}>Complete</button>
+                <button onClick={() => cancelAppointment(apt)}>Cancel</button>
+                <button onClick={() => rescheduleAppointment(apt)}>Reschedule</button>
+                {apt.payment_status !== 'paid' && (
+                  <button onClick={() => markPaid(apt)}>Mark Paid</button>
+                )}
+                <button onClick={() => editNotes(apt)}>Notes</button>
+                <button onClick={() => window.open(`/product-usage/${apt.id}`, '_blank')}>Usage</button>
+                <button onClick={() => window.open(`/booking-images/${apt.id}`, '_blank')}>Images</button>
+                <button onClick={() => window.open(`/booking-details/${apt.id}`, '_blank')}>Details</button>
+                <button onClick={() => window.open(`/collect-payment/${apt.id}`, '_blank')}>Collect</button>
+              </div>
+            </div>
+          ))}
+        </div>
         <div style={{ marginTop: '20px', textAlign: 'center' }}>
           <button
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
             style={{ marginRight: '10px' }}
           >
@@ -262,7 +277,7 @@ export default function AppointmentsPage() {
           </button>
           <span>Page {currentPage} of {totalPages}</span>
           <button
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
             style={{ marginLeft: '10px' }}
           >
