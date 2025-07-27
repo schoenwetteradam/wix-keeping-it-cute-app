@@ -1,5 +1,6 @@
 // api/webhook-router.js - FINAL VERSION with fixed labels and upserts
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { setCorsHeaders } from '../utils/cors';
 
@@ -17,6 +18,15 @@ HvGQo36RHMxgvmVTkZo/TysaUAlvV4kzuezHvpw7alKQl/TwctVNTpCIVlpBjJN2
 2qrhdGPk8kFwdgn1n9XwskzWP+fTiy542NGo/0d1fYOZSFSlwybh7ygi9BtFHfmt
 oYciq9XsE/4PlRsA7kdl1aXlL6ZpwW3pti02ewIDAQAB
 -----END PUBLIC KEY-----`;
+
+function constantTimeCompare(a, b) {
+  const bufA = Buffer.from(a || '', 'utf8');
+  const bufB = Buffer.from(b || '', 'utf8');
+  if (bufA.length !== bufB.length) {
+    return false;
+  }
+  return crypto.timingSafeEqual(bufA, bufB);
+}
 
 // Product usage tracking function
 async function checkForProductUsagePrompt(bookingId, customerEmail) {
@@ -68,6 +78,11 @@ export default async function handler(req, res) {
   
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const signature = req.headers['x-wix-webhook-signature'];
+  if (!constantTimeCompare(signature, process.env.WIX_WEBHOOK_SECRET)) {
+    return res.status(401).json({ error: 'Invalid signature' });
   }
 
   try {
