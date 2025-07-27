@@ -235,6 +235,7 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 - `SUPABASE_RECEIPTS_BUCKET` bucket for uploaded receipts
 - `WIX_API_TOKEN` Wix API token used for booking operations
 - `WIX_WEBHOOK_SECRET` secret used to verify Wix webhooks
+- `WIX_PUBLIC_KEY` Wix public key used to verify webhook signatures
 - `WIX_API_AUTH` Authorization header value for Wix analytics requests
 - `ADMIN_USER_IDS` comma-separated Supabase user IDs allowed to view all staff metrics
 

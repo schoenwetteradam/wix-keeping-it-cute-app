@@ -8,15 +8,12 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Wix Public Key for JWT verification - formatted correctly for RS256
-const WIX_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp1t69dN5qbUAS00eazDF
-MiI1Ek4Ehp78OyZxOkrFCmo8HQYJ1G9ZJOtKNF/zL+TTyAdlbNfvlBpcKVfLDc9U
-ZWLnBb1HIVrXDTR68nn/xi9NNLZF6xd5M10sGqDgrLM/6STZlpBA4yafcjet3BPS
-HvGQo36RHMxgvmVTkZo/TysaUAlvV4kzuezHvpw7alKQl/TwctVNTpCIVlpBjJN2
-2qrhdGPk8kFwdgn1n9XwskzWP+fTiy542NGo/0d1fYOZSFSlwybh7ygi9BtFHfmt
-oYciq9XsE/4PlRsA7kdl1aXlL6ZpwW3pti02ewIDAQAB
------END PUBLIC KEY-----`;
+// Wix public key used to verify signed webhook payloads.
+const { WIX_PUBLIC_KEY } = process.env;
+
+if (!WIX_PUBLIC_KEY) {
+  throw new Error("Missing WIX_PUBLIC_KEY environment variable. Add your Wix public key to verify webhook signatures.");
+}
 
 // Product usage tracking function
 async function checkForProductUsagePrompt(bookingId, customerEmail) {
