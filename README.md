@@ -308,6 +308,16 @@ Apply each SQL file in the `migrations` directory in order:
 psql $SUPABASE_URL < migrations/20240102_add_profiles_table.sql
 ```
 
+### Refreshing upcoming bookings
+
+Use the helper script to populate the `upcoming_bookings` table for the next
+week of appointments. This requires `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY` to be set in your environment.
+
+```bash
+npm run refresh-upcoming
+```
+
 ### Authentication flow
 
 Use the `/login` and `/signup` pages to authenticate.
