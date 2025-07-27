@@ -4,6 +4,7 @@ import fs from 'fs'
 import path from 'path'
 import { createClient } from '@supabase/supabase-js'
 import { setCorsHeaders } from '../utils/cors'
+import logger from '../utils/logger'
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -32,9 +33,9 @@ export default async function handler(req, res) {
     })
   }
 
-  console.log('🔍 === UPLOAD REQUEST START ===')
-  console.log('Content-Type:', req.headers['content-type'])
-  console.log('Content-Length:', req.headers['content-length'])
+  logger.info('UPLOAD REQUEST START')
+  logger.debug('Content-Type:', req.headers['content-type'])
+  logger.debug('Content-Length:', req.headers['content-length'])
 
   try {
     const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'salon-images'
@@ -48,12 +49,12 @@ export default async function handler(req, res) {
       allowEmptyFiles: false,
       multiples: false,
       filter: function ({ name, originalFilename, mimetype }) {
-        console.log('🔍 File filter check:', { name, originalFilename, mimetype })
+        logger.debug('File filter check:', { name, mimetype })
         
         // Check if it's an image
         const isImage = mimetype && mimetype.startsWith('image/')
         if (!isImage) {
-          console.log('❌ Not an image file:', mimetype)
+          logger.warn('Not an image file:', mimetype)
         }
         return isImage
       }
@@ -64,11 +65,11 @@ export default async function handler(req, res) {
       return new Promise((resolve, reject) => {
         form.parse(req, (err, fields, files) => {
           if (err) {
-            console.error('❌ Form parsing error:', err)
+            logger.error('Form parsing error:', err)
             reject(err)
             return
           }
-          console.log('✅ Form parsed successfully')
+          logger.info('Form parsed successfully')
           resolve({ fields, files })
         })
       })
@@ -76,8 +77,8 @@ export default async function handler(req, res) {
 
     const { fields, files } = await parseForm()
     
-    console.log('📋 Parsed fields:', Object.keys(fields))
-    console.log('📁 Parsed files:', Object.keys(files))
+    logger.debug('Parsed fields:', Object.keys(fields))
+    logger.debug('Parsed files:', Object.keys(files))
 
     // Extract the uploaded file - handle both single file and array
     let file = null
@@ -95,8 +96,8 @@ export default async function handler(req, res) {
     }
     
     if (!file) {
-      console.log('❌ No file found in upload')
-      return res.status(400).json({ 
+      logger.warn('No file found in upload')
+      return res.status(400).json({
         success: false,
         error: 'No image file found in upload. Please select an image file.',
         debug: {
@@ -106,11 +107,9 @@ export default async function handler(req, res) {
       })
     }
 
-    console.log('📸 File details:', {
-      originalFilename: file.originalFilename,
+    logger.debug('File details:', {
       size: file.size,
-      mimetype: file.mimetype,
-      filepath: file.filepath
+      mimetype: file.mimetype
     })
 
     // Extract form data safely
@@ -122,12 +121,12 @@ export default async function handler(req, res) {
     const productId = getFieldValue(fields.product_id)
     const category = getFieldValue(fields.category) || 'other'
     
-    console.log('📦 Product ID:', productId)
-    console.log('🏷️ Category:', category)
+    logger.info('Product ID:', productId)
+    logger.info('Category:', category)
     
     // Validate required fields
     if (!productId) {
-      console.log('❌ Missing product ID')
+      logger.warn('Missing product ID')
       return res.status(400).json({ 
         success: false,
         error: 'Product ID is required',
@@ -154,18 +153,18 @@ export default async function handler(req, res) {
     fs.unlinkSync(file.filepath)
 
     if (uploadError) {
-      console.error('❌ Upload error:', uploadError)
+      logger.error('Upload error:', uploadError)
       return res.status(500).json({ success: false, error: 'Failed to upload image' })
     }
 
     const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(supabasePath)
     const imageUrl = publicData.publicUrl
-    console.log('🔗 Public image URL:', imageUrl)
+    logger.info('Public image URL:', imageUrl)
 
     // Update database
     let updatedProduct = null
     if (productId) {
-      console.log('💾 Updating database...')
+      logger.info('Updating database...')
       
       try {
         const { data, error: updateError } = await supabase
@@ -179,15 +178,15 @@ export default async function handler(req, res) {
           .single()
 
         if (updateError) {
-          console.error('❌ Database update error:', updateError)
+          logger.error('Database update error:', updateError)
           // Don't fail the upload, just log the error
-          console.log('⚠️ Image uploaded but database update failed')
+          logger.warn('Image uploaded but database update failed')
         } else {
           updatedProduct = data
-          console.log('✅ Database updated successfully:', data.product_name)
+          logger.info('Database updated successfully:', data.product_name)
         }
       } catch (dbError) {
-        console.error('❌ Database operation failed:', dbError)
+        logger.error('Database operation failed:', dbError)
         // Continue anyway - image is uploaded
       }
     }
@@ -206,16 +205,15 @@ export default async function handler(req, res) {
       upload_timestamp: new Date().toISOString()
     }
 
-    console.log('🎉 === UPLOAD SUCCESS ===')
-    console.log('Response:', JSON.stringify(response, null, 2))
+    logger.info('UPLOAD SUCCESS')
+    logger.debug('Response:', JSON.stringify(response, null, 2))
 
     res.status(200).json(response)
 
   } catch (error) {
-    console.error('❌ === UPLOAD FAILED ===')
-    console.error('Error type:', error.constructor.name)
-    console.error('Error message:', error.message)
-    console.error('Error stack:', error.stack)
+    logger.error('UPLOAD FAILED')
+    logger.error('Error type:', error.constructor.name)
+    logger.error('Error message:', error.message)
     
     // Always return JSON, never HTML
     res.status(500).json({ 
