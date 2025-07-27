@@ -464,3 +464,9 @@ The repository contains a comprehensive suite of around 22 test files. When they
 Test Suites: 22 passed, 22 total
 Tests:       47 passed, 47 total
 ```
+
+## Examples
+
+A sample Express server demonstrating webhook verification is available in
+`docs/examples/server.js`. This file is for local testing only and isn't
+needed when deploying the application.
