@@ -30,7 +30,7 @@ describe('webhook-router loyalty account updated', () => {
       if (table === 'loyalty') return loyaltyQuery
       return createQuery({ data: {}, error: null })
     })
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
     const { default: handler } = await import('../api/webhook-router.js')

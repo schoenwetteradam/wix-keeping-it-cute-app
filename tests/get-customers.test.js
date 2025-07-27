@@ -23,7 +23,7 @@ beforeEach(() => {
 describe('get-customers handler', () => {
   test('returns 405 on non-GET requests', async () => {
     const from = jest.fn(() => createQuery({ data: [], error: null }));
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }));
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
 
     const { default: handler } = await import('../api/get-customers.js');
@@ -41,7 +41,7 @@ describe('get-customers handler', () => {
     const customersData = [{ id: 1 }];
     const query = createQuery({ data: customersData, error: null });
     const from = jest.fn(() => query);
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }));
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
 
     const { default: handler } = await import('../api/get-customers.js');

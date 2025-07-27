@@ -23,7 +23,7 @@ beforeEach(() => {
 describe('staff-chat handler', () => {
   test('returns 405 on unsupported method', async () => {
     const from = jest.fn(() => createQuery({ data: [], error: null }))
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
     const { default: handler } = await import('../api/staff-chat.js')
@@ -40,7 +40,7 @@ describe('staff-chat handler', () => {
   test('fetches messages on GET', async () => {
     const query = createQuery({ data: [{ id: '1', content: 'hi' }], error: null })
     const from = jest.fn(() => query)
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
     const { default: handler } = await import('../api/staff-chat.js')
@@ -62,7 +62,7 @@ describe('staff-chat handler', () => {
   test('inserts message on POST', async () => {
     const query = createQuery({ data: { id: '1', content: 'hi' }, error: null })
     const from = jest.fn(() => query)
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'u1' })))
 

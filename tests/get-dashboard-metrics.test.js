@@ -13,7 +13,7 @@ describe('get-dashboard-metrics handler', () => {
 
   test('returns 405 on non-GET requests', async () => {
     const rpc = jest.fn(() => Promise.resolve({ data: [], error: null }))
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ rpc }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ rpc }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'u1' })))
 
@@ -29,7 +29,7 @@ describe('get-dashboard-metrics handler', () => {
 
   test('non-admin cannot override staff_id', async () => {
     const rpc = jest.fn(() => Promise.resolve({ data: [], error: null }))
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ rpc }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ rpc }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' })))
 
@@ -45,7 +45,7 @@ describe('get-dashboard-metrics handler', () => {
 
   test('admin can request metrics for all staff', async () => {
     const rpc = jest.fn(() => Promise.resolve({ data: [], error: null }))
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ rpc }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ rpc }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'admin1' })))
 

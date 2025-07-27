@@ -23,7 +23,7 @@ beforeEach(() => {
 describe('get-appointments handler', () => {
   test('rejects non-positive page or limit', async () => {
     const from = jest.fn(() => createQuery({ data: [], error: null }));
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }));
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
 
     const { default: handler } = await import('../api/get-appointments.js');
@@ -39,7 +39,7 @@ describe('get-appointments handler', () => {
 
   test('rejects non-numeric page or limit', async () => {
     const from = jest.fn(() => createQuery({ data: [], error: null }));
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }));
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
 
     const { default: handler } = await import('../api/get-appointments.js');

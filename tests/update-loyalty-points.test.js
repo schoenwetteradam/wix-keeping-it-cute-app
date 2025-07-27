@@ -23,7 +23,7 @@ beforeEach(() => {
 describe('update-loyalty-points handler', () => {
   test('returns 405 on non-POST requests', async () => {
     const from = jest.fn(() => createQuery({ data: {}, error: null }))
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
     const { default: handler } = await import('../api/update-loyalty-points.js')
@@ -44,7 +44,7 @@ describe('update-loyalty-points handler', () => {
       .mockReturnValueOnce(selectQuery)
       .mockReturnValueOnce(updateQuery)
 
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
     const { default: handler } = await import('../api/update-loyalty-points.js')

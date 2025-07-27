@@ -28,7 +28,7 @@ describe('booking-updated handler', () => {
       if (table === 'product_usage_sessions') return usageQuery;
       return createUpdateQuery({});
     });
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }));
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
 
     const { default: handler } = await import('../api/booking-updated.js');
 

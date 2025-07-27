@@ -2,14 +2,11 @@
 import formidable from 'formidable'
 import fs from 'fs'
 import path from 'path'
-import { createClient } from '@supabase/supabase-js'
+import { createSupabaseClient } from '../utils/supabaseClient'
 import { setCorsHeaders } from '../utils/cors'
 import logger from '../utils/logger'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
+const supabase = createSupabaseClient()
 
 // CRITICAL: Disable Next.js body parser for file uploads
 export const config = {
