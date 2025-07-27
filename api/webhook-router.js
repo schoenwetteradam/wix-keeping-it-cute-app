@@ -1,12 +1,9 @@
 // api/webhook-router.js - FINAL VERSION with fixed labels and upserts
 import jwt from 'jsonwebtoken';
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseClient } from '../utils/supabaseClient';
 import { setCorsHeaders } from '../utils/cors';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const supabase = createSupabaseClient()
 
 // Wix public key used to verify signed webhook payloads.
 const { WIX_PUBLIC_KEY } = process.env;

@@ -1,12 +1,9 @@
 // api/fix-logo-setup.js - Run this ONCE to fix your logo setup
 import fs from 'fs'
 import path from 'path'
-import { createClient } from '@supabase/supabase-js'
+import { createSupabaseClient } from '../utils/supabaseClient'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
+const supabase = createSupabaseClient()
 
 export default async function handler(req, res) {
   try {

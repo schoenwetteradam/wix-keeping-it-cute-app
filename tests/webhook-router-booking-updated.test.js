@@ -29,7 +29,7 @@ describe('webhook-router booking updated', () => {
       if (table === 'bookings') return bookingQuery;
       return createQuery({ data: {}, error: null });
     });
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }));
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
 
     const { default: handler } = await import('../api/webhook-router.js');

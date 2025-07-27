@@ -1,5 +1,5 @@
 // api/get-dashboard-metrics.js
-import { createClient } from '@supabase/supabase-js'
+import { createSupabaseClient } from '../utils/supabaseClient'
 import { setCorsHeaders } from '../utils/cors'
 import requireAuth from '../utils/requireAuth'
 
@@ -8,10 +8,7 @@ const ADMIN_IDS = (process.env.ADMIN_USER_IDS || '')
   .map((id) => id.trim())
   .filter(Boolean)
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
+const supabase = createSupabaseClient()
 
 export default async function handler(req, res) {
   setCorsHeaders(res, 'GET')

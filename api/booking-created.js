@@ -1,12 +1,9 @@
 // api/booking-created.js - COMPLETE CORRECTED VERSION
-import { createClient } from '@supabase/supabase-js'
+import { createSupabaseClient } from '../utils/supabaseClient'
 import { setCorsHeaders } from '../utils/cors'
 import { addNotification } from '../utils/notifications'
 
-const supabase = createClient(
- process.env.SUPABASE_URL,
- process.env.SUPABASE_SERVICE_ROLE_KEY
-)
+const supabase = createSupabaseClient()
 
 export default async function handler(req, res) {
   setCorsHeaders(res, 'POST');

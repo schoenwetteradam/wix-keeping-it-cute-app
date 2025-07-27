@@ -1,10 +1,7 @@
-import { createClient } from '@supabase/supabase-js'
+import { createSupabaseClient } from '../utils/supabaseClient'
 import { addNotification } from '../utils/notifications'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
+const supabase = createSupabaseClient()
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

@@ -12,7 +12,7 @@ describe('get-inventory-alerts handler', () => {
 
   test('returns 405 on non-GET requests', async () => {
     const rpc = jest.fn(() => Promise.resolve({ data: [], error: null }))
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ rpc }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ rpc }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
     const { default: handler } = await import('../api/get-inventory-alerts.js')
@@ -34,7 +34,7 @@ describe('get-inventory-alerts handler', () => {
     const rpc = jest.fn(() => Promise.resolve({ data: lowStock, error: null }))
     const addNotification = jest.fn(() => Promise.resolve())
     const loadNotifications = jest.fn(() => Promise.resolve([]))
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ rpc }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ rpc }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
     jest.doMock('../utils/notifications', () => ({ addNotification, loadNotifications }))
 

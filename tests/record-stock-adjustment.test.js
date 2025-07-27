@@ -23,7 +23,7 @@ describe('record-stock-adjustment handler', () => {
 
   test('returns 405 on non-POST requests', async () => {
     const from = jest.fn(() => createQuery({ data: [], error: null }))
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
 
     const { default: handler } = await import('../api/record-stock-adjustment.js')
 
@@ -45,7 +45,7 @@ describe('record-stock-adjustment handler', () => {
       if (table === 'products') return selectQuery
     })
 
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
 
     const { default: handler } = await import('../api/record-stock-adjustment.js')
 

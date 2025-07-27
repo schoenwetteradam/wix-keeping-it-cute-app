@@ -1,10 +1,7 @@
-import { createClient } from '@supabase/supabase-js'
+import { createSupabaseClient } from '../utils/supabaseClient'
 import { setCorsHeaders } from '../utils/cors'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
+const supabase = createSupabaseClient()
 
 export default async function handler(req, res) {
   // Add comprehensive logging
@@ -28,8 +25,6 @@ export default async function handler(req, res) {
   try {
     // Log environment variables (without exposing secrets)
     console.log('🔍 Environment Check:')
-    console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? '✅ Set' : '❌ Missing')
-    console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅ Set' : '❌ Missing')
     
     const bookingData = req.body
     console.log('📅 Processing booking data:', bookingData)

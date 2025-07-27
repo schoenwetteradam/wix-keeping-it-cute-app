@@ -1,13 +1,10 @@
 // api/upload-image.js - Simple image upload handler
-import { createClient } from '@supabase/supabase-js'
+import { createSupabaseClient } from '../utils/supabaseClient'
 import formidable from 'formidable'
 import fs from 'fs'
 import path from 'path'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
+const supabase = createSupabaseClient()
 
 export const config = {
   api: {

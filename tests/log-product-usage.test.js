@@ -20,7 +20,7 @@ describe('log-product-usage handler', () => {
 
   test('returns 405 on non-POST requests', async () => {
     const from = jest.fn(() => createInsertQuery({ data: [], error: null }))
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
 
     const { default: handler } = await import('../api/log-product-usage.js')
 
@@ -40,7 +40,7 @@ describe('log-product-usage handler', () => {
     })
     const from = jest.fn(() => insertQuery)
     const addNotification = jest.fn(() => Promise.resolve())
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/notifications', () => ({ addNotification }))
 
     const { default: handler } = await import('../api/log-product-usage.js')

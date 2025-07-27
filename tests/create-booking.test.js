@@ -26,7 +26,7 @@ afterEach(() => {
 describe('create-booking handler', () => {
   test('returns 405 on non-POST requests', async () => {
     const from = jest.fn(() => createInsert({ data: {}, error: null }))
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
     const { default: handler } = await import('../api/create-booking.js')
@@ -42,7 +42,7 @@ describe('create-booking handler', () => {
 
   test('validates required fields', async () => {
     const from = jest.fn(() => createInsert({ data: {}, error: null }))
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
     const { default: handler } = await import('../api/create-booking.js')
@@ -66,7 +66,7 @@ describe('create-booking handler', () => {
 
     const insertQuery = createInsert({ data: { id: '1' }, error: null })
     const from = jest.fn(() => insertQuery)
-    jest.doMock('@supabase/supabase-js', () => ({ createClient: () => ({ from }) }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
     const { default: handler } = await import('../api/create-booking.js')
