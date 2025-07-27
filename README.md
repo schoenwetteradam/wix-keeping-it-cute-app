@@ -339,6 +339,110 @@ After signing in you can open these screens directly:
 Navigate by entering the URL in your browser or by linking from the staff portal.
 The staff portal now includes dedicated **Orders**, **Customers**, and **Chat** tabs for quick access. Staff can also open the chat directly at `/staff-chat`.
 
+## Wix + Vercel Integration Guide
+
+You can embed this project inside your Wix site or communicate with it via webhooks. Below is a basic outline for connecting a Next.js (Vercel) app to Wix.
+
+1. **Widget configuration** – Update your Wix `app-definition.json` so the widget points to your Vercel deployment:
+
+   ```json
+   {
+     "widgets": {
+       "your-widget-id": {
+         "widgetUrl": "https://your-vercel-app.vercel.app",
+         "width": 375,
+         "height": 812
+       }
+     }
+   }
+   ```
+
+2. **Install the Wix SDK** in your Vercel app and create a client:
+
+   ```bash
+   npm install @wix/sdk
+   ```
+
+   ```javascript
+   import { createClient, OAuthStrategy } from '@wix/sdk';
+   import { collections } from '@wix/data';
+
+   const wixClient = createClient({
+     modules: { collections },
+     auth: OAuthStrategy({
+       clientId: process.env.NEXT_PUBLIC_WIX_CLIENT_ID,
+       tokens: {
+         accessToken: 'user-access-token',
+         refreshToken: 'user-refresh-token'
+       }
+     })
+   });
+   ```
+
+3. **Handle OAuth callbacks** by exchanging the `code` for tokens:
+
+   ```javascript
+   export default async function handler(req, res) {
+     const { code } = req.query;
+
+     try {
+       const tokens = await wixClient.auth.getAccessToken(code, {
+         redirectUri: process.env.NEXT_PUBLIC_WIX_REDIRECT_URI
+       });
+       // Store tokens securely
+       res.redirect('/dashboard');
+     } catch (error) {
+       res.status(500).json({ error: 'Authentication failed' });
+     }
+   }
+   ```
+
+4. **Receive webhooks** by creating an API route and verifying the signature:
+
+   ```javascript
+   export default async function handler(req, res) {
+     if (req.method === 'POST') {
+       const { signature } = req.headers;
+       const isValid = verifyWixSignature(req.body, signature);
+       if (!isValid) return res.status(401).json({ error: 'Invalid signature' });
+
+       await processWixData(req.body);
+       res.status(200).json({ success: true });
+     }
+   }
+   ```
+
+   Register this endpoint under **Settings → Webhooks** in your Wix dashboard.
+
+5. **Iframe communication** – when embedding as an iframe, use `postMessage` on both sides:
+
+   ```javascript
+   // Wix page
+   import wixWindow from 'wix-window';
+
+   $w.onReady(() => {
+     const iframe = $w('#myIframe');
+     iframe.src = 'https://your-vercel-app.vercel.app';
+     wixWindow.addEventListener('message', (event) => {
+       if (event.origin === 'https://your-vercel-app.vercel.app') {
+         console.log('Received data:', event.data);
+       }
+     });
+   });
+   ```
+
+   ```javascript
+   // Vercel app
+   useEffect(() => {
+     window.parent.postMessage({
+       type: 'USER_UPDATE',
+       payload: { userId: 123, name: 'John Doe' }
+     }, 'https://your-wix-site.com');
+   }, []);
+   ```
+
+Set the environment variables `WIX_APP_ID`, `WIX_APP_SECRET` and `WIX_WEBHOOK_SECRET` in Vercel and enable CORS headers in `next.config.js` if you call API routes from Wix.
+
 ## Testing
 
 Run `npm install` to install all dependencies, including Jest for running the unit tests.
