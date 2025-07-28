@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import CalendarView from '../components/CalendarView'
+import AppointmentCard from '../components/AppointmentCard'
 import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
 import { fetchWithAuth } from '../utils/api'
 
@@ -216,55 +217,15 @@ export default function AppointmentsPage() {
           }}
         >
           {paginated.map((apt) => (
-            <div
+            <AppointmentCard
               key={apt.id}
-              style={{
-                background: 'white',
-                padding: '15px',
-                borderRadius: '8px',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-                border: '1px solid #e9ecef',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <strong>{apt.customer_name || 'Customer'}</strong>
-                  <div style={{ color: '#666', fontSize: '0.9em' }}>{apt.service_name || 'Service'}</div>
-                </div>
-                <span style={{ fontSize: '0.9em' }}>
-                  {apt.appointment_date ? new Date(apt.appointment_date).toLocaleString() : ''}
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', fontSize: '0.85em', color: '#555' }}>
-                <span>Status: {apt.status}</span>
-                <span>Payment: {apt.payment_status || 'pending'}</span>
-                {apt.total_price && (
-                  <span>Price: ${parseFloat(apt.total_price).toFixed(2)}</span>
-                )}
-                {apt.staff_member && <span>Staff: {apt.staff_member}</span>}
-              </div>
-              {apt.notes && (
-                <div style={{ fontSize: '0.85em', color: '#666' }}>
-                  Notes: {apt.notes.substring(0, 80)}
-                </div>
-              )}
-              <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                <button onClick={() => completeAppointment(apt)}>Complete</button>
-                <button onClick={() => cancelAppointment(apt)}>Cancel</button>
-                <button onClick={() => rescheduleAppointment(apt)}>Reschedule</button>
-                {apt.payment_status !== 'paid' && (
-                  <button onClick={() => markPaid(apt)}>Mark Paid</button>
-                )}
-                <button onClick={() => editNotes(apt)}>Notes</button>
-                <button onClick={() => window.open(`/product-usage/${apt.id}`, '_blank')}>Usage</button>
-                <button onClick={() => window.open(`/booking-images/${apt.id}`, '_blank')}>Images</button>
-                <button onClick={() => window.open(`/booking-details/${apt.id}`, '_blank')}>Details</button>
-                <button onClick={() => window.open(`/collect-payment/${apt.id}`, '_blank')}>Collect</button>
-              </div>
-            </div>
+              appointment={apt}
+              onComplete={completeAppointment}
+              onCancel={cancelAppointment}
+              onReschedule={rescheduleAppointment}
+              onMarkPaid={markPaid}
+              onEditNotes={editNotes}
+            />
           ))}
         </div>
         <div style={{ marginTop: '20px', textAlign: 'center' }}>
