@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import CalendarView from '../components/CalendarView'
 import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
 import { fetchWithAuth } from '../utils/api'
+import { isAdmin } from '../utils/isAdmin'
 
 export default function AppointmentsPage() {
   useRequireSupabaseAuth()
@@ -14,6 +15,7 @@ export default function AppointmentsPage() {
   const [staffFilter, setStaffFilter] = useState('')
   const [appointmentView, setAppointmentView] = useState('list')
   const [currentPage, setCurrentPage] = useState(1)
+  const [isAdminUser, setIsAdminUser] = useState(false)
   const APPOINTMENTS_PER_PAGE = 25
 
   const loadAppointments = async () => {
@@ -23,10 +25,18 @@ export default function AppointmentsPage() {
       const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
       if (!url || !key) throw new Error('Missing Supabase env vars')
       const supabase = createClient(url, key)
-      const { data, error } = await supabase
+      const { data: sessionData } = await supabase.auth.getSession()
+      const userId = sessionData?.session?.user?.id || null
+      const admin = isAdmin(userId)
+      setIsAdminUser(admin)
+      let query = supabase
         .from('bookings')
         .select('*, salon_services(*)')
         .order('appointment_date', { ascending: false })
+      if (!admin && userId) {
+        query = query.eq('staff_id', userId)
+      }
+      const { data, error } = await query
       if (error) throw error
       setAppointments(data || [])
       setError(null)
@@ -183,12 +193,14 @@ export default function AppointmentsPage() {
           onChange={(e) => setAppointmentSearch(e.target.value)}
           style={{ flex: '2', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', minWidth: '200px' }}
         />
-        <select value={staffFilter} onChange={e => setStaffFilter(e.target.value)} style={{ padding: '10px', borderRadius: '4px' }}>
-          <option value="">All Staff</option>
-          {staffOptions.map(name => (
-            <option key={name} value={name}>{name}</option>
-          ))}
-        </select>
+        {isAdminUser && (
+          <select value={staffFilter} onChange={e => setStaffFilter(e.target.value)} style={{ padding: '10px', borderRadius: '4px' }}>
+            <option value="">All Staff</option>
+            {staffOptions.map(name => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+        )}
         <select value={appointmentSort} onChange={(e) => setAppointmentSort(e.target.value)} style={{ padding: '10px', borderRadius: '4px' }}>
           <option value="newest">Newest</option>
           <option value="oldest">Oldest</option>
@@ -219,7 +231,7 @@ export default function AppointmentsPage() {
             <div
               key={apt.id}
               style={{
-                background: 'white',
+                background: 'linear-gradient(135deg, #fffaf4 0%, #f7e7d8 100%)',
                 padding: '15px',
                 borderRadius: '8px',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.08)',

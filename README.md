@@ -238,6 +238,7 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 - `WIX_PUBLIC_KEY` Wix public key used to verify webhook signatures
 - `WIX_API_AUTH` Authorization header value for Wix analytics requests
 - `ADMIN_USER_IDS` comma-separated Supabase user IDs allowed to view all staff metrics
+- `NEXT_PUBLIC_ADMIN_USER_IDS` same as above but exposed to the browser for role-based UI
 
 Generate these values in the **Wix Developer Center** by creating (or selecting)
 an app and navigating to **API Keys**. Create a new API key for server-to-server
