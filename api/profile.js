@@ -2,6 +2,11 @@ import { createSupabaseClient } from '../utils/supabaseClient'
 import { setCorsHeaders } from '../utils/cors'
 import requireAuth from '../utils/requireAuth'
 
+const ADMIN_IDS = (process.env.ADMIN_USER_IDS || '')
+  .split(',')
+  .map((id) => id.trim())
+  .filter(Boolean)
+
 const supabase = createSupabaseClient()
 
 export default async function handler(req, res) {
@@ -26,7 +31,8 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to load profile', details: error.message })
     }
 
-    res.status(200).json({ profile: { email: user.email, ...(data || {}) } })
+    const isAdmin = ADMIN_IDS.includes(user.id)
+    res.status(200).json({ profile: { email: user.email, is_admin: isAdmin, ...(data || {}) } })
     return
   }
 

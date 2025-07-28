@@ -3,6 +3,8 @@ import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { toPlainString } from '../utils/translation'
 import { fetchWithAuth } from '../utils/api'
+import { createClient } from '@supabase/supabase-js'
+import { isAdmin } from '../utils/isAdmin'
 
 export default function OrdersPage() {
   const router = useRouter()
@@ -16,6 +18,7 @@ export default function OrdersPage() {
   const [sortOption, setSortOption] = useState('newest')
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
+  const [isAdminUser, setIsAdminUser] = useState(false)
   const LIMIT = 20
 
   useEffect(() => {
@@ -26,6 +29,18 @@ export default function OrdersPage() {
   const loadOrders = async (pageToLoad = 1) => {
     try {
       setLoading(true)
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      const supabase = url && key ? createClient(url, key) : null
+      let userId = null
+      let admin = false
+      if (supabase) {
+        const { data: sessionData } = await supabase.auth.getSession()
+        userId = sessionData?.session?.user?.id || null
+        admin = isAdmin(userId)
+        setIsAdminUser(admin)
+      }
+
       const res = await fetchWithAuth(`/api/get-orders?page=${pageToLoad}&limit=${LIMIT}`)
       if (!res.ok) throw new Error('Failed to load orders')
       const data = await res.json()
@@ -37,10 +52,11 @@ export default function OrdersPage() {
         payment_status: toPlainString(order.payment_status),
         total_amount: toPlainString(order.total_amount)
       }))
+      const filtered = !admin && userId ? normalized.filter(o => o.staff_id === userId) : normalized
       if (pageToLoad === 1) {
-        setOrders(normalized)
+        setOrders(filtered)
       } else {
-        setOrders(prev => [...prev, ...normalized])
+        setOrders(prev => [...prev, ...filtered])
       }
       if (data.total_count != null) {
         setHasMore(pageToLoad * LIMIT < data.total_count)

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { createClient } from '@supabase/supabase-js'
 import { fetchWithAuth } from '../utils/api'
+import { isAdmin } from '../utils/isAdmin'
 import styles from './NavBar.module.css'
 
 export default function NavBar() {
@@ -46,6 +47,8 @@ export default function NavBar() {
       .catch(() => {})
   }, [user])
 
+  const admin = isAdmin(user?.id) || profile?.is_admin
+
   return (
     <nav className={styles.navbar}>
       <div className={styles.brand}>Keeping It Cute</div>
@@ -60,51 +63,59 @@ export default function NavBar() {
         <Link href="/staff" className={styles.tab}>
           🏠 Dashboard
         </Link>
-        <Link href="/dashboard" className={styles.tab}>
-          📈 Metrics
-        </Link>
+        {admin && (
+          <Link href="/dashboard" className={styles.tab}>
+            📈 Metrics
+          </Link>
+        )}
         <Link href="/staff?tab=appointments" className={styles.tab}>
           📅 Appointments
         </Link>
-        <Link href="/staff?tab=inventory" className={styles.tab}>
-          📦 Inventory
-        </Link>
+        {admin && (
+          <Link href="/staff?tab=inventory" className={styles.tab}>
+            📦 Inventory
+          </Link>
+        )}
         <Link href="/orders" className={styles.tab}>
           🛒 Orders
         </Link>
-        <Link href="/customers" className={styles.tab}>
-          👥 Contacts
-        </Link>
+        {admin && (
+          <Link href="/customers" className={styles.tab}>
+            👥 Contacts
+          </Link>
+        )}
         <Link href="/staff-chat" className={styles.tab}>
           💬 Chat
         </Link>
-        <div className={styles.tools}>
-          <button
-            className={styles.tab}
-            onClick={() => setToolsOpen(!toolsOpen)}
-            aria-haspopup="true"
-            aria-expanded={toolsOpen}
-          >
-            Tools ▾
-          </button>
-          <div className={`${styles.dropdown} ${toolsOpen ? styles.show : ''}`}>
-            <Link href="/all-products" className={styles.action}>
-              📋 All Products
-            </Link>
-            <Link href="/inventory-audit" className={styles.action}>
-              📊 Start Inventory Audit
-            </Link>
-            <Link href="/logo-management" className={`${styles.action} ${styles.beige}`}>
-              🎨 Manage Logo
-            </Link>
-            <Link href="/upload-product-images" className={`${styles.action} ${styles.green}`}>
-              📸 Upload Images
-            </Link>
-        <Link href="/loyalty-dashboard" className={styles.action}>
-          💎 Loyalty Points
-        </Link>
-      </div>
-    </div>
+        {admin && (
+          <div className={styles.tools}>
+            <button
+              className={styles.tab}
+              onClick={() => setToolsOpen(!toolsOpen)}
+              aria-haspopup="true"
+              aria-expanded={toolsOpen}
+            >
+              Tools ▾
+            </button>
+            <div className={`${styles.dropdown} ${toolsOpen ? styles.show : ''}`}>
+              <Link href="/all-products" className={styles.action}>
+                📋 All Products
+              </Link>
+              <Link href="/inventory-audit" className={styles.action}>
+                📊 Start Inventory Audit
+              </Link>
+              <Link href="/logo-management" className={`${styles.action} ${styles.beige}`}>
+                🎨 Manage Logo
+              </Link>
+              <Link href="/upload-product-images" className={`${styles.action} ${styles.green}`}>
+                📸 Upload Images
+              </Link>
+              <Link href="/loyalty-dashboard" className={styles.action}>
+                💎 Loyalty Points
+              </Link>
+            </div>
+          </div>
+        )}
         <div className={styles.right}>
           {user && (
             <>
