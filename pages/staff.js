@@ -117,15 +117,37 @@ export default function StaffDashboard() {
         {upcoming.length === 0 ? (
           <p>No upcoming appointments.</p>
         ) : (
-          <ul style={{ listStyle: 'none', padding: 0, marginBottom: '30px' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '20px',
+              marginBottom: '30px',
+            }}
+          >
             {upcoming.map((apt) => (
-              <li key={apt.id} style={{ background: 'white', marginBottom: '10px', padding: '15px', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-                <strong>{apt.customer_name || 'Customer'}</strong> -{' '}
-                {apt.appointment_date ? new Date(apt.appointment_date).toLocaleString() : ''}{' '}
-                {apt.salon_services?.name ? `(${apt.salon_services.name})` : ''}
-              </li>
+              <div
+                key={apt.id}
+                style={{
+                  background: 'white',
+                  padding: '20px',
+                  borderRadius: '12px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  border: '1px solid #e9ecef',
+                }}
+              >
+                <strong>{apt.customer_name || 'Customer'}</strong>
+                <div style={{ color: '#666', margin: '4px 0 8px' }}>
+                  {apt.appointment_date ? new Date(apt.appointment_date).toLocaleString() : ''}
+                </div>
+                {apt.salon_services?.name && (
+                  <div style={{ fontSize: '0.9em', color: '#555' }}>
+                    {apt.salon_services.name}
+                  </div>
+                )}
+              </div>
             ))}
-          </ul>
+          </div>
         )}
 
         <h3>Quick Links</h3>
