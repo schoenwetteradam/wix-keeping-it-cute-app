@@ -8,6 +8,7 @@ export default function StaffDashboard() {
   useRequireSupabaseAuth()
   const [metrics, setMetrics] = useState(null)
   const [branding, setBranding] = useState(null)
+  const [upcoming, setUpcoming] = useState([])
 
   useEffect(() => {
     async function load() {
@@ -22,6 +23,12 @@ export default function StaffDashboard() {
         if (mRes.ok) {
           const data = await mRes.json()
           setMetrics(data.metrics)
+        }
+
+        const uRes = await fetchWithAuth('/api/get-upcoming-bookings?limit=5')
+        if (uRes.ok) {
+          const data = await uRes.json()
+          setUpcoming(data.bookings || [])
         }
       } catch (err) {
         console.error('Dashboard load error', err)
@@ -105,6 +112,21 @@ export default function StaffDashboard() {
         <div style={{ background: '#fff3cd', padding: '20px', borderRadius: '8px', marginBottom: '30px', border: '1px solid #ffeeba' }}>
           You have {productUsageNeeded} appointments that require product usage logs.
         </div>
+
+        <h3 style={{ marginBottom: '10px' }}>Upcoming Appointments</h3>
+        {upcoming.length === 0 ? (
+          <p>No upcoming appointments.</p>
+        ) : (
+          <ul style={{ listStyle: 'none', padding: 0, marginBottom: '30px' }}>
+            {upcoming.map((apt) => (
+              <li key={apt.id} style={{ background: 'white', marginBottom: '10px', padding: '15px', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+                <strong>{apt.customer_name || 'Customer'}</strong> -{' '}
+                {apt.appointment_date ? new Date(apt.appointment_date).toLocaleString() : ''}{' '}
+                {apt.salon_services?.name ? `(${apt.salon_services.name})` : ''}
+              </li>
+            ))}
+          </ul>
+        )}
 
         <h3>Quick Links</h3>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
