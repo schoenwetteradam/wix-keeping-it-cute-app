@@ -226,7 +226,7 @@ CREATE TABLE service_products (
 Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 
 - `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL` for the browser)
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (or rely on `SUPABASE_ANON_KEY`)
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_STORAGE_BUCKET` (e.g., `salon-images`)
@@ -248,7 +248,7 @@ secret is currently unused unless you implement request verification.
 
 These values are required to build and run the API routes. Variables prefixed
 with `NEXT_PUBLIC_` are exposed to the browser, while server-side handlers rely
-on `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
+on `SUPABASE_URL` and either `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_ANON_KEY`.
 
 ### 2. Running locally
 
@@ -311,8 +311,8 @@ psql $SUPABASE_URL < migrations/20240102_add_profiles_table.sql
 ### Refreshing upcoming bookings
 
 Use the helper script to populate the `upcoming_bookings` table for the next
-week of appointments. This requires `SUPABASE_URL` and
-`SUPABASE_SERVICE_ROLE_KEY` to be set in your environment.
+week of appointments. This requires `SUPABASE_URL` and either
+`SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_ANON_KEY` to be set in your environment.
 
 ```bash
 npm run refresh-upcoming
