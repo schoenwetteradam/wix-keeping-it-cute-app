@@ -66,7 +66,7 @@ export default function NavBar() {
         <Link href="/staff?tab=appointments" className={styles.tab}>
           📅 Appointments
         </Link>
-        <Link href="/staff?tab=inventory" className={styles.tab}>
+        <Link href="/all-products" className={styles.tab}>
           📦 Inventory
         </Link>
         <Link href="/orders" className={styles.tab}>
