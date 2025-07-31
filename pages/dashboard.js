@@ -32,6 +32,14 @@ export default function Dashboard() {
   const ordersToday = metrics?.orders_today || 0
   const productUsageNeeded = metrics?.product_usage_needed || 0
   const lowStock = metrics?.low_stock || 0
+  const totalRevenue = (metrics?.total_revenue || []).reduce(
+    (sum, r) => sum + Number(r.total_revenue || 0),
+    0
+  )
+  const appointmentCount = (metrics?.appointment_counts || []).reduce(
+    (sum, a) => sum + Number(a.appointment_count || 0),
+    0
+  )
 
   return (
     <>
@@ -99,6 +107,28 @@ export default function Dashboard() {
           }}>
             <h3 style={{ margin: '0 0 10px', color: '#9c27b0', fontSize: '1.1em' }}>💳 Orders Today</h3>
             <p style={{ fontSize: '2.5em', margin: 0, fontWeight: 'bold', color: '#333' }}>{ordersToday}</p>
+          </div>
+          <div style={{
+            background: 'white',
+            padding: '25px',
+            borderRadius: '12px',
+            textAlign: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            border: '1px solid #e9ecef'
+          }}>
+            <h3 style={{ margin: '0 0 10px', color: '#388e3c', fontSize: '1.1em' }}>💰 Total Revenue</h3>
+            <p style={{ fontSize: '2.5em', margin: 0, fontWeight: 'bold', color: '#333' }}>${totalRevenue.toFixed(2)}</p>
+          </div>
+          <div style={{
+            background: 'white',
+            padding: '25px',
+            borderRadius: '12px',
+            textAlign: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            border: '1px solid #e9ecef'
+          }}>
+            <h3 style={{ margin: '0 0 10px', color: '#455a64', fontSize: '1.1em' }}>📋 Appointment Count</h3>
+            <p style={{ fontSize: '2.5em', margin: 0, fontWeight: 'bold', color: '#333' }}>{appointmentCount}</p>
           </div>
         </div>
 

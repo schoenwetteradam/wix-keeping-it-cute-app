@@ -38,7 +38,28 @@ export default async function handler(req, res) {
     if (error) {
       throw error
     }
-    res.status(200).json({ success: true, metrics: data ? data[0] : {} })
+
+    const { data: revenueData, error: revenueError } = await supabase.rpc('total_revenue_for_user', { user_id: user.id })
+    if (revenueError) {
+      throw revenueError
+    }
+
+    const { data: appointmentData, error: appointmentError } = await supabase.rpc('total_appointments_for_user', { user_id: user.id })
+    if (appointmentError) {
+      throw appointmentError
+    }
+
+    const { data: upcomingData, error: upcomingError } = await supabase.rpc('upcoming_appointments', { user_id: user.id })
+    if (upcomingError) {
+      throw upcomingError
+    }
+
+    const metrics = data ? data[0] : {}
+    metrics.total_revenue = revenueData || []
+    metrics.appointment_counts = appointmentData || []
+    metrics.upcoming_appointments_list = upcomingData || []
+
+    res.status(200).json({ success: true, metrics })
   } catch (err) {
     console.error('Dashboard Metrics Error:', err)
     res.status(500).json({
