@@ -1,151 +1,34 @@
-import { useState, useEffect } from 'react'
-import Head from 'next/head'
-import Link from 'next/link'
-import { fetchWithAuth } from '../utils/api'
+import React, { useEffect, useState } from 'react'
+import { fetchMetrics } from '../utils/fetchMetrics'
 
 export default function Dashboard() {
   const [metrics, setMetrics] = useState(null)
-  const [branding, setBranding] = useState(null)
 
   useEffect(() => {
-    async function load() {
-      try {
-        const bRes = await fetchWithAuth('/api/get-branding')
-        if (bRes.ok) {
-          const data = await bRes.json()
-          setBranding(data.branding)
-        }
-
-        const mRes = await fetchWithAuth('/api/get-dashboard-metrics')
-        if (mRes.ok) {
-          const data = await mRes.json()
-          setMetrics(data.metrics)
-        }
-      } catch (err) {
-        console.error('Dashboard load error', err)
-      }
-    }
-    load()
+    fetchMetrics().then(setMetrics)
   }, [])
 
-  const upcomingCount = metrics?.upcoming_appointments || 0
-  const ordersToday = metrics?.orders_today || 0
-  const productUsageNeeded = metrics?.product_usage_needed || 0
-  const lowStock = metrics?.low_stock || 0
-  const totalRevenue = (metrics?.total_revenue || []).reduce(
-    (sum, r) => sum + Number(r.total_revenue || 0),
-    0
-  )
-  const appointmentCount = (metrics?.appointment_counts || []).reduce(
-    (sum, a) => sum + Number(a.appointment_count || 0),
-    0
-  )
+  if (!metrics) return <div>Loading metrics...</div>
 
   return (
-    <>
-      <Head>
-        <title>Dashboard - Keeping It Cute Salon</title>
-      </Head>
-      <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px' }}>
-        {/* Hero Header */}
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          {branding?.logo_url && (
-            <img src={branding.logo_url} alt="Salon Logo" style={{ height: '80px' }} />
-          )}
-          <h1 style={{ margin: '10px 0' }}>Welcome Back!</h1>
-          <p>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-        </div>
-
-        {/* Metrics */}
-        <h2 style={{ marginBottom: '15px' }}>Metrics at a Glance</h2>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '20px',
-          marginBottom: '30px'
-        }}>
-          <div style={{
-            background: 'white',
-            padding: '25px',
-            borderRadius: '12px',
-            textAlign: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            border: '1px solid #e9ecef'
-          }}>
-            <h3 style={{ margin: '0 0 10px', color: '#1976d2', fontSize: '1.1em' }}>📅 Upcoming Appointments</h3>
-            <p style={{ fontSize: '2.5em', margin: 0, fontWeight: 'bold', color: '#333' }}>{upcomingCount}</p>
-          </div>
-          <div style={{
-            background: 'white',
-            padding: '25px',
-            borderRadius: '12px',
-            textAlign: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            border: '1px solid #e9ecef'
-          }}>
-            <h3 style={{ margin: '0 0 10px', color: '#f57c00', fontSize: '1.1em' }}>📝 Usage Forms Needed</h3>
-            <p style={{ fontSize: '2.5em', margin: 0, fontWeight: 'bold', color: '#333' }}>{productUsageNeeded}</p>
-          </div>
-          <div style={{
-            background: 'white',
-            padding: '25px',
-            borderRadius: '12px',
-            textAlign: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            border: '1px solid #e9ecef'
-          }}>
-            <h3 style={{ margin: '0 0 10px', color: '#d32f2f', fontSize: '1.1em' }}>🚨 Low Stock</h3>
-            <p style={{ fontSize: '2.5em', margin: 0, fontWeight: 'bold', color: '#d32f2f' }}>{lowStock}</p>
-          </div>
-          <div style={{
-            background: 'white',
-            padding: '25px',
-            borderRadius: '12px',
-            textAlign: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            border: '1px solid #e9ecef'
-          }}>
-            <h3 style={{ margin: '0 0 10px', color: '#9c27b0', fontSize: '1.1em' }}>💳 Orders Today</h3>
-            <p style={{ fontSize: '2.5em', margin: 0, fontWeight: 'bold', color: '#333' }}>{ordersToday}</p>
-          </div>
-          <div style={{
-            background: 'white',
-            padding: '25px',
-            borderRadius: '12px',
-            textAlign: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            border: '1px solid #e9ecef'
-          }}>
-            <h3 style={{ margin: '0 0 10px', color: '#388e3c', fontSize: '1.1em' }}>💰 Total Revenue</h3>
-            <p style={{ fontSize: '2.5em', margin: 0, fontWeight: 'bold', color: '#333' }}>${totalRevenue.toFixed(2)}</p>
-          </div>
-          <div style={{
-            background: 'white',
-            padding: '25px',
-            borderRadius: '12px',
-            textAlign: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            border: '1px solid #e9ecef'
-          }}>
-            <h3 style={{ margin: '0 0 10px', color: '#455a64', fontSize: '1.1em' }}>📋 Appointment Count</h3>
-            <p style={{ fontSize: '2.5em', margin: 0, fontWeight: 'bold', color: '#333' }}>{appointmentCount}</p>
-          </div>
-        </div>
-
-        {/* Alerts */}
-        <div style={{ background: '#fff3cd', padding: '20px', borderRadius: '8px', marginBottom: '30px', border: '1px solid #ffeeba' }}>
-          You have {productUsageNeeded} appointments that require product usage logs.
-        </div>
-
-        {/* Quick Links */}
-        <h3>Quick Links</h3>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <Link href="/product-usage-dashboard" style={{ padding: '10px 15px', background: '#e0cdbb', color: 'white', borderRadius: '6px', textDecoration: 'none' }}>Log Product Usage</Link>
-          <Link href="/staff?tab=appointments" style={{ padding: '10px 15px', background: '#667eea', color: 'white', borderRadius: '6px', textDecoration: 'none' }}>View All Appointments</Link>
-          <Link href="/alerts" style={{ padding: '10px 15px', background: '#d32f2f', color: 'white', borderRadius: '6px', textDecoration: 'none' }}>Restock Inventory</Link>
-          <Link href="/site-analytics" style={{ padding: '10px 15px', background: '#1976d2', color: 'white', borderRadius: '6px', textDecoration: 'none' }}>Site Analytics</Link>
-        </div>
+    <div className="p-4">
+      <h2 className="text-xl font-bold mb-4">📈 Metrics at a Glance</h2>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <MetricCard label="Upcoming Appointments" value={metrics.upcomingAppointments} icon="📅" />
+        <MetricCard label="Usage Forms Needed" value={metrics.usageFormsNeeded} icon="📝" />
+        <MetricCard label="Low Stock" value={metrics.lowStock} icon="🚨" />
+        <MetricCard label="Orders Today" value={metrics.ordersToday} icon="💳" />
+        <MetricCard label="Total Revenue" value={`$${Number(metrics.totalRevenue).toFixed(2)}`} icon="💰" />
+        <MetricCard label="Appointment Count" value={metrics.appointmentCount} icon="📋" />
       </div>
-    </>
+    </div>
   )
 }
+
+const MetricCard = ({ label, value, icon }) => (
+  <div className="p-4 bg-white shadow rounded-lg text-center">
+    <div className="text-3xl">{icon}</div>
+    <div className="text-sm text-gray-500">{label}</div>
+    <div className="text-2xl font-semibold">{value}</div>
+  </div>
+)
