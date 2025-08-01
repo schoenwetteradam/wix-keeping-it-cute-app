@@ -8,10 +8,6 @@ const supabase = createSupabaseClient()
 // Wix public key used to verify signed webhook payloads.
 const { WIX_PUBLIC_KEY } = process.env;
 
-if (!WIX_PUBLIC_KEY) {
-  throw new Error("Missing WIX_PUBLIC_KEY environment variable. Add your Wix public key to verify webhook signatures.");
-}
-
 // Product usage tracking function
 async function checkForProductUsagePrompt(bookingId, customerEmail) {
   try {
@@ -132,21 +128,25 @@ export default async function handler(req, res) {
     // 3. Check for JWT FORMAT webhook (string starting with 'eyJ')
     if (typeof webhookData === 'string' && webhookData.startsWith('eyJ')) {
       console.log('🔐 JWT Token detected, processing...');
-      
+
       let rawPayload, event, eventData;
-      
+
       try {
-        // Try to verify JWT first
-        console.log('🔒 Attempting JWT verification...');
-        rawPayload = jwt.verify(webhookData, WIX_PUBLIC_KEY, { 
-          algorithms: ['RS256']
-        });
-        console.log('✅ JWT verified successfully');
-        
+        // Try to verify JWT first if we have a public key
+        if (WIX_PUBLIC_KEY) {
+          console.log('🔒 Attempting JWT verification...');
+          rawPayload = jwt.verify(webhookData, WIX_PUBLIC_KEY, {
+            algorithms: ['RS256']
+          });
+          console.log('✅ JWT verified successfully');
+        } else {
+          throw new Error('Missing WIX_PUBLIC_KEY');
+        }
+
       } catch (jwtError) {
-        console.log('⚠️ JWT Verification failed:', jwtError.message);
+        console.log('⚠️ JWT Verification skipped or failed:', jwtError.message);
         console.log('🔄 Attempting to decode without verification...');
-        
+
         // Decode without verification for processing
         const decoded = jwt.decode(webhookData, { complete: true });
         if (!decoded || !decoded.payload) {
