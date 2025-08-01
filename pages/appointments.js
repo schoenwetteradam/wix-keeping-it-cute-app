@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { createClient } from '@supabase/supabase-js'
 import CalendarView from '../components/CalendarView'
 import AppointmentCard from '../components/AppointmentCard'
 import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
@@ -20,16 +19,10 @@ export default function AppointmentsPage() {
   const loadAppointments = async () => {
     setLoading(true)
     try {
-      const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      if (!url || !key) throw new Error('Missing Supabase env vars')
-      const supabase = createClient(url, key)
-      const { data, error } = await supabase
-        .from('bookings')
-        .select('*, salon_services(*)')
-        .order('appointment_date', { ascending: false })
-      if (error) throw error
-      setAppointments(data || [])
+      const res = await fetchWithAuth('/api/get-appointments')
+      if (!res.ok) throw new Error('Failed to load appointments')
+      const data = await res.json()
+      setAppointments(data.appointments || [])
       setError(null)
     } catch (err) {
       setError(err.message)
