@@ -57,6 +57,13 @@ A comprehensive webhook system for Keeping It Cute Salon that captures all busin
 - `POST /api/session-ended` - Website visitor sessions
 - `POST /api/webhook-router` - Universal fallback for any webhook
 
+### Schedules
+- `GET /api/schedules` - Query Wix schedules
+- `POST /api/schedules` - Create a new schedule
+- `GET /api/schedules/[scheduleId]` - Retrieve a schedule
+- `PATCH /api/schedules/[scheduleId]` - Update a schedule
+- `POST /api/schedules/[scheduleId]/cancel` - Cancel a schedule
+
 ### Salon Data
 - `GET /api/get-branding` - Retrieve salon branding details
 - `GET /api/get-orders` - List recent orders

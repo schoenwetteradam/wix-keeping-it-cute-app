@@ -30,4 +30,36 @@ export class WixAPIManager {
   async getServices() {
     return this.makeRequest('/bookings/v2/services')
   }
+
+  async getSchedule(scheduleId) {
+    return this.makeRequest(`/calendar/v3/schedules/${scheduleId}`)
+  }
+
+  async querySchedules(query = {}) {
+    return this.makeRequest('/calendar/v3/schedules/query', 'POST', { query })
+  }
+
+  async createSchedule(schedule, idempotencyKey) {
+    const body = { schedule }
+    if (idempotencyKey) {
+      body.idempotencyKey = idempotencyKey
+    }
+    return this.makeRequest('/calendar/v3/schedules', 'POST', body)
+  }
+
+  async updateSchedule(scheduleId, schedule, participantNotification) {
+    const body = { schedule }
+    if (participantNotification) {
+      body.participantNotification = participantNotification
+    }
+    return this.makeRequest(`/calendar/v3/schedules/${scheduleId}`, 'PATCH', body)
+  }
+
+  async cancelSchedule(scheduleId, preserveFutureEventsWithParticipants = false, participantNotification) {
+    const body = { preserveFutureEventsWithParticipants }
+    if (participantNotification) {
+      body.participantNotification = participantNotification
+    }
+    return this.makeRequest(`/calendar/v3/schedules/${scheduleId}/cancel`, 'POST', body)
+  }
 }
