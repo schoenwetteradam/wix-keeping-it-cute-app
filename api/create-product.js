@@ -19,10 +19,40 @@ export default async function handler(req, res) {
     const { product_name, brand, category, ...rest } = req.body || {}
 
     if (!product_name || !brand || !category) {
-      return res.status(400).json({ error: 'product_name, brand and category are required' })
+      return res
+        .status(400)
+        .json({ error: 'product_name, brand and category are required' })
     }
 
+    // Create product in Wix Stores
+    const wixRes = await fetch('https://www.wixapis.com/stores/v1/products', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: process.env.WIX_API_TOKEN
+      },
+      body: JSON.stringify({
+        product: {
+          name: product_name,
+          productType: 'physical',
+          brand,
+          ...rest
+        }
+      })
+    })
+
+    const wixData = await wixRes.json()
+    if (!wixRes.ok) {
+      return res
+        .status(wixRes.status)
+        .json({ error: 'Failed to create product', details: wixData })
+    }
+
+    const productInfo = wixData.product || wixData
+
+    // Store basic product info in Supabase
     const productRecord = {
+      wix_product_id: productInfo.id,
       product_name,
       brand,
       category,
@@ -38,10 +68,11 @@ export default async function handler(req, res) {
 
     if (error) {
       console.error('Supabase product insert error:', error)
-      return res.status(500).json({ error: 'Failed to create product', details: error.message })
     }
 
-    res.status(200).json({ success: true, product: data })
+    res
+      .status(200)
+      .json({ success: true, product: data || productRecord })
   } catch (err) {
     console.error('Create product error:', err)
     res.status(500).json({ error: 'Unexpected error', details: err.message })
