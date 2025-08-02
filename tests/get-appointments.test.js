@@ -53,4 +53,21 @@ describe('get-appointments handler', () => {
     expect(res.json).toHaveBeenCalledWith({ error: 'Invalid page or limit parameter' });
   });
 
+  test('applies range based on page and limit', async () => {
+    const query = createQuery({ data: [], error: null });
+    const from = jest.fn(() => query);
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
+    jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
+
+    const { default: handler } = await import('../api/get-appointments.js');
+
+    const req = { method: 'GET', query: { page: '2', limit: '10' } };
+    const res = createRes();
+
+    await handler(req, res);
+
+    expect(query.range).toHaveBeenCalledWith(10, 19);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
 });

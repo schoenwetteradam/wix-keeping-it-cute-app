@@ -19,10 +19,21 @@ export default function AppointmentsPage() {
   const loadAppointments = async () => {
     setLoading(true)
     try {
-      const res = await fetchWithAuth('/api/get-appointments')
-      if (!res.ok) throw new Error('Failed to load appointments')
-      const data = await res.json()
-      setAppointments(data.appointments || [])
+      const limit = 1000
+      let page = 1
+      let all = []
+
+      while (true) {
+        const res = await fetchWithAuth(`/api/get-appointments?page=${page}&limit=${limit}`)
+        if (!res.ok) throw new Error('Failed to load appointments')
+        const data = await res.json()
+        const batch = data.appointments || []
+        all = all.concat(batch)
+        if (batch.length < limit) break
+        page += 1
+      }
+
+      setAppointments(all)
       setError(null)
     } catch (err) {
       setError(err.message)
