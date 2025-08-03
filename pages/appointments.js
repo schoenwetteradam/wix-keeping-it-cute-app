@@ -15,8 +15,10 @@ export default function AppointmentsPage() {
   const [appointmentView, setAppointmentView] = useState('list')
   const [currentPage, setCurrentPage] = useState(1)
   const APPOINTMENTS_PER_PAGE = 25
-
-  const loadAppointments = async () => {
+  const [viewAll, setViewAll] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  
+  const loadAppointments = async (scopeParam) => {
     setLoading(true)
     try {
       const limit = 1000
@@ -24,7 +26,8 @@ export default function AppointmentsPage() {
       let all = []
 
       while (true) {
-        const res = await fetchWithAuth(`/api/get-appointments?page=${page}&limit=${limit}`)
+        const scopeQuery = scopeParam ? `&scope=${scopeParam}` : ''
+        const res = await fetchWithAuth(`/api/get-appointments?page=${page}&limit=${limit}${scopeQuery}`)
         if (!res.ok) throw new Error('Failed to load appointments')
         const data = await res.json()
         const batch = data.appointments || []
@@ -43,7 +46,23 @@ export default function AppointmentsPage() {
   }
 
   useEffect(() => {
-    loadAppointments()
+    async function init() {
+      try {
+        const res = await fetchWithAuth('/api/profile')
+        if (res.ok) {
+          const data = await res.json()
+          const admin = !!data.profile?.is_admin
+          setIsAdmin(admin)
+          setViewAll(admin)
+          await loadAppointments(admin ? 'all' : 'mine')
+          return
+        }
+      } catch (e) {
+        console.error('Profile load error', e)
+      }
+      await loadAppointments('mine')
+    }
+    init()
   }, [])
 
   const completeAppointment = async (apt) => {
@@ -200,6 +219,18 @@ export default function AppointmentsPage() {
           <option value="created-newest">Created Newest</option>
           <option value="created-oldest">Created Oldest</option>
         </select>
+        <button
+          onClick={() => {
+            const next = !viewAll
+            setViewAll(next)
+            setStaffFilter('')
+            setCurrentPage(1)
+            loadAppointments(next ? 'all' : 'mine')
+          }}
+          style={{ padding: '10px', borderRadius: '4px', cursor: 'pointer' }}
+        >
+          {viewAll ? 'My Appointments' : 'Salon Schedule'}
+        </button>
         <button onClick={() => setAppointmentView(appointmentView === 'list' ? 'calendar' : 'list')} style={{ padding: '10px', borderRadius: '4px', cursor: 'pointer' }}>
           {appointmentView === 'list' ? 'Calendar View' : 'List View'}
         </button>

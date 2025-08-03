@@ -1,6 +1,12 @@
 // api/get-appointments.js
 import { createSupabaseClient } from '../utils/supabaseClient'
 import { setCorsHeaders } from '../utils/cors'
+import requireAuth from '../utils/requireAuth'
+
+const ADMIN_IDS = (process.env.ADMIN_USER_IDS || '')
+  .split(',')
+  .map(id => id.trim())
+  .filter(Boolean)
 
 const supabase = createSupabaseClient()
 
@@ -15,9 +21,12 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
-  
+
   try {
-    const { page = '1', limit = '1000', status, payment_status } = req.query
+    const user = await requireAuth(req, res)
+    if (!user) return
+
+    const { page = '1', limit = '1000', status, payment_status, scope } = req.query
 
     const pageNum = parseInt(page, 10)
     const limitNum = parseInt(limit, 10)
@@ -33,13 +42,20 @@ export default async function handler(req, res) {
       .select('*, salon_services(*)')
       .order('appointment_date', { ascending: false })
       .range(start, end)
-    
+
     if (status) {
       query = query.eq('status', status);
     }
-    
+
     if (payment_status) {
       query = query.eq('payment_status', payment_status);
+    }
+
+    const isAdmin = ADMIN_IDS.includes(user.id)
+    if (scope === 'mine') {
+      query = query.eq('staff_id', user.id)
+    } else if (scope !== 'all' && !isAdmin) {
+      query = query.eq('staff_id', user.id)
     }
 
     
