@@ -7,6 +7,11 @@ const ADMIN_IDS = (process.env.ADMIN_USER_IDS || '')
   .map(id => id.trim())
   .filter(Boolean)
 
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
+  .split(',')
+  .map(e => e.trim().toLowerCase())
+  .filter(Boolean)
+
 const supabase = createSupabaseClient()
 
 export default async function handler(req, res) {
@@ -31,7 +36,11 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to load profile', details: error.message })
     }
 
-    res.status(200).json({ profile: { email: user.email, ...(data || {}), is_admin: ADMIN_IDS.includes(user.id) } })
+    const isAdmin =
+      ADMIN_IDS.includes(user.id) ||
+      (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase()))
+
+    res.status(200).json({ profile: { email: user.email, ...(data || {}), is_admin: isAdmin } })
     return
   }
 
@@ -47,7 +56,11 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to save profile', details: error.message })
     }
 
-    res.status(200).json({ profile: { ...data, is_admin: ADMIN_IDS.includes(user.id) } })
+    const isAdmin =
+      ADMIN_IDS.includes(user.id) ||
+      (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase()))
+
+    res.status(200).json({ profile: { ...data, is_admin: isAdmin } })
     return
   }
 

@@ -19,6 +19,7 @@ beforeEach(() => {
   process.env.SUPABASE_URL = 'http://example.supabase.co';
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'key';
   process.env.ADMIN_USER_IDS = 'admin1';
+  process.env.ADMIN_EMAILS = '';
 });
 
 describe('get-appointments handler', () => {
@@ -123,6 +124,24 @@ describe('get-appointments handler', () => {
     await handler(req, res);
 
     expect(query.eq).toHaveBeenCalledWith('staff_id', 'admin1');
+  });
+
+  test('allows admin emails to view all appointments', async () => {
+    process.env.ADMIN_EMAILS = 'boss@example.com';
+    const query = createQuery({ data: [], error: null });
+    const from = jest.fn(() => query);
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
+    jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
+    jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1', email: 'boss@example.com' })));
+
+    const { default: handler } = await import('../api/get-appointments.js');
+
+    const req = { method: 'GET', query: { page: '1', limit: '10', scope: 'all' } };
+    const res = createRes();
+
+    await handler(req, res);
+
+    expect(query.eq).not.toHaveBeenCalledWith('staff_id', 'user1');
   });
 
 });
