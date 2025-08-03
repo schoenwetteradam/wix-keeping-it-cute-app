@@ -178,7 +178,7 @@ export default function StaffDashboard() {
         <h3>Quick Links</h3>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <Link href="/product-usage-dashboard" style={{ padding: '10px 15px', background: '#e0cdbb', color: 'white', borderRadius: '6px', textDecoration: 'none' }}>Log Product Usage</Link>
-          <Link href="/appointments" style={{ padding: '10px 15px', background: '#667eea', color: 'white', borderRadius: '6px', textDecoration: 'none' }}>View All Appointments</Link>
+          <Link href="/appointments" style={{ padding: '10px 15px', background: '#667eea', color: 'white', borderRadius: '6px', textDecoration: 'none' }}>Salon Schedule</Link>
           <Link href="/alerts" style={{ padding: '10px 15px', background: '#d32f2f', color: 'white', borderRadius: '6px', textDecoration: 'none' }}>Restock Inventory</Link>
           <Link href="/site-analytics" style={{ padding: '10px 15px', background: '#1976d2', color: 'white', borderRadius: '6px', textDecoration: 'none' }}>Site Analytics</Link>
         </div>
