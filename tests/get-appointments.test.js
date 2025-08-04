@@ -71,6 +71,7 @@ describe('get-appointments handler', () => {
 
     await handler(req, res);
 
+    expect(from).toHaveBeenCalledWith('bookings');
     expect(query.range).toHaveBeenCalledWith(10, 19);
     expect(res.status).toHaveBeenCalledWith(200);
   });
