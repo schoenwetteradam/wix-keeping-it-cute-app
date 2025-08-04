@@ -44,7 +44,7 @@ export default async function handler(req, res) {
 
     let query = supabase
       .from('bookings')
-      .select('*, salon_services(*)')
+      .select('*')
       .order('appointment_date', { ascending: false })
       .range(start, end)
 
@@ -67,17 +67,26 @@ export default async function handler(req, res) {
 
     
     const { data: appointments, error } = await query;
+    if (error) {
+      console.error('❌ Appointments fetch error:', error);
+      return res.status(500).json({
+        error: 'Failed to fetch appointments',
+        details: error.message
+      });
+    }
+
+    const formatted = appointments || []
 
     // Cache upcoming bookings for the next week
-    if (appointments) {
-      const now = new Date();
-      const nextWeek = new Date();
-      nextWeek.setDate(now.getDate() + 7);
+    if (formatted.length) {
+      const now = new Date()
+      const nextWeek = new Date()
+      nextWeek.setDate(now.getDate() + 7)
 
-      const upcoming = appointments.filter(a => {
-        const dt = new Date(a.appointment_date);
-        return dt >= now && dt < nextWeek;
-      });
+      const upcoming = formatted.filter(a => {
+        const dt = new Date(a.appointment_date)
+        return dt >= now && dt < nextWeek
+      })
 
       if (upcoming.length) {
         try {
@@ -92,25 +101,17 @@ export default async function handler(req, res) {
                 payment_status: a.payment_status
               })),
               { onConflict: 'booking_id', ignoreDuplicates: false }
-            );
+            )
         } catch (cacheErr) {
-          console.error('❌ Upcoming bookings cache error:', cacheErr);
+          console.error('❌ Upcoming bookings cache error:', cacheErr)
         }
       }
     }
-    
-    if (error) {
-      console.error('❌ Appointments fetch error:', error);
-      return res.status(500).json({ 
-        error: 'Failed to fetch appointments', 
-        details: error.message 
-      });
-    }
-    
+
     res.status(200).json({
       success: true,
-      appointments: appointments || [],
-      count: appointments?.length || 0,
+      appointments: formatted,
+      count: formatted.length,
       timestamp: new Date().toISOString()
     });
     
