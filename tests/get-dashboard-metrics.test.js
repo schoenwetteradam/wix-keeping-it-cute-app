@@ -60,8 +60,8 @@ describe('get-dashboard-metrics handler', () => {
     await handler(req, res)
 
     expect(rpc).toHaveBeenCalledWith('dashboard_metrics', { p_staff_id: null })
-    expect(rpc).toHaveBeenCalledWith('total_revenue_for_user', { user_id: 'admin1' })
-    expect(rpc).toHaveBeenCalledWith('total_appointments_for_user', { user_id: 'admin1' })
-    expect(rpc).toHaveBeenCalledWith('upcoming_appointments', { user_id: 'admin1' })
+    expect(rpc).toHaveBeenCalledWith('total_revenue_for_user', { user_id: 'admin-uuid-placeholder' })
+    expect(rpc).toHaveBeenCalledWith('total_appointments_for_user', { user_id: 'admin-uuid-placeholder' })
+    expect(rpc).toHaveBeenCalledWith('upcoming_appointments', { user_id: 'admin-uuid-placeholder' })
   })
 })
