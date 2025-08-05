@@ -32,7 +32,7 @@ export default function StaffDashboard() {
     load()
   }, [])
 
-  const upcomingCount = metrics?.upcoming_appointments || 0
+  const upcomingCount = upcoming.length
   const ordersToday = metrics?.orders_today || 0
   const productUsageNeeded = metrics?.product_usage_needed || 0
   const lowStock = metrics?.low_stock || 0
