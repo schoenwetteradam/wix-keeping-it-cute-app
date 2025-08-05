@@ -31,7 +31,7 @@ export default async function handler(req, res) {
 
     const { data, error } = await supabase
       .from('contacts')
-      .insert([contactRecord])
+      .upsert(contactRecord, { onConflict: 'email' })
       .select();
 
     if (error) {
