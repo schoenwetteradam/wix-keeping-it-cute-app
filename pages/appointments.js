@@ -17,6 +17,16 @@ export default function AppointmentsPage() {
   const APPOINTMENTS_PER_PAGE = 25
   const [viewAll, setViewAll] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+
+  const buttonStyle = {
+    padding: '12px 18px',
+    background: '#0070f3',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '16px'
+  }
   
   const loadAppointments = async (scopeParam) => {
     setLoading(true)
@@ -227,11 +237,11 @@ export default function AppointmentsPage() {
             setCurrentPage(1)
             loadAppointments(next ? 'all' : 'mine')
           }}
-          style={{ padding: '10px', borderRadius: '4px', cursor: 'pointer' }}
+          style={buttonStyle}
         >
           {viewAll ? 'My Appointments' : 'Salon Schedule'}
         </button>
-        <button onClick={() => setAppointmentView(appointmentView === 'list' ? 'calendar' : 'list')} style={{ padding: '10px', borderRadius: '4px', cursor: 'pointer' }}>
+        <button onClick={() => setAppointmentView(appointmentView === 'list' ? 'calendar' : 'list')} style={buttonStyle}>
           {appointmentView === 'list' ? 'Calendar View' : 'List View'}
         </button>
         <span style={{ alignSelf: 'center', fontWeight: 'bold' }}>
@@ -267,7 +277,7 @@ export default function AppointmentsPage() {
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            style={{ marginRight: '10px' }}
+            style={{ ...buttonStyle, marginRight: '10px', opacity: currentPage === 1 ? 0.5 : 1 }}
           >
             Previous
           </button>
@@ -275,7 +285,7 @@ export default function AppointmentsPage() {
           <button
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
-            style={{ marginLeft: '10px' }}
+            style={{ ...buttonStyle, marginLeft: '10px', opacity: currentPage === totalPages ? 0.5 : 1 }}
           >
             Next
           </button>
