@@ -5,6 +5,16 @@ const createQuery = (result) => {
   promise.order = jest.fn(() => promise);
   promise.range = jest.fn(() => promise);
   promise.eq = jest.fn(() => promise);
+  promise.or = jest.fn(() => promise);
+  promise.single = jest.fn(() => promise);
+  return promise;
+};
+
+const createProfileQuery = (profile) => {
+  const promise = Promise.resolve({ data: profile, error: null });
+  promise.select = jest.fn(() => promise);
+  promise.eq = jest.fn(() => promise);
+  promise.single = jest.fn(() => promise);
   return promise;
 };
 
@@ -24,7 +34,9 @@ beforeEach(() => {
 
 describe('get-appointments handler', () => {
   test('rejects non-positive page or limit', async () => {
-    const from = jest.fn(() => createQuery({ data: [], error: null }));
+    const bookingsQuery = createQuery({ data: [], error: null });
+    const profileQuery = createProfileQuery({ full_name: 'Test User' });
+    const from = jest.fn((table) => table === 'bookings' ? bookingsQuery : profileQuery);
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' })));
@@ -41,7 +53,9 @@ describe('get-appointments handler', () => {
   });
 
   test('rejects non-numeric page or limit', async () => {
-    const from = jest.fn(() => createQuery({ data: [], error: null }));
+    const bookingsQuery = createQuery({ data: [], error: null });
+    const profileQuery = createProfileQuery({ full_name: 'Test User' });
+    const from = jest.fn((table) => table === 'bookings' ? bookingsQuery : profileQuery);
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' })));
@@ -59,7 +73,8 @@ describe('get-appointments handler', () => {
 
   test('applies range based on page and limit', async () => {
     const query = createQuery({ data: [], error: null });
-    const from = jest.fn(() => query);
+    const profileQuery = createProfileQuery({ full_name: 'Test User' });
+    const from = jest.fn((table) => table === 'bookings' ? query : profileQuery);
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' })));
@@ -78,7 +93,8 @@ describe('get-appointments handler', () => {
 
   test('filters to user appointments for non-admins', async () => {
     const query = createQuery({ data: [], error: null });
-    const from = jest.fn(() => query);
+    const profileQuery = createProfileQuery({ full_name: 'Test User' });
+    const from = jest.fn((table) => table === 'bookings' ? query : profileQuery);
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' })));
@@ -90,12 +106,13 @@ describe('get-appointments handler', () => {
 
     await handler(req, res);
 
-    expect(query.eq).toHaveBeenCalledWith('staff_id', 'user1');
+    expect(query.or).toHaveBeenCalledWith('staff_id.eq.user1,staff_member.eq.Test%20User');
   });
 
   test('allows viewing all appointments when scope=all', async () => {
     const query = createQuery({ data: [], error: null });
-    const from = jest.fn(() => query);
+    const profileQuery = createProfileQuery({ full_name: 'Test User' });
+    const from = jest.fn((table) => table === 'bookings' ? query : profileQuery);
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' })));
@@ -107,12 +124,13 @@ describe('get-appointments handler', () => {
 
     await handler(req, res);
 
-    expect(query.eq).not.toHaveBeenCalledWith('staff_id', 'user1');
+    expect(query.or).not.toHaveBeenCalled();
   });
 
   test('admin can filter to their own appointments with scope=mine', async () => {
     const query = createQuery({ data: [], error: null });
-    const from = jest.fn(() => query);
+    const profileQuery = createProfileQuery({ full_name: 'Admin User' });
+    const from = jest.fn((table) => table === 'bookings' ? query : profileQuery);
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'admin1' })));
@@ -124,13 +142,14 @@ describe('get-appointments handler', () => {
 
     await handler(req, res);
 
-    expect(query.eq).toHaveBeenCalledWith('staff_id', 'admin1');
+    expect(query.or).toHaveBeenCalledWith('staff_id.eq.admin1,staff_member.eq.Admin%20User');
   });
 
   test('allows admin emails to view all appointments', async () => {
     process.env.ADMIN_EMAILS = 'boss@example.com';
     const query = createQuery({ data: [], error: null });
-    const from = jest.fn(() => query);
+    const profileQuery = createProfileQuery({ full_name: 'Boss' });
+    const from = jest.fn((table) => table === 'bookings' ? query : profileQuery);
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1', email: 'boss@example.com' })));
@@ -142,7 +161,7 @@ describe('get-appointments handler', () => {
 
     await handler(req, res);
 
-    expect(query.eq).not.toHaveBeenCalledWith('staff_id', 'user1');
+    expect(query.or).not.toHaveBeenCalled();
   });
 
 });
