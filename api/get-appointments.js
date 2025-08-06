@@ -56,13 +56,36 @@ export default async function handler(req, res) {
       query = query.eq('payment_status', payment_status);
     }
 
+    // fetch user profile for name-based filtering
+    let userFullName = null
+    try {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single()
+      userFullName = profileData?.full_name || null
+    } catch (_) {
+      userFullName = null
+    }
+
     const isAdmin =
       ADMIN_IDS.includes(user.id) ||
       (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase()))
     if (scope === 'mine') {
-      query = query.eq('staff_id', user.id)
+      if (userFullName) {
+        const encodedName = encodeURIComponent(userFullName)
+        query = query.or(`staff_id.eq.${user.id},staff_member.eq.${encodedName}`)
+      } else {
+        query = query.eq('staff_id', user.id)
+      }
     } else if (scope !== 'all' && !isAdmin) {
-      query = query.eq('staff_id', user.id)
+      if (userFullName) {
+        const encodedName = encodeURIComponent(userFullName)
+        query = query.or(`staff_id.eq.${user.id},staff_member.eq.${encodedName}`)
+      } else {
+        query = query.eq('staff_id', user.id)
+      }
     }
 
     

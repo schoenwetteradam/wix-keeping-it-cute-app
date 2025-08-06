@@ -40,15 +40,16 @@
   margin-top: 10px;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px;
 }
 .actions button {
-  padding: 6px 10px;
+  padding: 10px 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   background: var(--color-blush-pink);
   cursor: pointer;
   transition: background 0.2s ease;
+  font-size: 0.9em;
 }
 .actions button:hover {
   background: var(--color-gold);
