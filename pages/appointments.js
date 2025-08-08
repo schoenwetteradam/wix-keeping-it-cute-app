@@ -40,7 +40,11 @@ export default function AppointmentsPage() {
       while (true) {
         const scopeQuery = scopeParam ? `&scope=${scopeParam}` : ''
         const res = await fetchWithAuth(`/api/get-appointments?page=${page}&limit=${limit}${scopeQuery}`)
-        if (!res.ok) throw new Error('Failed to load appointments')
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '')
+          console.error('Appointments API error:', res.status, errText)
+          throw new Error('Failed to load appointments')
+        }
         const data = await res.json()
         const batch = data.appointments || []
         all = all.concat(batch)
@@ -51,6 +55,7 @@ export default function AppointmentsPage() {
       setAppointments(all)
       setError(null)
     } catch (err) {
+      console.error('loadAppointments error:', err)
       setError(err.message)
     } finally {
       setLoading(false)
