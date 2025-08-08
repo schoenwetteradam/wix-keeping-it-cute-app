@@ -1,14 +1,138 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
 import { fetchWithAuth } from '../utils/api'
+import AppointmentCard from '../components/AppointmentCard'
 
 export default function StaffDashboard() {
   useRequireSupabaseAuth()
+  const router = useRouter()
   const [metrics, setMetrics] = useState(null)
   const [branding, setBranding] = useState(null)
   const [upcoming, setUpcoming] = useState([])
+  const [appointments, setAppointments] = useState([])
+  const [apptLoading, setApptLoading] = useState(false)
+  const [apptError, setApptError] = useState(null)
+
+  const loadAppointments = async () => {
+    setApptLoading(true)
+    try {
+      const res = await fetchWithAuth('/api/get-appointments?scope=mine')
+      if (!res.ok) throw new Error('Failed to load appointments')
+      const data = await res.json()
+      setAppointments(data.appointments || [])
+      setApptError(null)
+    } catch (err) {
+      setApptError(err.message)
+    } finally {
+      setApptLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (router.isReady && router.query.tab === 'appointments') {
+      loadAppointments()
+    }
+  }, [router.isReady, router.query.tab])
+
+  const completeAppointment = async (apt) => {
+    if (!confirm('Mark this appointment completed?')) return
+    try {
+      const res = await fetchWithAuth(`/api/complete-booking/${apt.id}`, { method: 'POST' })
+      if (!res.ok) throw new Error('Complete failed')
+      setAppointments(
+        appointments.map(a => a.id === apt.id ? { ...a, status: 'completed' } : a)
+      )
+    } catch (err) {
+      alert('Failed to mark completed')
+      console.error('Complete error:', err)
+    }
+  }
+
+  const cancelAppointment = async (apt) => {
+    if (!confirm('Cancel this appointment?')) return
+    try {
+      const res = await fetchWithAuth(`/api/cancel-booking/${apt.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ revision: apt.revision })
+      })
+      if (!res.ok) throw new Error('Cancel failed')
+      setAppointments(
+        appointments.map(a => a.id === apt.id ? { ...a, status: 'canceled' } : a)
+      )
+    } catch (err) {
+      alert('Failed to cancel appointment')
+      console.error('Cancel error:', err)
+    }
+  }
+
+  const rescheduleAppointment = async (apt) => {
+    const newStart = prompt('New start time (YYYY-MM-DDTHH:MM)', apt.appointment_date?.slice(0,16) || '')
+    if (!newStart) return
+    const newEnd = prompt('New end time (YYYY-MM-DDTHH:MM)', apt.end_time?.slice(0,16) || '')
+    if (!newEnd) return
+    try {
+      const res = await fetchWithAuth(`/api/reschedule-booking/${apt.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startDate: new Date(newStart).toISOString(),
+          endDate: new Date(newEnd).toISOString(),
+          revision: apt.revision
+        })
+      })
+      if (!res.ok) throw new Error('Reschedule failed')
+      const data = await res.json()
+      setAppointments(
+        appointments.map(a => a.id === apt.id ? { ...a, appointment_date: newStart, end_time: newEnd, revision: data.booking?.revision || a.revision } : a)
+      )
+    } catch (err) {
+      alert('Failed to reschedule appointment')
+      console.error('Reschedule error:', err)
+    }
+  }
+
+  const markPaid = async (apt) => {
+    if (!confirm('Mark this appointment as paid?')) return
+    try {
+      const res = await fetchWithAuth(`/api/mark-booking-paid/${apt.id}`, {
+        method: 'POST'
+      })
+      if (!res.ok) throw new Error('Mark paid failed')
+      setAppointments(
+        appointments.map(a =>
+          a.id === apt.id ? { ...a, payment_status: 'paid' } : a
+        )
+      )
+    } catch (err) {
+      alert('Failed to mark paid')
+      console.error('Mark paid error:', err)
+    }
+  }
+
+  const editNotes = async (apt) => {
+    const newNotes = prompt('Appointment notes', apt.notes || '')
+    if (newNotes === null) return
+    try {
+      const res = await fetchWithAuth('/api/update-appointment-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appointment_id: apt.id, notes: newNotes })
+      })
+      if (!res.ok) throw new Error('Failed to update notes')
+      setAppointments(
+        appointments.map(a =>
+          a.id === apt.id ? { ...a, notes: newNotes } : a
+        )
+      )
+    } catch (err) {
+      alert('Failed to save notes')
+      console.error('Update notes error:', err)
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -44,6 +168,46 @@ export default function StaffDashboard() {
     (sum, a) => sum + Number(a.appointment_count || 0),
     0
   )
+
+  if (router.query.tab === 'appointments') {
+    return (
+      <>
+        <Head>
+          <title>My Appointments - Keeping It Cute Salon</title>
+        </Head>
+        <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+          <h1 style={{ marginBottom: '20px' }}>My Appointments</h1>
+          {apptLoading ? (
+            <p>Loading appointments...</p>
+          ) : apptError ? (
+            <p style={{ color: 'red' }}>Error: {apptError}</p>
+          ) : appointments.length === 0 ? (
+            <p>No appointments found.</p>
+          ) : (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '20px',
+              }}
+            >
+              {appointments.map((apt) => (
+                <AppointmentCard
+                  key={apt.id}
+                  appointment={apt}
+                  onComplete={completeAppointment}
+                  onCancel={cancelAppointment}
+                  onReschedule={rescheduleAppointment}
+                  onMarkPaid={markPaid}
+                  onEditNotes={editNotes}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </>
+    )
+  }
 
   return (
     <>

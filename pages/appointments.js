@@ -20,12 +20,14 @@ export default function AppointmentsPage() {
 
   const buttonStyle = {
     padding: '12px 18px',
-    background: '#0070f3',
+    background: '#f57c00',
     color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
+    border: '1px solid #e9ecef',
+    borderRadius: '12px',
     cursor: 'pointer',
-    fontSize: '16px'
+    fontSize: '16px',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+    transition: 'background 0.2s ease'
   }
   
   const loadAppointments = async (scopeParam) => {
