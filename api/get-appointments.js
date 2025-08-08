@@ -60,7 +60,7 @@ export default async function handler(req, res) {
     let userFullName = null
     try {
       const { data: profileData } = await supabase
-        .from('profiles')
+        .from('staff_profiles')
         .select('full_name')
         .eq('id', user.id)
         .single()
