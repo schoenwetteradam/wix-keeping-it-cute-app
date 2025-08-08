@@ -77,7 +77,7 @@ describe('get-appointments handler', () => {
     const from = jest.fn((table) => table === 'bookings' ? query : profileQuery);
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
-    jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' })));
+    jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' }))); 
 
     const { default: handler } = await import('../api/get-appointments.js');
 
@@ -89,6 +89,24 @@ describe('get-appointments handler', () => {
     expect(from).toHaveBeenCalledWith('bookings');
     expect(query.range).toHaveBeenCalledWith(10, 19);
     expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('fetches staff profile for name filtering', async () => {
+    const query = createQuery({ data: [], error: null });
+    const profileQuery = createProfileQuery({ full_name: 'Test User' });
+    const from = jest.fn((table) => table === 'bookings' ? query : profileQuery);
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
+    jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
+    jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' }))); 
+
+    const { default: handler } = await import('../api/get-appointments.js');
+
+    const req = { method: 'GET', query: { page: '1', limit: '10' } };
+    const res = createRes();
+
+    await handler(req, res);
+
+    expect(from).toHaveBeenCalledWith('staff_profiles');
   });
 
   test('filters to user appointments for non-admins', async () => {
