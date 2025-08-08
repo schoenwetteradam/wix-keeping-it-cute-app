@@ -15,6 +15,7 @@ export default function StaffDashboard() {
   const [appointments, setAppointments] = useState([])
   const [apptLoading, setApptLoading] = useState(false)
   const [apptError, setApptError] = useState(null)
+  const [metricsError, setMetricsError] = useState(null)
 
   const loadAppointments = async () => {
     setApptLoading(true)
@@ -148,9 +149,19 @@ export default function StaffDashboard() {
           const data = await mRes.json()
           setMetrics(data.metrics)
           setUpcoming(data.metrics.upcoming_appointments_list || [])
+          setMetricsError(null)
+        } else {
+          const errData = await mRes.json().catch(() => ({}))
+          console.error('Metrics load failed:', errData.error || mRes.status, errData.details)
+          setMetrics(null)
+          setUpcoming([])
+          setMetricsError(errData.error || 'Failed to load metrics')
         }
       } catch (err) {
         console.error('Dashboard load error', err)
+        setMetrics(null)
+        setUpcoming([])
+        setMetricsError(err.message)
       }
     }
     load()
@@ -224,6 +235,11 @@ export default function StaffDashboard() {
         </div>
 
         <h2 style={{ marginBottom: '15px' }}>Metrics at a Glance</h2>
+        {metricsError && (
+          <p style={{ color: 'red', marginBottom: '15px' }}>
+            Error loading metrics: {metricsError}
+          </p>
+        )}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
