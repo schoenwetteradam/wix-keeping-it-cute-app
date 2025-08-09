@@ -31,9 +31,14 @@ export default async function handler(req, res) {
     const isAdmin = ADMIN_IDS.includes(user.id)
 
     let staffId = req.query.staff_id
-    if (!isAdmin || staffId === undefined) {
+    if (!isAdmin) {
       staffId = user.id
-    } else if (staffId === '' || staffId === 'null') {
+    } else if (
+      staffId === undefined ||
+      staffId === '' ||
+      staffId === 'null' ||
+      staffId === 'undefined'
+    ) {
       staffId = null
     }
 
@@ -49,7 +54,10 @@ export default async function handler(req, res) {
       throw revenueError
     }
 
-    const { data: appointmentData, error: appointmentError } = await supabase.rpc('total_appointments_for_user', { user_id: rpcUserId })
+    const { data: appointmentData, error: appointmentError } = await supabase.rpc(
+      'total_appointments_for_user',
+      { user_id: rpcUserId }
+    )
     if (appointmentError) {
       throw appointmentError
     }
