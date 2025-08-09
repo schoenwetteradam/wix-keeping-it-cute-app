@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
+import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
+import useRequireRole from '../utils/useRequireRole'
 import { fetchWithAuth } from '../utils/api'
 
 // Basic analytics metrics derived from the local database
@@ -11,6 +13,8 @@ const MEASUREMENTS = [
 ]
 
 export default function SiteAnalytics() {
+  useRequireSupabaseAuth()
+  useRequireRole(['admin'])
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [selected, setSelected] = useState(['TOTAL_SESSIONS'])

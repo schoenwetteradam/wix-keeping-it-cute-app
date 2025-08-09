@@ -27,8 +27,19 @@ async function requireAuth(req, res) {
     res.end('Unauthorized');
     return null;
   }
-  req.user = data.user;
-  return data.user;
+  let role = null;
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single();
+    role = profile?.role || null;
+  } catch (e) {
+    role = null;
+  }
+  req.user = { ...data.user, role };
+  return req.user;
 }
 
 module.exports = requireAuth;
