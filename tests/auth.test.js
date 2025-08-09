@@ -10,7 +10,14 @@ jest.mock('@supabase/supabase-js', () => {
           }
           return Promise.resolve({ data: null, error: new Error('Invalid token') });
         })
-      }
+      },
+      from: jest.fn(() => ({
+        select: jest.fn(() => ({
+          eq: jest.fn(() => ({
+            single: jest.fn(() => Promise.resolve({ data: { role: 'staff' }, error: null }))
+          }))
+        }))
+      }))
     }))
   };
 });
@@ -38,6 +45,6 @@ describe('requireAuth', () => {
     await requireAuth(req, res);
 
     expect(res.end).not.toHaveBeenCalled();
-    expect(req.user).toEqual({ id: '123' });
+    expect(req.user).toEqual({ id: '123', role: 'staff' });
   });
 });

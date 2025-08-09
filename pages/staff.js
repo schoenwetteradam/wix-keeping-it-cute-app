@@ -3,11 +3,13 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
+import useRequireRole from '../utils/useRequireRole'
 import { fetchWithAuth } from '../utils/api'
 import AppointmentCard from '../components/AppointmentCard'
 
 export default function StaffDashboard() {
   useRequireSupabaseAuth()
+  useRequireRole(['staff', 'admin'])
   const router = useRouter()
   const [metrics, setMetrics] = useState(null)
   const [branding, setBranding] = useState(null)

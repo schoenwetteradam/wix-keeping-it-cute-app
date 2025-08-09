@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { getBrowserSupabaseClient } from '../utils/supabaseBrowserClient'
+import { fetchWithAuth } from '../utils/api'
 
 export default function Login() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -34,10 +35,23 @@ export default function Login() {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       setError(error.message)
-    } else {
-      router.push('/staff')
+      setLoading(false)
+      return
     }
 
+    let redirect = '/staff'
+    try {
+      const res = await fetchWithAuth('/api/profile')
+      if (res.ok) {
+        const { profile } = await res.json()
+        if (profile?.role === 'admin') {
+          redirect = '/dashboard'
+        }
+      }
+    } catch {
+      // ignore
+    }
+    router.push(redirect)
     setLoading(false)
   }
 
