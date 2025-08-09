@@ -31,9 +31,14 @@ export default async function handler(req, res) {
     const isAdmin = ADMIN_IDS.includes(user.id)
 
     let staffId = req.query.staff_id
-    if (!isAdmin || staffId === undefined) {
+    if (!isAdmin) {
       staffId = user.id
-    } else if (staffId === '' || staffId === 'null') {
+    } else if (
+      staffId === undefined ||
+      staffId === '' ||
+      staffId === 'null' ||
+      staffId === 'undefined'
+    ) {
       staffId = null
     }
 
