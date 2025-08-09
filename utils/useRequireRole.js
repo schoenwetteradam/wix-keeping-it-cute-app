@@ -15,7 +15,7 @@ export default function useRequireRole(allowedRoles = []) {
         }
         const { profile } = await res.json()
         const role = profile?.role
-        if (!role || !allowedRoles.includes(role)) {
+        if (allowedRoles.length && (!role || !allowedRoles.includes(role))) {
           router.replace('/staff')
         }
       } catch (err) {
