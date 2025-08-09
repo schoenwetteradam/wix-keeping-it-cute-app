@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { createClient } from '@supabase/supabase-js'
 import ErrorBoundary from '../components/ErrorBoundary'
 import Layout from '../components/Layout'
+import { getBrowserSupabaseClient } from '../utils/supabaseBrowserClient'
 import '../styles/globals.css'
 
 export default function MyApp({ Component, pageProps }) {
@@ -13,12 +13,9 @@ export default function MyApp({ Component, pageProps }) {
     const hash = window.location.hash
     if (!hash || !hash.includes('access_token')) return
 
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    if (!url || !key) return
-
-    const supabase = createClient(url, key)
-    supabase.auth
+    try {
+      const supabase = getBrowserSupabaseClient()
+      supabase.auth
       .getSessionFromUrl()
       .then(({ data }) => {
         if (data?.session) {
@@ -26,6 +23,9 @@ export default function MyApp({ Component, pageProps }) {
         }
       })
       .catch(() => {})
+    } catch {
+      // missing env vars, ignore
+    }
   }, [router])
 
   return (

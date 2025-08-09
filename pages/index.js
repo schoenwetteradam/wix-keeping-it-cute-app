@@ -21,7 +21,7 @@ export default function Home() {
         <PlusIcon width={32} height={32} style={{ color: '#ff69b4' }} />
         <h1>Keeping It Cute Salon</h1>
         <Image
-          src="/glory.svg"
+          src="/images/products/nail-care/glory.svg"
           alt="Decorative graphic"
           width={300}
           height={200}

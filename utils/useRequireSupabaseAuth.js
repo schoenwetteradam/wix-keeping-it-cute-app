@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { createClient } from '@supabase/supabase-js'
+import { getBrowserSupabaseClient } from './supabaseBrowserClient'
 
 export default function useRequireSupabaseAuth() {
   const router = useRouter()
@@ -13,7 +13,13 @@ export default function useRequireSupabaseAuth() {
       return
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    let supabase
+    try {
+      supabase = getBrowserSupabaseClient()
+    } catch {
+      router.replace('/login')
+      return
+    }
 
     async function checkSession() {
       if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {

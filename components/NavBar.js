@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { createClient } from '@supabase/supabase-js'
 import { fetchWithAuth } from '../utils/api'
+import { getBrowserSupabaseClient } from '../utils/supabaseBrowserClient'
 import styles from './NavBar.module.css'
 
 export default function NavBar() {
@@ -25,16 +25,17 @@ export default function NavBar() {
   }, [router.events])
 
   useEffect(() => {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    if (!url || !key) return
-    const supabase = createClient(url, key)
-    supabase.auth.getUser().then(({ data }) => setUser(data?.user || null))
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setUser(session?.user || null)
-    })
-    return () => {
-      subscription.unsubscribe()
+    try {
+      const supabase = getBrowserSupabaseClient()
+      supabase.auth.getUser().then(({ data }) => setUser(data?.user || null))
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+        setUser(session?.user || null)
+      })
+      return () => {
+        subscription.unsubscribe()
+      }
+    } catch {
+      // missing env vars; user will be treated as unauthenticated
     }
   }, [])
 
@@ -117,15 +118,16 @@ export default function NavBar() {
               <Link href="/profile" className={styles.tab}>
                 Profile
               </Link>
-              <button onClick={async () => {
-                const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-                const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-                if (url && key) {
-                  const supabase = createClient(url, key)
-                  await supabase.auth.signOut()
-                }
-                router.push('/login')
-              }} className={styles.tab}>
+              <button
+                onClick={async () => {
+                  try {
+                    const supabase = getBrowserSupabaseClient()
+                    await supabase.auth.signOut()
+                  } catch {}
+                  router.push('/login')
+                }}
+                className={styles.tab}
+              >
                 Logout
               </button>
             </>

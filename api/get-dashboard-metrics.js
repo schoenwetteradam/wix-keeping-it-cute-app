@@ -59,10 +59,13 @@ export default async function handler(req, res) {
       throw upcomingError
     }
 
-    const metrics = data ? data[0] : {}
-    metrics.total_revenue = revenueData || []
-    metrics.appointment_counts = appointmentData || []
-    metrics.upcoming_appointments_list = upcomingData || []
+    const baseMetrics = Array.isArray(data) ? data[0] : data || {}
+    const metrics = {
+      ...baseMetrics,
+      total_revenue: revenueData || [],
+      appointment_counts: appointmentData || [],
+      upcoming_appointments_list: upcomingData || []
+    }
 
     res.status(200).json({ success: true, metrics })
   } catch (err) {

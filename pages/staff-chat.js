@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
-import { createClient } from '@supabase/supabase-js'
 import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
 import { fetchWithAuth } from '../utils/api'
+import { getBrowserSupabaseClient } from '../utils/supabaseBrowserClient'
 
 export default function StaffChat() {
   useRequireSupabaseAuth()
@@ -18,7 +18,7 @@ export default function StaffChat() {
     )
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey)
+  const supabase = getBrowserSupabaseClient()
 
   const [branding, setBranding] = useState(null)
   const [messages, setMessages] = useState([])
