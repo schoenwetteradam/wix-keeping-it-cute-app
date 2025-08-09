@@ -31,13 +31,33 @@ export default async function handler(req, res) {
     const isAdmin = ADMIN_IDS.includes(user.id)
 
     let staffId = req.query.staff_id
-    if (!isAdmin || staffId === undefined) {
-      staffId = user.id
-    } else if (staffId === '' || staffId === 'null') {
-      staffId = null
-    }
+    let rpcUserId = user.id
 
-    const rpcUserId = staffId ?? ADMIN_PLACEHOLDER
+    if (isAdmin) {
+      if (
+        staffId === undefined ||
+        staffId === '' ||
+        staffId === 'null' ||
+        staffId === 'undefined'
+      ) {
+        staffId = null
+        rpcUserId = ADMIN_PLACEHOLDER
+      } else {
+        const { data: staffRow } = await supabase
+          .from('staff')
+          .select('user_id')
+          .eq('id', staffId)
+          .single()
+        rpcUserId = staffRow?.user_id || ADMIN_PLACEHOLDER
+      }
+    } else {
+      const { data: staffRow } = await supabase
+        .from('staff')
+        .select('id')
+        .eq('user_id', user.id)
+        .single()
+      staffId = staffRow?.id || user.id
+    }
 
     const { data, error } = await supabase.rpc('dashboard_metrics', { p_staff_id: staffId })
     if (error) {
@@ -49,7 +69,10 @@ export default async function handler(req, res) {
       throw revenueError
     }
 
-    const { data: appointmentData, error: appointmentError } = await supabase.rpc('total_appointments_for_user', { user_id: rpcUserId })
+    const { data: appointmentData, error: appointmentError } = await supabase.rpc(
+      'total_appointments_for_user',
+      { user_id: rpcUserId }
+    )
     if (appointmentError) {
       throw appointmentError
     }
