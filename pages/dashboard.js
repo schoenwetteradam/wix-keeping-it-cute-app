@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react'
+import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
+import useRequireRole from '../utils/useRequireRole'
 import { fetchMetrics } from '../utils/fetchMetrics'
 
 export default function Dashboard() {
+  useRequireSupabaseAuth()
+  useRequireRole(['admin'])
   const [metrics, setMetrics] = useState(null)
 
   useEffect(() => {
