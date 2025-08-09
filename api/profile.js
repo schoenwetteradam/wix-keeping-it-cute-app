@@ -40,7 +40,7 @@ export default async function handler(req, res) {
       ADMIN_IDS.includes(user.id) ||
       (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase()))
 
-    res.status(200).json({ profile: { email: user.email, ...(data || {}), is_admin: isAdmin } })
+    res.status(200).json({ profile: { email: user.email, role: user.role, ...(data || {}), is_admin: isAdmin } })
     return
   }
 
@@ -60,7 +60,7 @@ export default async function handler(req, res) {
       ADMIN_IDS.includes(user.id) ||
       (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase()))
 
-    res.status(200).json({ profile: { ...data, is_admin: isAdmin } })
+    res.status(200).json({ profile: { ...data, role: user.role, is_admin: isAdmin } })
     return
   }
 
