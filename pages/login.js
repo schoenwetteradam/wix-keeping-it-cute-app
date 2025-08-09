@@ -48,8 +48,8 @@ export default function Login() {
           redirect = '/dashboard'
         }
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error('Failed to load profile', err)
     }
     router.push(redirect)
     setLoading(false)

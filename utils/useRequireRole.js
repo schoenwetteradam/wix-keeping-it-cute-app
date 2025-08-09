@@ -19,6 +19,7 @@ export default function useRequireRole(allowedRoles = []) {
           router.replace('/staff')
         }
       } catch (err) {
+        console.error('Failed to verify user role', err)
         router.replace('/login')
       }
     }
