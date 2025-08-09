@@ -1,4 +1,3 @@
-// api/get-dashboard-metrics.js
 import { createSupabaseClient } from '../utils/supabaseClient'
 import { setCorsHeaders } from '../utils/cors'
 import requireAuth from '../utils/requireAuth'
