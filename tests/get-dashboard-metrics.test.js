@@ -64,4 +64,23 @@ describe('get-dashboard-metrics handler', () => {
     expect(rpc).toHaveBeenCalledWith('total_appointments_for_user', { user_id: 'admin-uuid-placeholder' })
     expect(rpc).toHaveBeenCalledWith('upcoming_appointments', { user_id: 'admin-uuid-placeholder' })
   })
+
+  test('admin treats "undefined" staff_id as all staff', async () => {
+    const rpc = jest.fn(() => Promise.resolve({ data: [], error: null }))
+    jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ rpc }) }))
+    jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
+    jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'admin1' })))
+
+    const { default: handler } = await import('../api/get-dashboard-metrics.js')
+
+    const req = { method: 'GET', query: { staff_id: 'undefined' } }
+    const res = createRes()
+
+    await handler(req, res)
+
+    expect(rpc).toHaveBeenCalledWith('dashboard_metrics', { p_staff_id: null })
+    expect(rpc).toHaveBeenCalledWith('total_revenue_for_user', { user_id: 'admin-uuid-placeholder' })
+    expect(rpc).toHaveBeenCalledWith('total_appointments_for_user', { user_id: 'admin-uuid-placeholder' })
+    expect(rpc).toHaveBeenCalledWith('upcoming_appointments', { user_id: 'admin-uuid-placeholder' })
+  })
 })
