@@ -54,7 +54,10 @@ export default async function handler(req, res) {
       throw revenueError
     }
 
-    const { data: appointmentData, error: appointmentError } = await supabase.rpc('total_appointments_for_user', { user_id: rpcUserId })
+    const { data: appointmentData, error: appointmentError } = await supabase.rpc(
+      'total_appointments_for_user',
+      { user_id: rpcUserId }
+    )
     if (appointmentError) {
       throw appointmentError
     }
