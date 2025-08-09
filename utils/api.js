@@ -1,11 +1,12 @@
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+import { getBrowserSupabaseClient } from './supabaseBrowserClient'
 
 let supabase = null
-if (typeof window !== 'undefined' && supabaseUrl && anonKey) {
-  supabase = createClient(supabaseUrl, anonKey)
+if (typeof window !== 'undefined') {
+  try {
+    supabase = getBrowserSupabaseClient()
+  } catch {
+    // ignore missing env variables in non-browser environments
+  }
 }
 
 export async function fetchWithAuth(url, options = {}) {
