@@ -7,12 +7,14 @@ export default function createClient(req, res) {
     {
       cookies: {
         getAll() {
-          return Object.keys(req.cookies).map((name) => ({
+          const source = req?.cookies || {}
+          return Object.keys(source).map((name) => ({
             name,
-            value: req.cookies[name] || '',
+            value: source[name] ?? '',
           }))
         },
         setAll(cookiesToSet) {
+          if (!Array.isArray(cookiesToSet) || cookiesToSet.length === 0) return
           res.setHeader(
             'Set-Cookie',
             cookiesToSet.map(({ name, value, options }) =>
