@@ -41,11 +41,11 @@ export default function Login() {
     const { data: { user } } = await supabase.auth.getUser()
     let redirect = '/staff'
     if (user) {
-      const { data } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
+        const { data } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle()
       if (data?.role === 'admin') {
         redirect = '/dashboard'
       }

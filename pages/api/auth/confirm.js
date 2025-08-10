@@ -10,20 +10,20 @@ export default async function handler(req, res) {
     return
   }
 
-  const token_hash = stringOrFirstString(req.query.token_hash)
-  const type = stringOrFirstString(req.query.type)
-  let next = '/error'
+    const token_hash = stringOrFirstString(req.query.token_hash)
+    const type = stringOrFirstString(req.query.type)
+    let next = '/error'
 
-  if (token_hash && type) {
-    const supabase = createClient()
-    const { error } = await supabase.auth.verifyOtp({
-      token_hash,
-      type,
-    })
-    if (!error) {
-      next = stringOrFirstString(req.query.next) || '/'
+    if (token_hash && type) {
+      const supabase = createClient(req, res)
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash,
+        type, // 'email', 'recovery', 'invite', 'email_change', etc.
+      })
+      if (!error) {
+        next = stringOrFirstString(req.query.next) || '/'
+      }
     }
-  }
 
   res.redirect(next)
 }
