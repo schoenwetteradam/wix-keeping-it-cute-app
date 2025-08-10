@@ -33,7 +33,7 @@ async function requireAuth(req, res) {
       .from('profiles')
       .select('role')
       .eq('id', data.user.id)
-      .single();
+      .maybeSingle();
     role = profile?.role || null;
   } catch (e) {
     role = null;

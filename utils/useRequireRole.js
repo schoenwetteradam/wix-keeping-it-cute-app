@@ -18,7 +18,7 @@ export default function useRequireRole(allowedRoles = []) {
         .from('profiles')
         .select('role')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
       const role = data?.role
       if (!allowedRoles.includes(role)) {
         router.replace('/staff')
