@@ -114,7 +114,7 @@ curl -X POST -H 'Authorization: Bearer YOUR_TOKEN' \
 Create a function in Supabase that aggregates the numbers used on the business dashboard:
 
 ```sql
--- migrations/20240917_allow_null_staff_in_dashboard_metrics.sql
+-- migrations/20240918_cast_counts_to_int_in_dashboard_metrics.sql
 CREATE OR REPLACE FUNCTION dashboard_metrics(p_staff_id uuid)
 RETURNS TABLE(
   upcoming_appointments integer,
@@ -125,21 +125,40 @@ RETURNS TABLE(
 BEGIN
   RETURN QUERY
     SELECT
-      (SELECT COUNT(*) FROM bookings
+      (SELECT COUNT(*)::int FROM bookings
          WHERE (p_staff_id IS NULL OR staff_id = p_staff_id)
            AND appointment_date >= NOW()
            AND appointment_date < NOW() + INTERVAL '7 days'),
-      (SELECT COUNT(*) FROM product_usage_sessions
+      (SELECT COUNT(*)::int FROM product_usage_sessions
          WHERE (p_staff_id IS NULL OR staff_id = p_staff_id)
            AND is_completed = false),
-      (SELECT COUNT(*) FROM products
+      (SELECT COUNT(*)::int FROM products
          WHERE is_active = true
            AND current_stock <= min_threshold),
-      (SELECT COUNT(*) FROM orders
+      (SELECT COUNT(*)::int FROM orders
          WHERE (p_staff_id IS NULL OR staff_id = p_staff_id)
            AND created_at::date = CURRENT_DATE);
 END;
 $$ LANGUAGE plpgsql STABLE;
+```
+
+Additional functions provide staff-specific revenue and appointment details. Passing `NULL` for the user ID parameter returns metrics for all staff:
+
+```sql
+-- migrations/20250104_create_user_dashboard_functions.sql
+CREATE OR REPLACE FUNCTION public.total_revenue_for_user(p_user_id uuid)
+RETURNS TABLE(staff_name text, total_revenue numeric) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    s.first_name || ' ' || s.last_name AS staff_name,
+    SUM(o.total_amount) AS total_revenue
+  FROM public.orders o
+  JOIN public.staff s ON s.id = o.staff_id
+  WHERE (p_user_id IS NULL OR p_user_id = s.user_id)
+  GROUP BY s.first_name, s.last_name;
+END;
+$$ LANGUAGE plpgsql;
 ```
 
 The frontend calls `/api/get-dashboard-metrics` which executes this function and returns the results. By default each staff member can view only their own metrics. User IDs listed in the `ADMIN_USER_IDS` variable are allowed to request metrics for any staff member or for the entire business.

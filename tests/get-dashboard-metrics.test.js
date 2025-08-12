@@ -17,7 +17,7 @@ describe('get-dashboard-metrics handler', () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'u1' })))
 
-    const { default: handler } = await import('../api/get-dashboard-metrics.js')
+    const handler = require('../api/get-dashboard-metrics.js')
 
     const req = { method: 'POST', query: {} }
     const res = createRes()
@@ -33,7 +33,7 @@ describe('get-dashboard-metrics handler', () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' })))
 
-    const { default: handler } = await import('../api/get-dashboard-metrics.js')
+    const handler = require('../api/get-dashboard-metrics.js')
 
     const req = { method: 'GET', query: { staff_id: 'other' } }
     const res = createRes()
@@ -41,9 +41,9 @@ describe('get-dashboard-metrics handler', () => {
     await handler(req, res)
 
     expect(rpc).toHaveBeenCalledWith('dashboard_metrics', { p_staff_id: 'user1' })
-    expect(rpc).toHaveBeenCalledWith('total_revenue_for_user', { user_id: 'user1' })
-    expect(rpc).toHaveBeenCalledWith('total_appointments_for_user', { user_id: 'user1' })
-    expect(rpc).toHaveBeenCalledWith('upcoming_appointments', { user_id: 'user1' })
+    expect(rpc).toHaveBeenCalledWith('total_revenue_for_user', { p_user_id: 'user1' })
+    expect(rpc).toHaveBeenCalledWith('total_appointments_for_user', { p_user_id: 'user1' })
+    expect(rpc).toHaveBeenCalledWith('upcoming_appointments', { p_user_id: 'user1' })
   })
 
   test('admin can request metrics for all staff', async () => {
@@ -52,7 +52,7 @@ describe('get-dashboard-metrics handler', () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'admin1' })))
 
-    const { default: handler } = await import('../api/get-dashboard-metrics.js')
+    const handler = require('../api/get-dashboard-metrics.js')
 
     const req = { method: 'GET', query: { staff_id: '' } }
     const res = createRes()
@@ -60,9 +60,9 @@ describe('get-dashboard-metrics handler', () => {
     await handler(req, res)
 
     expect(rpc).toHaveBeenCalledWith('dashboard_metrics', { p_staff_id: null })
-    expect(rpc).toHaveBeenCalledWith('total_revenue_for_user', { user_id: 'admin-uuid-placeholder' })
-    expect(rpc).toHaveBeenCalledWith('total_appointments_for_user', { user_id: 'admin-uuid-placeholder' })
-    expect(rpc).toHaveBeenCalledWith('upcoming_appointments', { user_id: 'admin-uuid-placeholder' })
+    expect(rpc).toHaveBeenCalledWith('total_revenue_for_user', { p_user_id: null })
+    expect(rpc).toHaveBeenCalledWith('total_appointments_for_user', { p_user_id: null })
+    expect(rpc).toHaveBeenCalledWith('upcoming_appointments', { p_user_id: null })
   })
 
   test('admin treats "undefined" staff_id as all staff', async () => {
@@ -71,7 +71,7 @@ describe('get-dashboard-metrics handler', () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'admin1' })))
 
-    const { default: handler } = await import('../api/get-dashboard-metrics.js')
+    const handler = require('../api/get-dashboard-metrics.js')
 
     const req = { method: 'GET', query: { staff_id: 'undefined' } }
     const res = createRes()
@@ -79,8 +79,8 @@ describe('get-dashboard-metrics handler', () => {
     await handler(req, res)
 
     expect(rpc).toHaveBeenCalledWith('dashboard_metrics', { p_staff_id: null })
-    expect(rpc).toHaveBeenCalledWith('total_revenue_for_user', { user_id: 'admin-uuid-placeholder' })
-    expect(rpc).toHaveBeenCalledWith('total_appointments_for_user', { user_id: 'admin-uuid-placeholder' })
-    expect(rpc).toHaveBeenCalledWith('upcoming_appointments', { user_id: 'admin-uuid-placeholder' })
+    expect(rpc).toHaveBeenCalledWith('total_revenue_for_user', { p_user_id: null })
+    expect(rpc).toHaveBeenCalledWith('total_appointments_for_user', { p_user_id: null })
+    expect(rpc).toHaveBeenCalledWith('upcoming_appointments', { p_user_id: null })
   })
 })
