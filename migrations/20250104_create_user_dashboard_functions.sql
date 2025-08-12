@@ -28,6 +28,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION public.upcoming_appointments(p_user_id uuid)
 RETURNS TABLE(staff_name text, appointment_date timestamptz, customer_name text) AS $$
+
 BEGIN
   RETURN QUERY
   SELECT
