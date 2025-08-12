@@ -8,9 +8,12 @@ export async function middleware(req) {
     return NextResponse.next()
   }
 
-  // Bypass authentication for Wix webhook router and log incoming headers
-  if (pathname.startsWith('/api/webhook-router')) {
-    console.log('Bypassing middleware for webhook-router. Headers:', Object.fromEntries(req.headers))
+  // Allow unauthenticated access for certain public API routes
+  const publicPaths = ['/api/webhook-router', '/api/get-branding', '/api/health']
+  if (publicPaths.some((p) => pathname.startsWith(p))) {
+    if (pathname.startsWith('/api/webhook-router')) {
+      console.log('Bypassing middleware for webhook-router. Headers:', Object.fromEntries(req.headers))
+    }
     return NextResponse.next()
   }
 
