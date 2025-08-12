@@ -8,18 +8,35 @@ export default function Dashboard() {
   const unauthorized = useRequireRole(['admin'])
   const [metrics, setMetrics] = useState(null)
   const [errors, setErrors] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     if (unauthorized) return
-    fetchMetrics().then((res) => {
-      setMetrics(res.metrics)
-      setErrors(res.errors)
-    })
+    setLoading(true)
+    fetchMetrics()
+      .then((res) => {
+        setMetrics(res.metrics)
+        setErrors(res.errors)
+      })
+      .catch((err) => {
+        console.error('Failed to fetch metrics', err)
+        setError('Failed to load metrics.')
+      })
+      .finally(() => setLoading(false))
   }, [unauthorized])
 
   if (authError) return <div>{authError}</div>
   if (unauthorized) return <div>Not authorized</div>
-  if (!metrics) return <div>Loading metrics...</div>
+  if (loading)
+    return (
+      <div className="flex justify-center items-center p-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900 mr-2"></div>
+        Loading...
+      </div>
+    )
+  if (error) return <div className="p-4 text-red-600">{error}</div>
+  if (!metrics) return null
 
   return (
     <div className="p-4">
