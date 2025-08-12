@@ -5,14 +5,16 @@ import { fetchMetrics } from '../utils/fetchMetrics'
 
 export default function Dashboard() {
   const { authError } = useRequireSupabaseAuth()
-  useRequireRole(['admin'])
+  const unauthorized = useRequireRole(['admin'])
   const [metrics, setMetrics] = useState(null)
 
   useEffect(() => {
+    if (unauthorized) return
     fetchMetrics().then(setMetrics)
-  }, [])
+  }, [unauthorized])
 
   if (authError) return <div>{authError}</div>
+  if (unauthorized) return <div>Not authorized</div>
   if (!metrics) return <div>Loading metrics...</div>
 
   return (
