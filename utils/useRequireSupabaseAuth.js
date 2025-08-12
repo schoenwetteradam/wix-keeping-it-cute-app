@@ -1,15 +1,16 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { getBrowserSupabaseClient } from './supabaseBrowserClient'
 
 export default function useRequireSupabaseAuth() {
   const router = useRouter()
+  const [authError, setAuthError] = useState(null)
 
   useEffect(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     if (!supabaseUrl || !supabaseAnonKey) {
-      router.replace('/login')
+      setAuthError('Supabase credentials missing')
       return
     }
 
@@ -17,7 +18,7 @@ export default function useRequireSupabaseAuth() {
     try {
       supabase = getBrowserSupabaseClient()
     } catch {
-      router.replace('/login')
+      setAuthError('Supabase initialization failed')
       return
     }
 
@@ -41,5 +42,7 @@ export default function useRequireSupabaseAuth() {
     }
 
     checkSession()
-  }, [router])
+  }, [router, setAuthError])
+
+  return { authError }
 }
