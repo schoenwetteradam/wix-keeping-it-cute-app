@@ -1,9 +1,15 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { getBrowserSupabaseClient } from './supabaseBrowserClient'
 
+/**
+ * Hook to enforce role-based access.
+ * Returns an `unauthorized` flag when the current user's role is not allowed.
+ * Pages using this hook should check the flag and render a "Not authorized" screen.
+ */
 export default function useRequireRole(allowedRoles = []) {
   const router = useRouter()
+  const [unauthorized, setUnauthorized] = useState(false)
 
   useEffect(() => {
     const supabase = getBrowserSupabaseClient()
@@ -21,10 +27,14 @@ export default function useRequireRole(allowedRoles = []) {
         .maybeSingle()
       const role = data?.role
       if (!allowedRoles.includes(role)) {
-        router.replace('/staff')
+        setUnauthorized(true)
+      } else {
+        setUnauthorized(false)
       }
     }
 
     checkRole()
   }, [router, allowedRoles.join(',')])
+
+  return unauthorized
 }

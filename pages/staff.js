@@ -9,7 +9,7 @@ import AppointmentCard from '../components/AppointmentCard'
 
 export default function StaffDashboard() {
   useRequireSupabaseAuth()
-  useRequireRole(['staff', 'admin'])
+  const unauthorized = useRequireRole(['staff', 'admin'])
   const router = useRouter()
   const [metrics, setMetrics] = useState(null)
   const [branding, setBranding] = useState(null)
@@ -35,10 +35,11 @@ export default function StaffDashboard() {
   }
 
   useEffect(() => {
+    if (unauthorized) return
     if (router.isReady && router.query.tab === 'appointments') {
       loadAppointments()
     }
-  }, [router.isReady, router.query.tab])
+  }, [router.isReady, router.query.tab, unauthorized])
 
   const completeAppointment = async (apt) => {
     if (!confirm('Mark this appointment completed?')) return
@@ -221,6 +222,8 @@ export default function StaffDashboard() {
       </>
     )
   }
+
+  if (unauthorized) return <div>Not authorized</div>
 
   return (
     <>

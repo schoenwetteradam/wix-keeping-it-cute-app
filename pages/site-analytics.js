@@ -14,7 +14,7 @@ const MEASUREMENTS = [
 
 export default function SiteAnalytics() {
   useRequireSupabaseAuth()
-  useRequireRole(['admin'])
+  const unauthorized = useRequireRole(['admin'])
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [selected, setSelected] = useState(['TOTAL_SESSIONS'])
@@ -22,6 +22,7 @@ export default function SiteAnalytics() {
   const [error, setError] = useState('')
 
   const loadData = async () => {
+    if (unauthorized) return
     try {
       setError('')
       const params = new URLSearchParams()
@@ -41,12 +42,15 @@ export default function SiteAnalytics() {
   }
 
   useEffect(() => {
+    if (unauthorized) return
     loadData()
-  }, [])
+  }, [unauthorized])
 
   const toggleMeasurement = (m) => {
     setSelected((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]))
   }
+
+  if (unauthorized) return <div>Not authorized</div>
 
   return (
     <>
