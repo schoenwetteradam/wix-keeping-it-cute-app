@@ -142,6 +142,25 @@ END;
 $$ LANGUAGE plpgsql STABLE;
 ```
 
+Additional functions provide staff-specific revenue and appointment details. Passing `NULL` for the `user_id` parameter returns metrics for all staff:
+
+```sql
+-- migrations/20250104_create_user_dashboard_functions.sql
+CREATE OR REPLACE FUNCTION public.total_revenue_for_user(user_id uuid)
+RETURNS TABLE(staff_name text, total_revenue numeric) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    s.first_name || ' ' || s.last_name AS staff_name,
+    SUM(o.total_amount) AS total_revenue
+  FROM public.orders o
+  JOIN public.staff s ON s.id = o.staff_id
+  WHERE (user_id IS NULL OR user_id = s.user_id)
+  GROUP BY s.first_name, s.last_name;
+END;
+$$ LANGUAGE plpgsql;
+```
+
 The frontend calls `/api/get-dashboard-metrics` which executes this function and returns the results. By default each staff member can view only their own metrics. User IDs listed in the `ADMIN_USER_IDS` variable are allowed to request metrics for any staff member or for the entire business.
 
 ### Booking & Payments

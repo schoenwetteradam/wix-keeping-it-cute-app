@@ -8,8 +8,6 @@ const ADMIN_IDS = (process.env.ADMIN_USER_IDS || '')
   .map((id) => id.trim())
   .filter(Boolean)
 
-const ADMIN_PLACEHOLDER = 'admin-uuid-placeholder'
-
 const supabase = createSupabaseClient()
 
 export default async function handler(req, res) {
@@ -42,27 +40,25 @@ export default async function handler(req, res) {
       staffId = null
     }
 
-    const rpcUserId = staffId ?? ADMIN_PLACEHOLDER
-
     const { data, error } = await supabase.rpc('dashboard_metrics', { p_staff_id: staffId })
     if (error) {
       throw error
     }
 
-    const { data: revenueData, error: revenueError } = await supabase.rpc('total_revenue_for_user', { user_id: rpcUserId })
+    const { data: revenueData, error: revenueError } = await supabase.rpc('total_revenue_for_user', { user_id: staffId })
     if (revenueError) {
       throw revenueError
     }
 
     const { data: appointmentData, error: appointmentError } = await supabase.rpc(
       'total_appointments_for_user',
-      { user_id: rpcUserId }
+      { user_id: staffId }
     )
     if (appointmentError) {
       throw appointmentError
     }
 
-    const { data: upcomingData, error: upcomingError } = await supabase.rpc('upcoming_appointments', { user_id: rpcUserId })
+    const { data: upcomingData, error: upcomingError } = await supabase.rpc('upcoming_appointments', { user_id: staffId })
     if (upcomingError) {
       throw upcomingError
     }

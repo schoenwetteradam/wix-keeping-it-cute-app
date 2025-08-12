@@ -7,7 +7,7 @@ BEGIN
     SUM(o.total_amount) AS total_revenue
   FROM public.orders o
   JOIN public.staff s ON s.id = o.staff_id
-  WHERE (user_id = s.user_id OR user_id = 'admin-uuid-placeholder')
+  WHERE (user_id IS NULL OR user_id = s.user_id)
   GROUP BY s.first_name, s.last_name;
 END;
 $$ LANGUAGE plpgsql;
@@ -18,10 +18,10 @@ BEGIN
   RETURN QUERY
   SELECT 
     s.first_name || ' ' || s.last_name,
-    COUNT(b.id)
+    COUNT(b.id)::int
   FROM public.bookings b
   JOIN public.staff s ON s.id = b.staff_id
-  WHERE (user_id = s.user_id OR user_id = 'admin-uuid-placeholder')
+  WHERE (user_id IS NULL OR user_id = s.user_id)
   GROUP BY s.first_name, s.last_name;
 END;
 $$ LANGUAGE plpgsql;
@@ -36,8 +36,8 @@ BEGIN
     b.customer_name
   FROM public.bookings b
   JOIN public.staff s ON s.id = b.staff_id
-  WHERE 
-    (user_id = s.user_id OR user_id = 'admin-uuid-placeholder')
+  WHERE
+    (user_id IS NULL OR user_id = s.user_id)
     AND b.appointment_date > now()
     AND b.status = 'scheduled'
   ORDER BY b.appointment_date ASC;
