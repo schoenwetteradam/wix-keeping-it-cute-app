@@ -1,8 +1,7 @@
 import { createSupabaseClient } from './supabaseClient'
 
-const supabase = createSupabaseClient()
-
 export const fetchMetrics = async () => {
+  const supabase = createSupabaseClient()
   const result = {
     upcomingAppointments: 0,
     usageFormsNeeded: 0,
