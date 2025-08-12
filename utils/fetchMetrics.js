@@ -11,6 +11,7 @@ export const fetchMetrics = async () => {
     totalRevenue: 0,
     appointmentCount: 0
   }
+  const errors = []
 
   const metricMap = [
     ['metric_upcoming_appointments', 'upcomingAppointments'],
@@ -23,9 +24,13 @@ export const fetchMetrics = async () => {
 
   for (const [view, key] of metricMap) {
     const { data, error } = await supabase.from(view).select('*').limit(1).single()
-    if (error) console.error(`Failed to fetch ${view}:`, error)
-    else result[key] = data.count ?? data.total ?? data.metric_value ?? 0
+    if (error) {
+      console.error(`Failed to fetch ${view}:`, error)
+      errors.push({ view, error })
+    } else {
+      result[key] = data.count ?? data.total ?? data.metric_value ?? 0
+    }
   }
 
-  return result
+  return { metrics: result, errors }
 }

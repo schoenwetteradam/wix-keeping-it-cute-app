@@ -7,10 +7,14 @@ export default function Dashboard() {
   const { authError } = useRequireSupabaseAuth()
   const unauthorized = useRequireRole(['admin'])
   const [metrics, setMetrics] = useState(null)
+  const [errors, setErrors] = useState([])
 
   useEffect(() => {
     if (unauthorized) return
-    fetchMetrics().then(setMetrics)
+    fetchMetrics().then((res) => {
+      setMetrics(res.metrics)
+      setErrors(res.errors)
+    })
   }, [unauthorized])
 
   if (authError) return <div>{authError}</div>
@@ -19,6 +23,11 @@ export default function Dashboard() {
 
   return (
     <div className="p-4">
+      {errors.length > 0 && (
+        <div className="mb-4 p-2 bg-yellow-100 text-yellow-800 border border-yellow-400 rounded">
+          Warning: Some metrics could not be loaded.
+        </div>
+      )}
       <h2 className="text-xl font-bold mb-4">📈 Metrics at a Glance</h2>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <MetricCard label="Upcoming Appointments" value={metrics.upcomingAppointments} icon="📅" />
