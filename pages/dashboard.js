@@ -4,7 +4,7 @@ import useRequireRole from '../utils/useRequireRole'
 import { fetchMetrics } from '../utils/fetchMetrics'
 
 export default function Dashboard() {
-  useRequireSupabaseAuth()
+  const { authError } = useRequireSupabaseAuth()
   useRequireRole(['admin'])
   const [metrics, setMetrics] = useState(null)
 
@@ -12,6 +12,7 @@ export default function Dashboard() {
     fetchMetrics().then(setMetrics)
   }, [])
 
+  if (authError) return <div>{authError}</div>
   if (!metrics) return <div>Loading metrics...</div>
 
   return (
