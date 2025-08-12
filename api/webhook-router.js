@@ -355,7 +355,7 @@ async function processContactEventJWT(event, eventData = null) {
 
     const { data, error } = await supabase
       .from('contacts')
-      .upsert(contactRecord, { onConflict: 'wix_contact_id', ignoreDuplicates: false })
+      .upsert(contactRecord, { onConflict: 'email', ignoreDuplicates: false })
       .select();
 
     if (error) {
