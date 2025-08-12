@@ -22,15 +22,23 @@ export const fetchMetrics = async () => {
     ['metric_appointment_count', 'appointmentCount']
   ]
 
-  for (const [view, key] of metricMap) {
-    const { data, error } = await supabase.from(view).select('*').limit(1).single()
-    if (error) {
-      console.error(`Failed to fetch ${view}:`, error)
-      errors.push({ view, error })
-    } else {
-      result[key] = data.count ?? data.total ?? data.metric_value ?? 0
-    }
-  }
+  const queries = metricMap.map(([view, key]) =>
+    supabase
+      .from(view)
+      .select('*')
+      .limit(1)
+      .single()
+      .then(({ data, error }) => {
+        if (error) {
+          console.error(`Failed to fetch ${view}:`, error)
+          errors.push({ view, error })
+        } else {
+          result[key] = data.count ?? data.total ?? data.metric_value ?? 0
+        }
+      })
+  )
+
+  await Promise.all(queries)
 
   return { metrics: result, errors }
 }
