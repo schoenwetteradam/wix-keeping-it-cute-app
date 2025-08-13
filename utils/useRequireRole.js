@@ -26,7 +26,9 @@ export default function useRequireRole(allowedRoles = []) {
         .eq('id', user.id)
         .maybeSingle()
       const role = data?.role
-      if (!allowedRoles.includes(role)) {
+      const allowed = allowedRoles.map(r => String(r).toLowerCase())
+      const normalizedRole = String(role || '').toLowerCase()
+      if (!allowed.includes(normalizedRole)) {
         setUnauthorized(true)
       } else {
         setUnauthorized(false)
