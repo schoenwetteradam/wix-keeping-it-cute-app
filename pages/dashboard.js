@@ -4,7 +4,7 @@ import useRequireRole from '../utils/useRequireRole'
 import { fetchMetrics } from '../utils/fetchMetrics'
 
 export default function Dashboard() {
-  const { authError } = useRequireSupabaseAuth()
+  const { authError, loading: authLoading } = useRequireSupabaseAuth()
   const unauthorized = useRequireRole(['admin'])
   const [metrics, setMetrics] = useState(null)
   const [errors, setErrors] = useState([])
@@ -12,7 +12,7 @@ export default function Dashboard() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (unauthorized) return
+    if (unauthorized || authLoading) return
     setLoading(true)
     fetchMetrics()
       .then((res) => {
@@ -24,9 +24,16 @@ export default function Dashboard() {
         setError('Failed to load metrics.')
       })
       .finally(() => setLoading(false))
-  }, [unauthorized])
+  }, [unauthorized, authLoading])
 
   if (authError) return <div>{authError}</div>
+  if (authLoading)
+    return (
+      <div className="flex justify-center items-center p-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900 mr-2"></div>
+        Loading...
+      </div>
+    )
   if (unauthorized) return <div>Not authorized</div>
   if (loading)
     return (
