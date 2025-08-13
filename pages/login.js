@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
-import { createClient } from '../utils/supabase/component'
+import { getBrowserSupabaseClient } from '../utils/supabaseBrowserClient'
 
 export default function Login() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -17,7 +17,7 @@ export default function Login() {
     )
   }
 
-  const supabase = createClient()
+  const supabase = getBrowserSupabaseClient()
 
   const router = useRouter()
   const [email, setEmail] = useState('')
