@@ -4,14 +4,16 @@ import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
 import { fetchWithAuth } from '../utils/api'
 
 export default function Profile() {
-  useRequireSupabaseAuth()
+  const { authError, loading: authLoading } = useRequireSupabaseAuth()
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
   const [avatarFile, setAvatarFile] = useState(null)
   const [form, setForm] = useState({ full_name: '', phone: '', address: '', gender: '' })
   const [message, setMessage] = useState('')
 
-  useEffect(() => { loadProfile() }, [])
+  useEffect(() => {
+    if (!authLoading) loadProfile()
+  }, [authLoading])
 
   const loadProfile = async () => {
     try {
@@ -67,7 +69,10 @@ export default function Profile() {
     }
   }
 
-  if (loading) {
+  if (authError) {
+    return <p style={{ padding: '2rem' }}>{authError}</p>
+  }
+  if (authLoading || loading) {
     return <p style={{ padding: '2rem' }}>Loading profile...</p>
   }
 

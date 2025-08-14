@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { getBrowserSupabaseClient } from '../utils/supabaseBrowserClient'
@@ -25,32 +25,61 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  useEffect(() => {
+    router.prefetch('/dashboard')
+    router.prefetch('/staff')
+  }, [router])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setError(error.message)
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
+
+    if (signInError) {
+      setError(
+        `${signInError.message}${
+          signInError.status ? ` (status ${signInError.status})` : ''
+        }`
+      )
       setLoading(false)
       return
     }
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: userError
+    } = await supabase.auth.getUser()
+
+    if (userError) {
+      setError(
+        `${userError.message}${
+          userError.status ? ` (status ${userError.status})` : ''
+        }`
+      )
+      setLoading(false)
+      return
+    }
+
     let redirect = '/staff'
     if (user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .maybeSingle()
-      if (data?.role === 'admin') {
+      const { data, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle()
+      if (profileError) {
+        console.error('Profile fetch error:', profileError)
+      } else if (data?.role === 'admin') {
         redirect = '/dashboard'
       }
     }
-    router.push(redirect)
+
+    await router.push(redirect)
     setLoading(false)
   }
 
