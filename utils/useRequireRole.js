@@ -1,12 +1,13 @@
+// utils/useRequireRole.js
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { getBrowserSupabaseClient } from './supabaseBrowserClient'
 
-/**
- * Hook to enforce role-based access.
- * Returns an `unauthorized` flag when the current user's role is not allowed.
- * Pages using this hook should check the flag and render a "Not authorized" screen.
- */
+const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
+  .split(',')
+  .map(e => e.trim().toLowerCase())
+  .filter(Boolean)
+
 export default function useRequireRole(allowedRoles = []) {
   const router = useRouter()
   const [unauthorized, setUnauthorized] = useState(false)
@@ -20,15 +21,20 @@ export default function useRequireRole(allowedRoles = []) {
         router.replace('/login')
         return
       }
-      const { data } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle()
-      const role = data?.role
-      const allowed = allowedRoles.map(r => String(r).toLowerCase())
-      const normalizedRole = String(role || '').toLowerCase()
-      if (!allowed.includes(normalizedRole)) {
+
+      // Check if user is an admin via email
+      const isAdmin = user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())
+      
+      // For your salon system, everyone is considered 'staff' by default
+      // Admins have both 'staff' and 'admin' roles
+      const userRoles = isAdmin ? ['staff', 'admin'] : ['staff']
+      
+      // Check if user has any of the required roles
+      const hasRequiredRole = allowedRoles.some(requiredRole => 
+        userRoles.includes(requiredRole.toLowerCase())
+      )
+
+      if (!hasRequiredRole) {
         setUnauthorized(true)
       } else {
         setUnauthorized(false)
