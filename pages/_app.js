@@ -10,21 +10,22 @@ export default function MyApp({ Component, pageProps }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const hash = window.location.hash
-    if (!hash || !hash.includes('access_token')) return
 
     try {
       const supabase = getBrowserSupabaseClient()
-      supabase.auth
-      .getSessionFromUrl()
-      .then(({ data }) => {
-        if (data?.session) {
+      
+      // Listen for auth state changes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session) {
           router.replace('/staff')
+        } else if (event === 'SIGNED_OUT') {
+          router.replace('/login')
         }
       })
-      .catch(() => {})
+
+      return () => subscription.unsubscribe()
     } catch {
-      // missing env vars, ignore
+      // Missing env vars, ignore
     }
   }, [router])
 

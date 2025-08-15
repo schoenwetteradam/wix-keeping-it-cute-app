@@ -27,15 +27,13 @@ export default function useRequireSupabaseAuth() {
 
     async function checkSession() {
       try {
-        if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
-          try {
-            const { data } = await supabase.auth.getSessionFromUrl()
-            if (data?.session) {
-              router.replace('/staff')
-              return
-            }
-          } catch (e) {
-            // ignore parsing errors
+        // Handle URL fragments (magic links, OAuth returns)
+        if (typeof window !== 'undefined' && window.location.hash) {
+          const hashParams = new URLSearchParams(window.location.hash.substring(1))
+          if (hashParams.get('access_token')) {
+            // Let Supabase handle the session automatically
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            window.history.replaceState({}, document.title, window.location.pathname)
           }
         }
 
@@ -57,6 +55,17 @@ export default function useRequireSupabaseAuth() {
     }
 
     checkSession()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        router.replace('/staff')
+      } else if (event === 'SIGNED_OUT') {
+        router.replace('/login')
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [router])
 
   return { authError, loading }
