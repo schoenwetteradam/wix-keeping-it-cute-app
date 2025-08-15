@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router'
 import NavBar from './NavBar'
+import { Analytics } from "@vercel/analytics/next"
 
 export default function Layout({ children }) {
   const router = useRouter()
@@ -10,6 +11,7 @@ export default function Layout({ children }) {
     <>
       {showNav && <NavBar />}
       <main className="container">{children}</main>
+      <Analytics />
     </>
   )
 }
