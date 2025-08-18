@@ -28,9 +28,18 @@ export default function StaffDashboard() {
       const res = await fetchWithAuth('/api/get-appointments?scope=mine')
       if (!res.ok) throw new Error('Failed to load appointments')
       const data = await res.json()
-      setAppointments(data.appointments || [])
+
+      // Debug: Log the response to see the structure
+      console.log('API Response:', data)
+
+      // The API might return data.appointments or just data directly
+      const appointments = data.appointments || data || []
+      setAppointments(appointments)
       setApptError(null)
+
+      console.log('Set appointments:', appointments.length, 'items')
     } catch (err) {
+      console.error('Load appointments error:', err)
       setApptError(err.message)
     } finally {
       setApptLoading(false)
