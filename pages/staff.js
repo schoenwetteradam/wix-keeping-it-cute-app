@@ -304,7 +304,7 @@ export default function StaffDashboard() {
             My Appointments
           </h1>
 
-          {/* Controls */}
+          {/* Enhanced Controls with Profile Management */}
           <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button 
               onClick={loadAppointments}
@@ -321,7 +321,48 @@ export default function StaffDashboard() {
             >
               {apptLoading ? 'Loading...' : 'Refresh Appointments'}
             </button>
-            
+
+            {/* Create Profile Button */}
+            <button 
+              onClick={async () => {
+                try {
+                  addDebugInfo('Creating staff profile...')
+                  const res = await fetchWithAuth('/api/create-staff-profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      full_name: 'Staff Member',
+                      phone: '',
+                      address: ''
+                    })
+                  })
+                  
+                  if (res.ok) {
+                    const data = await res.json()
+                    addDebugInfo(`✅ Staff check complete. Can create appointments: ${data.canCreateAppointments}`)
+                    if (data.recommendedStaff) {
+                      addDebugInfo(`📋 Recommended staff: ${data.recommendedStaff.email}`)
+                    }
+                  } else {
+                    const errorText = await res.text()
+                    addDebugInfo(`❌ Profile check failed: ${errorText}`)
+                  }
+                } catch (err) {
+                  addDebugInfo(`❌ Profile creation error: ${err.message}`)
+                }
+              }}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#2196f3',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              Create/Check Profile
+            </button>
+
             {/* Add Test Data Button */}
             <button 
               onClick={async () => {
@@ -334,6 +375,7 @@ export default function StaffDashboard() {
                   if (res.ok) {
                     const data = await res.json()
                     addDebugInfo(`✅ Created ${data.appointments?.length || 0} test appointments`)
+                    addDebugInfo(`📋 Staff used: ${data.staffUsed?.name || data.staffUsed?.email || 'Unknown'}`)
                     // Reload appointments to show the new data
                     await loadAppointments()
                   } else {
@@ -355,7 +397,41 @@ export default function StaffDashboard() {
             >
               Add Test Data
             </button>
-            
+
+            {/* Clear Test Data Button */}
+            <button 
+              onClick={async () => {
+                if (!confirm('Delete all test appointments? This cannot be undone.')) return
+                
+                try {
+                  const supabase = getBrowserSupabaseClient()
+                  const { error } = await supabase
+                    .from('bookings')
+                    .delete()
+                    .contains('payload', { test: true })
+                  
+                  if (error) {
+                    addDebugInfo(`❌ Failed to clear test data: ${error.message}`)
+                  } else {
+                    addDebugInfo('✅ Test data cleared')
+                    await loadAppointments()
+                  }
+                } catch (err) {
+                  addDebugInfo(`❌ Error clearing test data: ${err.message}`)
+                }
+              }}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#f44336',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              Clear Test Data
+            </button>
+
             <button 
               onClick={() => setDebugInfo('')}
               style={{
