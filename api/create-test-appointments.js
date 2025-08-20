@@ -31,12 +31,22 @@ export default async function handler(req, res) {
         .select('full_name')
         .eq('id', user.id)
         .single()
-      
+
       if (profile?.full_name) {
         userFullName = profile.full_name
       }
     } catch (profileError) {
       console.log('Profile lookup failed, using default name')
+    }
+
+    // Ensure staff profile exists to satisfy foreign key constraint
+    try {
+      await supabase.from('staff_profiles').upsert({
+        id: user.id,
+        full_name: userFullName
+      })
+    } catch (profileUpsertError) {
+      console.log('Profile upsert failed', profileUpsertError)
     }
 
     // Create sample appointments
