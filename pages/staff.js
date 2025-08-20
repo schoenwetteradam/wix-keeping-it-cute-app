@@ -150,6 +150,7 @@ export default function StaffDashboard() {
   // Try API endpoints with different approaches
   const tryApiEndpoints = async () => {
     const endpoints = [
+      '/api/get-all-appointments?limit=100',
       '/api/get-appointments?scope=mine&limit=100',
       '/api/get-appointments?limit=100',
       '/api/appointments?limit=100'
@@ -398,8 +399,64 @@ export default function StaffDashboard() {
               Add Test Data
             </button>
 
-            {/* Clear Test Data Button */}
+            {/* Database Diagnostic Button */}
             <button 
+              onClick={async () => {
+                try {
+                  addDebugInfo('Running database diagnostic...')
+                  const res = await fetchWithAuth('/api/debug-appointments')
+                  
+                  if (res.ok) {
+                    const data = await res.json()
+                    addDebugInfo('=== DATABASE DIAGNOSTIC RESULTS ===')
+                    addDebugInfo(`Total appointments in database: ${data.summary.totalAppointments}`)
+                    addDebugInfo(`Your user ID: ${data.user.id}`)
+                    addDebugInfo(`Your email: ${data.user.email}`)
+                    
+                    // Show staff groups
+                    data.summary.staffGroupCounts.forEach(group => {
+                      addDebugInfo(`Staff ID "${group.staffId}": ${group.count} appointments`)
+                    })
+                    
+                    // Show query results
+                    addDebugInfo(`Appointments with your exact user ID: ${data.queryResults.exactUserId.count}`)
+                    addDebugInfo(`Appointments with your email as staff_member: ${data.queryResults.byEmail.count}`)
+                    addDebugInfo(`Appointments with NULL staff_id: ${data.queryResults.nullStaffId.count}`)
+                    
+                    // Show sample appointments
+                    addDebugInfo('=== SAMPLE APPOINTMENTS ===')
+                    data.sampleAppointments.forEach((apt, i) => {
+                      addDebugInfo(`${i+1}. ${apt.customer_name} - Staff ID: ${apt.staff_id || 'NULL'} - Staff Member: ${apt.staff_member || 'NULL'}`)
+                    })
+                    
+                    // Show staff records
+                    addDebugInfo('=== STAFF RECORDS ===')
+                    data.allStaff.forEach(staff => {
+                      addDebugInfo(`${staff.first_name} ${staff.last_name} (${staff.email}) - ID: ${staff.id}`)
+                    })
+                    
+                  } else {
+                    const errorText = await res.text()
+                    addDebugInfo(`❌ Diagnostic failed: ${errorText}`)
+                  }
+                } catch (err) {
+                  addDebugInfo(`❌ Diagnostic error: ${err.message}`)
+                }
+              }}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#9c27b0',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              🔍 Database Diagnostic
+            </button>
+
+            {/* Clear Test Data Button */}
+            <button
               onClick={async () => {
                 if (!confirm('Delete all test appointments? This cannot be undone.')) return
                 
