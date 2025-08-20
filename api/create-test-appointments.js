@@ -21,35 +21,48 @@ export default async function handler(req, res) {
     const user = await requireAuth(req, res)
     if (!user) return
 
-    console.log('🧪 Creating test appointments for user:', user.id)
+    console.log('🧪 Creating test appointments for user:', user.id, user.email)
 
-    // Get user profile info for proper assignment
-    let userFullName = 'Test Staff'
-    try {
-      const { data: profile } = await supabase
-        .from('staff_profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .single()
+    // Find ANY staff record that could work for this user
+    let staffRecord = null
+    const userEmail = user.email || 'staff@example.com'
 
-      if (profile?.full_name) {
-        userFullName = profile.full_name
+    // Try multiple strategies to find a staff record
+    const searches = [
+      // 1. Exact ID match
+      supabase.from('staff').select('*').eq('id', user.id).maybeSingle(),
+      // 2. Email match
+      supabase.from('staff').select('*').eq('email', userEmail).maybeSingle(),
+      // 3. Email starts with username
+      supabase.from('staff').select('*').ilike('email', `${userEmail.split('@')[0]}%`).limit(1).maybeSingle(),
+      // 4. Any staff record (fallback)
+      supabase.from('staff').select('*').limit(1).maybeSingle()
+    ]
+
+    for (let i = 0; i < searches.length; i++) {
+      try {
+        const { data, error } = await searches[i]
+        if (!error && data) {
+          staffRecord = data
+          console.log(`✅ Found staff record using strategy ${i + 1}:`, data.email)
+          break
+        }
+      } catch (err) {
+        console.log(`Strategy ${i + 1} failed:`, err.message)
       }
-    } catch (profileError) {
-      console.log('Profile lookup failed, using default name')
     }
 
-    // Ensure staff profile exists to satisfy foreign key constraint
-    try {
-      await supabase.from('staff_profiles').upsert({
-        id: user.id,
-        full_name: userFullName
+    if (!staffRecord) {
+      return res.status(500).json({
+        error: 'No staff record found',
+        details: 'Unable to find any staff record to assign appointments to'
       })
-    } catch (profileUpsertError) {
-      console.log('Profile upsert failed', profileUpsertError)
     }
 
-    // Create sample appointments
+    // Use the staff record we found
+    const userDisplayName = `${staffRecord.first_name || 'Staff'} ${staffRecord.last_name || 'Member'}`.trim()
+
+    // Create sample appointments using the found staff record ID
     const sampleAppointments = [
       {
         wix_booking_id: `test-booking-${Date.now()}-1`,
@@ -58,19 +71,19 @@ export default async function handler(req, res) {
         customer_phone: '(555) 123-4567',
         service_name: 'Haircut & Style',
         service_duration: 90,
-        appointment_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
+        appointment_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         end_time: new Date(Date.now() + 24 * 60 * 60 * 1000 + 90 * 60 * 1000).toISOString(),
         total_price: 85.00,
         payment_status: 'pending',
         status: 'scheduled',
-        staff_member: userFullName,
-        staff_id: user.id,
+        staff_member: userDisplayName,
+        staff_id: staffRecord.id,
         notes: 'First time client - requested layers',
         location: 'Keeping It Cute Salon & Spa',
         number_of_participants: 1,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        payload: { test: true, created_by: 'test-data-api' }
+        payload: { test: true, created_by: 'test-data-api', auth_user: user.id }
       },
       {
         wix_booking_id: `test-booking-${Date.now()}-2`,
@@ -79,19 +92,19 @@ export default async function handler(req, res) {
         customer_phone: '(555) 987-6543',
         service_name: 'Color & Highlights',
         service_duration: 120,
-        appointment_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // Day after tomorrow
+        appointment_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
         end_time: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000).toISOString(),
         total_price: 150.00,
         payment_status: 'paid',
         status: 'confirmed',
-        staff_member: userFullName,
-        staff_id: user.id,
+        staff_member: userDisplayName,
+        staff_id: staffRecord.id,
         notes: 'Regular client - blonde highlights as usual',
         location: 'Keeping It Cute Salon & Spa',
         number_of_participants: 1,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        payload: { test: true, created_by: 'test-data-api' }
+        payload: { test: true, created_by: 'test-data-api', auth_user: user.id }
       },
       {
         wix_booking_id: `test-booking-${Date.now()}-3`,
@@ -100,63 +113,23 @@ export default async function handler(req, res) {
         customer_phone: '(555) 456-7890',
         service_name: 'Manicure & Pedicure',
         service_duration: 75,
-        appointment_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
+        appointment_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         end_time: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 75 * 60 * 1000).toISOString(),
         total_price: 65.00,
         payment_status: 'pending',
         status: 'scheduled',
-        staff_member: userFullName,
-        staff_id: user.id,
+        staff_member: userDisplayName,
+        staff_id: staffRecord.id,
         notes: 'Gel polish - requested pink color',
         location: 'Keeping It Cute Salon & Spa',
         number_of_participants: 1,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        payload: { test: true, created_by: 'test-data-api' }
-      },
-      {
-        wix_booking_id: `test-booking-${Date.now()}-4`,
-        customer_name: 'Jennifer Wilson',
-        customer_email: 'jennifer.wilson@example.com',
-        customer_phone: '(555) 321-9876',
-        service_name: 'Deep Conditioning Treatment',
-        service_duration: 60,
-        appointment_date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday (past appointment)
-        end_time: new Date(Date.now() - 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString(),
-        total_price: 45.00,
-        payment_status: 'paid',
-        status: 'completed',
-        staff_member: userFullName,
-        staff_id: user.id,
-        notes: 'Completed successfully - customer very happy',
-        location: 'Keeping It Cute Salon & Spa',
-        number_of_participants: 1,
-        created_at: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
-        updated_at: new Date().toISOString(),
-        payload: { test: true, created_by: 'test-data-api' }
-      },
-      {
-        wix_booking_id: `test-booking-${Date.now()}-5`,
-        customer_name: 'Ashley Brown',
-        customer_email: 'ashley.brown@example.com',
-        customer_phone: '(555) 654-3210',
-        service_name: 'Eyebrow Shaping & Tinting',
-        service_duration: 45,
-        appointment_date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
-        end_time: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000 + 45 * 60 * 1000).toISOString(),
-        total_price: 35.00,
-        payment_status: 'pending',
-        status: 'scheduled',
-        staff_member: userFullName,
-        staff_id: user.id,
-        notes: 'New client - consultation needed',
-        location: 'Keeping It Cute Salon & Spa',
-        number_of_participants: 1,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        payload: { test: true, created_by: 'test-data-api' }
+        payload: { test: true, created_by: 'test-data-api', auth_user: user.id }
       }
     ]
+
+    console.log(`📝 Inserting ${sampleAppointments.length} appointments using staff ID: ${staffRecord.id}`)
 
     // Insert the sample appointments
     const { data: insertedAppointments, error: insertError } = await supabase
@@ -168,7 +141,12 @@ export default async function handler(req, res) {
       console.error('❌ Insert error:', insertError)
       return res.status(500).json({
         error: 'Failed to create test appointments',
-        details: insertError.message
+        details: insertError.message,
+        staffUsed: {
+          id: staffRecord.id,
+          name: userDisplayName,
+          email: staffRecord.email
+        }
       })
     }
 
@@ -178,9 +156,15 @@ export default async function handler(req, res) {
       success: true,
       message: `Created ${insertedAppointments.length} test appointments`,
       appointments: insertedAppointments,
-      assignedTo: {
-        userId: user.id,
-        staffName: userFullName
+      staffUsed: {
+        id: staffRecord.id,
+        name: userDisplayName,
+        email: staffRecord.email,
+        matchesAuthUser: staffRecord.id === user.id
+      },
+      authUser: {
+        id: user.id,
+        email: user.email
       }
     })
 
@@ -192,3 +176,4 @@ export default async function handler(req, res) {
     })
   }
 }
+
