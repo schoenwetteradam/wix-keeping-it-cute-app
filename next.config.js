@@ -10,10 +10,12 @@ const nextConfig = {
   },
 
   async rewrites() {
+    const edgeUrl = process.env.NEXT_PUBLIC_SUPABASE_EDGE_FUNCTIONS_URL
+    if (!edgeUrl) return []
     return [
       {
         source: '/api/edge/:path*',
-        destination: `${process.env.NEXT_PUBLIC_SUPABASE_EDGE_FUNCTIONS_URL}/:path*`
+        destination: `${edgeUrl}/:path*`
       }
     ]
   },
