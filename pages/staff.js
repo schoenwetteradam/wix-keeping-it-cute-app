@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
 import useRequireRole from '../utils/useRequireRole'
-import { fetchWithAuth } from '../utils/api'
+import { fetchWithAuth, edgeClient } from '../utils/api'
 import { getBrowserSupabaseClient } from '../utils/supabaseBrowserClient'
 
 export default function StaffDashboard() {
@@ -22,6 +22,10 @@ export default function StaffDashboard() {
   const [metricsError, setMetricsError] = useState(null)
   const [debugInfo, setDebugInfo] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [useEdgeFunctions, setUseEdgeFunctions] = useState(
+    process.env.NEXT_PUBLIC_ENABLE_EDGE_FUNCTIONS === 'true'
+  )
+  const [edgeStatus, setEdgeStatus] = useState('unknown')
 
   // Helper function to log debug info
   const addDebugInfo = (info) => {
@@ -57,7 +61,7 @@ export default function StaffDashboard() {
 
   // Load metrics from API
   const loadMetrics = async () => {
-    try {
+  try {
       addDebugInfo('Loading metrics...')
       const res = await fetchWithAuth('/api/get-dashboard-metrics')
       
@@ -80,34 +84,71 @@ export default function StaffDashboard() {
       setMetrics({
         upcoming_appointments: 0,
         product_usage_needed: 0,
-        low_stock: 0,
-        orders_today: 0
-      })
+      low_stock: 0,
+      orders_today: 0
+    })
+  }
+}
+
+  const testEdgeFunctions = async () => {
+    try {
+      addDebugInfo('Testing Edge Functions...')
+      const supabase = getBrowserSupabaseClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session) {
+        addDebugInfo('❌ No auth session for Edge Function test')
+        return
+      }
+
+      // Test booking operations
+      const result = await edgeClient.getUpcomingBookings(null, 7, session.access_token)
+      setEdgeStatus('working')
+      addDebugInfo(`✅ Edge Functions working! Found ${result.bookings?.length || 0} bookings`)
+
+      // Set the upcoming appointments from Edge Function
+      if (result.bookings) {
+        setUpcoming(result.bookings)
+      }
+    } catch (error) {
+      setEdgeStatus('failed')
+      addDebugInfo(`❌ Edge Functions failed: ${error.message}`)
     }
   }
 
   // Load upcoming appointments
   const loadUpcomingAppointments = async () => {
+    setApptLoading(true)
+    setApptError(null)
+
     try {
-      addDebugInfo('Loading upcoming appointments...')
-      const res = await fetchWithAuth('/api/get-appointments?scope=mine&limit=5')
-      
+      if (useEdgeFunctions) {
+        const supabase = getBrowserSupabaseClient()
+        const { data: { session } } = await supabase.auth.getSession()
+
+        if (session) {
+          const result = await edgeClient.getUpcomingBookings(null, 7, session.access_token)
+          setUpcoming(result.bookings || [])
+          addDebugInfo(`✅ Loaded ${result.bookings?.length || 0} appointments from Edge Functions`)
+          return
+        }
+      }
+
+      addDebugInfo('Using Vercel API fallback...')
+      const res = await fetchWithAuth('/api/get-bookings?limit=10')
+
       if (res.ok) {
         const data = await res.json()
-        const upcomingAppts = (data.appointments || []).filter(apt => {
-          const aptDate = new Date(apt.appointment_date)
-          return aptDate >= new Date()
-        }).slice(0, 3)
-        
-        setUpcoming(upcomingAppts)
-        addDebugInfo(`✅ Loaded ${upcomingAppts.length} upcoming appointments`)
+        setUpcoming(data || [])
+        addDebugInfo(`✅ Loaded ${data?.length || 0} appointments from Vercel API`)
       } else {
-        addDebugInfo('⚠️ Upcoming appointments API failed')
-        setUpcoming([])
+        throw new Error(`API error: ${res.status}`)
       }
     } catch (err) {
-      addDebugInfo(`❌ Upcoming appointments error: ${err.message}`)
-      setUpcoming([])
+      setApptError(err.message)
+      addDebugInfo(`❌ Failed to load appointments: ${err.message}`)
+    } finally {
+      setApptLoading(false)
     }
   }
 
@@ -647,9 +688,9 @@ export default function StaffDashboard() {
 
         {/* Debug Panel */}
         {debugInfo && (
-          <div style={{ 
-            padding: '15px', 
-            backgroundColor: '#f0f0f0', 
+          <div style={{
+            padding: '15px',
+            backgroundColor: '#f0f0f0',
             border: '1px solid #ccc',
             borderRadius: '8px',
             marginBottom: '20px',
@@ -662,7 +703,7 @@ export default function StaffDashboard() {
             <pre style={{ margin: '5px 0 0 0', whiteSpace: 'pre-wrap' }}>
               {debugInfo}
             </pre>
-            <button 
+            <button
               onClick={() => setDebugInfo('')}
               style={{
                 padding: '5px 10px',
@@ -680,10 +721,74 @@ export default function StaffDashboard() {
           </div>
         )}
 
+        {/* Edge Functions Controls */}
+        <div style={{
+          marginTop: '20px',
+          padding: '15px',
+          backgroundColor: '#f5f5f5',
+          borderRadius: '8px'
+        }}>
+          <h3>Enhanced Features (Edge Functions)</h3>
+
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+            <label>
+              <input
+                type="checkbox"
+                checked={useEdgeFunctions}
+                onChange={(e) => setUseEdgeFunctions(e.target.checked)}
+              />
+              Use Enhanced Edge Functions
+            </label>
+
+            <span style={{
+              padding: '4px 8px',
+              borderRadius: '4px',
+              backgroundColor: edgeStatus === 'working' ? '#e8f5e8' :
+                               edgeStatus === 'failed' ? '#ffebee' : '#fff3e0',
+              color: edgeStatus === 'working' ? '#4caf50' :
+                     edgeStatus === 'failed' ? '#f44336' : '#ff9800',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}>
+              Edge Functions: {edgeStatus}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={testEdgeFunctions}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#4caf50',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Test Edge Functions
+            </button>
+
+            <button
+              onClick={loadUpcomingAppointments}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#2196f3',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Reload with Current Method
+            </button>
+          </div>
+        </div>
+
         {/* Error Display */}
         {metricsError && (
-          <div style={{ 
-            padding: '15px', 
+          <div style={{
+            padding: '15px',
             backgroundColor: '#ffebee', 
             color: '#c62828', 
             border: '1px solid #ffcdd2',

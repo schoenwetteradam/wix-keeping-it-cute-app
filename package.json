@@ -12,7 +12,10 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "refresh-upcoming": "node scripts/refresh-upcoming-bookings.js"
+    "refresh-upcoming": "node scripts/refresh-upcoming-bookings.js",
+    "test:edge": "node scripts/test-edge-functions.js",
+    "deploy:edge": "echo 'Edge functions deployed via Supabase dashboard'",
+    "check:integration": "node scripts/check-integration.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.4.0",
