@@ -22,6 +22,31 @@ export default function StaffDashboard() {
   const [metricsError, setMetricsError] = useState(null)
   const [debugInfo, setDebugInfo] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [modalMetric, setModalMetric] = useState(null)
+
+  const openMetricModal = (metric) => setModalMetric(metric)
+  const closeMetricModal = () => setModalMetric(null)
+
+  const renderModalContent = () => {
+    switch (modalMetric) {
+      case 'Upcoming Appointments':
+        return upcoming.length > 0
+          ? upcoming.map(apt => (
+              <div key={apt.id} style={{ padding: '10px 0', borderBottom: '1px solid #eee' }}>
+                <strong>{apt.customer_name}</strong> - {new Date(apt.appointment_date).toLocaleString()}
+              </div>
+            ))
+          : <p>No upcoming appointments.</p>
+      case 'Forms Needed':
+        return <p>No forms needing attention.</p>
+      case 'Low Stock Items':
+        return <p>No low stock items.</p>
+      case 'Orders Today':
+        return <p>No orders today.</p>
+      default:
+        return null
+    }
+  }
 
   // Helper function to log debug info
   const addDebugInfo = (info) => {
@@ -696,36 +721,88 @@ export default function StaffDashboard() {
 
         {/* Metrics Cards */}
         {!isLoading && (
-          <div style={{ 
-            display: 'grid', 
+          <div style={{
+            display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '20px',
             marginBottom: '30px'
           }}>
-            <MetricCard 
-              title="Upcoming Appointments" 
+            <MetricCard
+              title="Upcoming Appointments"
               value={metrics?.upcoming_appointments || 0}
               color="#f57c00"
               icon="📅"
+              onClick={() => openMetricModal('Upcoming Appointments')}
             />
-            <MetricCard 
-              title="Forms Needed" 
+            <MetricCard
+              title="Forms Needed"
               value={metrics?.product_usage_needed || 0}
               color="#2196f3"
               icon="📝"
+              onClick={() => openMetricModal('Forms Needed')}
             />
-            <MetricCard 
-              title="Low Stock Items" 
+            <MetricCard
+              title="Low Stock Items"
               value={metrics?.low_stock || 0}
               color="#f44336"
               icon="⚠️"
+              onClick={() => openMetricModal('Low Stock Items')}
             />
-            <MetricCard 
-              title="Orders Today" 
+            <MetricCard
+              title="Orders Today"
               value={metrics?.orders_today || 0}
               color="#4caf50"
               icon="💳"
+              onClick={() => openMetricModal('Orders Today')}
             />
+          </div>
+        )}
+
+        {modalMetric && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
+            }}
+            onClick={closeMetricModal}
+          >
+            <div
+              style={{
+                backgroundColor: '#fff',
+                padding: '20px',
+                borderRadius: '8px',
+                maxWidth: '500px',
+                width: '90%',
+                maxHeight: '80%',
+                overflowY: 'auto'
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <h2 style={{ marginTop: 0 }}>{modalMetric}</h2>
+              {renderModalContent()}
+              <button
+                onClick={closeMetricModal}
+                style={{
+                  marginTop: '20px',
+                  padding: '8px 16px',
+                  backgroundColor: '#2196f3',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         )}
 
@@ -839,7 +916,7 @@ export default function StaffDashboard() {
 }
 
 // Metric Card Component
-const MetricCard = ({ title, value, color, icon }) => (
+const MetricCard = ({ title, value, color, icon, onClick }) => (
   <div style={{
     padding: '20px',
     backgroundColor: 'white',
@@ -847,8 +924,10 @@ const MetricCard = ({ title, value, color, icon }) => (
     borderRadius: '12px',
     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
     textAlign: 'center',
-    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    cursor: onClick ? 'pointer' : 'default'
   }}
+  onClick={onClick}
   onMouseEnter={(e) => {
     e.currentTarget.style.transform = 'translateY(-2px)'
     e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)'
