@@ -9,8 +9,8 @@
   "regions": ["iad1"],
   "crons": [
     {
-      "path": "/api/cron/sync-processor",
-      "schedule": "*/5 * * * *"
+      "path": "/api/cron",
+      "schedule": "0 10 * * *"
     }
   ],
   "env": {
