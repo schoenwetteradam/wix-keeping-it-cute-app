@@ -626,7 +626,8 @@ async function processPaymentEventJWT(event, eventData = null) {
 async function processBookingEventNewFormat(webhookData) {
   console.log('📅 Processing booking event (new format)...');
   
-  if (webhookData.slug === 'created') {
+  if (webhookData.slug === 'created' || webhookData.slug === 'confirmed') {
+    // Wix sometimes sends `booking.confirmed` instead of `booking.created`
     return await processBookingCreated(webhookData);
   } else if (webhookData.slug === 'updated') {
     return await processBookingUpdated(webhookData);
@@ -641,7 +642,8 @@ async function processBookingEventNewFormat(webhookData) {
 async function processBookingEventJWT(event, eventData) {
   console.log('📅 Processing booking event (JWT format)...');
   
-  if (event.slug === 'created') {
+  if (event.slug === 'created' || event.slug === 'confirmed') {
+    // Treat `booking.confirmed` the same as a newly created booking
     return await processBookingCreated({ createdEvent: { entity: eventData || event } });
   } else if (event.slug === 'updated') {
     return await processBookingUpdated({ updatedEvent: { entity: eventData || event } });
