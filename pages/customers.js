@@ -182,53 +182,139 @@ export default function CustomersPage() {
           <span style={{ alignSelf: 'center', fontWeight: 'bold' }}>Customers: {filteredCustomers.length}</span>
         </div>
 
-        <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: '#f1f1f1', textAlign: 'left' }}>
-                <th style={{ padding: '12px' }}>Name</th>
-                <th style={{ padding: '12px' }}>Email</th>
-                <th style={{ padding: '12px' }}>Phone</th>
-                <th style={{ padding: '12px' }}>Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCustomers.map(c => (
-                <tr key={c.id} onClick={() => handleCustomerClick(c)} style={{ cursor: 'pointer', borderTop: '1px solid #eee' }}>
-                  <td style={{ padding: '12px' }}>{c.first_name} {c.last_name}</td>
-                  <td style={{ padding: '12px' }}>{c.email}</td>
-                  <td style={{ padding: '12px' }}>{c.phone || 'N/A'}</td>
-                  <td style={{ padding: '12px' }}>{c.created_at ? new Date(c.created_at).toLocaleDateString() : ''}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {filteredCustomers.length === 0 ? (
+          <div style={{
+            background: 'white',
+            padding: '40px',
+            borderRadius: '12px',
+            textAlign: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{ fontSize: '3em', marginBottom: '20px' }}>👥</div>
+            <h3 style={{ color: '#666', marginBottom: '10px' }}>No Customers Found</h3>
+            <p style={{ color: '#888', fontSize: '0.9em' }}>
+              Customers will appear here once they book appointments or make purchases.
+            </p>
+          </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '20px'
+          }}>
+            {filteredCustomers.map(c => (
+              <div
+                key={c.id}
+                onClick={() => handleCustomerClick(c)}
+                style={{
+                  background: 'white',
+                  border: '1px solid #e9ecef',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ margin: '0 0 8px 0', color: '#333', fontSize: '1.2em' }}>
+                      {c.first_name} {c.last_name}
+                    </h4>
+                    <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '1em' }}>
+                      📧 {c.email || 'No email'}
+                    </p>
+                    {c.phone && (
+                      <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '0.95em' }}>
+                        📱 {c.phone}
+                      </p>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                    {c.created_at && (
+                      <span style={{ fontSize: '0.9em', color: '#666' }}>
+                        {new Date(c.created_at).toLocaleDateString()}
+                      </span>
+                    )}
+                    {(c.labels && c.labels.length > 0) && (
+                      <span style={{
+                        background: '#e3f2fd',
+                        color: '#1976d2',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '0.75em',
+                        fontWeight: 'bold'
+                      }}>
+                        {c.labels[0]}
+                        {c.labels.length > 1 && ` +${c.labels.length - 1}`}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  gap: '10px',
+                  justifyContent: 'flex-end',
+                  marginTop: '15px',
+                  borderTop: '1px solid #f0f0f0',
+                  paddingTop: '15px'
+                }}>
+                  <span style={{
+                    background: '#e3f2fd',
+                    color: '#1976d2',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '0.75em',
+                    fontWeight: 'bold'
+                  }}>
+                    📝 View Details
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {showDetails && selectedCustomer && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000,
-            padding: '20px'
-          }}>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '30px',
-              maxWidth: '600px',
-              width: '100%',
-              maxHeight: '80vh',
-              overflow: 'auto',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
-            }}>
+          <div
+            className="customer-overlay"
+            onClick={closeDetails}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }}
+          >
+            <div
+              className="customer-modal"
+              onClick={e => e.stopPropagation()}
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '30px',
+                maxWidth: '600px',
+                width: '100%',
+                maxHeight: '80vh',
+                overflow: 'auto',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+              }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                 <h2 style={{ margin: 0 }}>Customer Details</h2>
                 <button
@@ -238,15 +324,28 @@ export default function CustomersPage() {
                   ×
                 </button>
               </div>
-              <p><strong>Name:</strong> {selectedCustomer.first_name} {selectedCustomer.last_name}</p>
-              <p><strong>Email:</strong> {selectedCustomer.email}</p>
-              {selectedCustomer.phone && (<p><strong>Phone:</strong> {selectedCustomer.phone}</p>)}
-              {selectedCustomer.labels && selectedCustomer.labels.length > 0 && (
-                <p><strong>Labels:</strong> {selectedCustomer.labels.join(', ')}</p>
-              )}
+              <div style={{
+                background: '#f8f9fa',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                  gap: '15px'
+                }}>
+                  <div><strong>Name:</strong> {selectedCustomer.first_name} {selectedCustomer.last_name}</div>
+                  <div><strong>Email:</strong> {selectedCustomer.email}</div>
+                  {selectedCustomer.phone && (<div><strong>Phone:</strong> {selectedCustomer.phone}</div>)}
+                  {selectedCustomer.labels && selectedCustomer.labels.length > 0 && (
+                    <div><strong>Labels:</strong> {selectedCustomer.labels.join(', ')}</div>
+                  )}
+                </div>
+              </div>
               {selectedCustomer.address && (
-                <div>
-                  <strong>Address:</strong>
+                <div style={{ marginBottom: '20px' }}>
+                  <h3 style={{ margin: '0 0 10px 0' }}>Address</h3>
                   <div style={{ marginLeft: '10px' }}>
                     {selectedCustomer.address.addressLine1 && <div>{selectedCustomer.address.addressLine1}</div>}
                     {selectedCustomer.address.city && <div>{selectedCustomer.address.city}</div>}
@@ -257,15 +356,31 @@ export default function CustomersPage() {
                 </div>
               )}
               {loyaltyRecord && (
-                <div style={{ marginTop: '10px' }}>
-                  <strong>Loyalty Points:</strong>
-                  <div style={{ marginLeft: '10px' }}>
+                <div style={{ background: '#fff3e0', padding: '20px', borderRadius: '8px' }}>
+                  <h3 style={{ margin: '0 0 10px 0' }}>Loyalty Points</h3>
+                  <div style={{ display: 'flex', gap: '15px' }}>
                     <div>Balance: {loyaltyRecord.points_balance}</div>
                     <div>Redeemed: {loyaltyRecord.redeemed_points}</div>
                   </div>
                 </div>
               )}
             </div>
+            <style jsx>{`
+              .customer-overlay {
+                animation: fadeIn 0.3s ease forwards;
+              }
+              .customer-modal {
+                animation: slideUp 0.3s ease forwards;
+              }
+              @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+              }
+              @keyframes slideUp {
+                from { transform: translateY(20px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+              }
+            `}</style>
           </div>
         )}
       </div>
