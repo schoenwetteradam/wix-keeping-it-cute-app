@@ -1,6 +1,8 @@
 import styles from './AppointmentCard.module.css'
+import { useRouter } from 'next/router'
 
 export default function AppointmentCard({ appointment, onComplete, onCancel, onReschedule, onMarkPaid, onEditNotes }) {
+  const router = useRouter()
   const {
     id,
     customer_name,
@@ -13,8 +15,12 @@ export default function AppointmentCard({ appointment, onComplete, onCancel, onR
     notes,
   } = appointment
 
+  const handleCardClick = () => {
+    router.push(`/product-usage/${id}`)
+  }
+
   return (
-    <div className={styles.card}>
+    <div className={styles.card} onClick={handleCardClick}>
       <div className={styles.header}>
         <div>
           <strong>{customer_name || 'Customer'}</strong>
@@ -32,17 +38,17 @@ export default function AppointmentCard({ appointment, onComplete, onCancel, onR
       </div>
       {notes && <div className={styles.notes}>Notes: {notes.substring(0, 80)}</div>}
       <div className={styles.actions}>
-        <button onClick={() => onComplete(appointment)}>Complete</button>
-        <button onClick={() => onCancel(appointment)}>Cancel</button>
-        <button onClick={() => onReschedule(appointment)}>Reschedule</button>
+        <button onClick={(e) => { e.stopPropagation(); onComplete(appointment) }}>Complete</button>
+        <button onClick={(e) => { e.stopPropagation(); onCancel(appointment) }}>Cancel</button>
+        <button onClick={(e) => { e.stopPropagation(); onReschedule(appointment) }}>Reschedule</button>
         {payment_status !== 'paid' && (
-          <button onClick={() => onMarkPaid(appointment)}>Mark Paid</button>
+          <button onClick={(e) => { e.stopPropagation(); onMarkPaid(appointment) }}>Mark Paid</button>
         )}
-        <button onClick={() => onEditNotes(appointment)}>Notes</button>
-        <button onClick={() => window.open(`/product-usage/${id}`, '_blank')}>Usage</button>
-        <button onClick={() => window.open(`/booking-images/${id}`, '_blank')}>Images</button>
-        <button onClick={() => window.open(`/booking-details/${id}`, '_blank')}>Details</button>
-        <button onClick={() => window.open(`/collect-payment/${id}`, '_blank')}>Collect</button>
+        <button onClick={(e) => { e.stopPropagation(); onEditNotes(appointment) }}>Notes</button>
+        <button onClick={(e) => { e.stopPropagation(); window.open(`/product-usage/${id}`, '_blank') }}>Usage</button>
+        <button onClick={(e) => { e.stopPropagation(); window.open(`/booking-images/${id}`, '_blank') }}>Images</button>
+        <button onClick={(e) => { e.stopPropagation(); window.open(`/booking-details/${id}`, '_blank') }}>Details</button>
+        <button onClick={(e) => { e.stopPropagation(); window.open(`/collect-payment/${id}`, '_blank') }}>Collect</button>
       </div>
     </div>
   )
