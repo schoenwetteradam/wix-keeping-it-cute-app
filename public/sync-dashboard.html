@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wix Sync Management Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .status-excellent { @apply bg-green-100 text-green-800 border-green-200; }
+        .status-good { @apply bg-blue-100 text-blue-800 border-blue-200; }
+        .status-fair { @apply bg-yellow-100 text-yellow-800 border-yellow-200; }
+        .status-poor { @apply bg-red-100 text-red-800 border-red-200; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Wix ↔ Supabase Sync Manager</h1>
+            <p class="text-gray-600">Manage and monitor your data synchronization between Wix and Supabase</p>
+        </div>
+
+        <!-- Sync Status Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Sync Health</p>
+                        <p id="sync-health" class="text-2xl font-semibold text-gray-900">Loading...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Records Synced</p>
+                        <p id="records-synced" class="text-2xl font-semibold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-yellow-100 rounded-lg">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.098 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Issues Found</p>
+                        <p id="issues-count" class="text-2xl font-semibold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Last Sync</p>
+                        <p id="last-sync" class="text-sm font-semibold text-gray-900">Never</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sync Controls -->
+        <div class="bg-white rounded-lg shadow mb-8">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Sync Controls</h2>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Quick Sync Options -->
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-900 mb-3">Quick Sync Options</h3>
+                        <div class="space-y-2">
+                            <button onclick="runQuickSync('all')" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                                🔄 Full Sync (All Data)
+                            </button>
+                            <button onclick="runQuickSync('incremental')" class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors">
+                                ⚡ Incremental Sync (New Only)
+                            </button>
+                            <button onclick="runQuickSync('bookings')" class="w-full bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors">
+                                📅 Bookings Only
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Sync Configuration -->
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-900 mb-3">Custom Sync</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tables to Sync</label>
+                                <select id="sync-tables" multiple class="w-full border-gray-300 rounded-md shadow-sm">
+                                    <option value="bookings">Bookings</option>
+                                    <option value="contacts">Contacts</option>
+                                    <option value="orders">Orders</option>
+                                    <option value="products">Products</option>
+                                    <option value="loyalty">Loyalty</option>
+                                    <option value="services">Services</option>
+                                </select>
+                            </div>
+                            <div class="flex space-x-3">
+                                <div class="flex-1">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Batch Size</label>
+                                    <input id="batch-size" type="number" value="100" min="10" max="500" class="w-full border-gray-300 rounded-md shadow-sm">
+                                </div>
+                                <div class="flex items-center mt-6">
+                                    <input id="skip-existing" type="checkbox" checked class="rounded border-gray-300">
+                                    <label for="skip-existing" class="ml-2 text-sm text-gray-700">Skip existing</label>
+                                </div>
+                            </div>
+                            <button onclick="runCustomSync()" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors">
+                                🎯 Run Custom Sync
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sync Status Tables -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Table Status -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Table Sync Status</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Table</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Records</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Success Rate</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-status" class="bg-white divide-y divide-gray-200">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent Operations -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Recent Sync Operations</h2>
+                </div>
+                <div class="p-6">
+                    <div id="recent-operations" class="space-y-3">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Quality Issues -->
+        <div class="bg-white rounded-lg shadow mb-8" id="quality-issues" style="display: none;">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Data Quality Issues</h2>
+            </div>
+            <div class="p-6">
+                <div id="quality-issues-content">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Modal -->
+        <div id="progress-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Syncing Data...</h3>
+                    <p id="progress-message" class="text-gray-600">Initializing sync process...</p>
+                    <div class="mt-4 bg-gray-200 rounded-full h-2">
+                        <div id="progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let syncStatus = null
+        let isLoading = false
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSyncStatus()
+            // Refresh every 30 seconds
+            setInterval(loadSyncStatus, 30000)
+        })
+
+        async function loadSyncStatus() {
+            if (isLoading) return
+            isLoading = true
+
+            try {
+                const response = await fetch('/api/sync-status')
+                const data = await response.json()
+                
+                if (data.success) {
+                    syncStatus = data
+                    updateDashboard(data)
+                }
+            } catch (error) {
+                console.error('Failed to load sync status:', error)
+                showError('Failed to load sync status')
+            } finally {
+                isLoading = false
+            }
+        }
+
+        function updateDashboard(data) {
+            // Update overview cards
+            document.getElementById('sync-health').textContent = 
+                data.sync_health.overall_status.toUpperCase()
+            
+            const totalSynced = Object.values(data.sync_health.tables)
+                .reduce((sum, table) => sum + (table.synced || 0), 0)
+            document.getElementById('records-synced').textContent = totalSynced.toLocaleString()
+            
+            // Update last sync time
+            const lastSync = Math.max(...Object.values(data.sync_health.tables)
+                .map(table => table.last_sync ? new Date(table.last_sync).getTime() : 0))
+            
+            if (lastSync > 0) {
+                document.getElementById('last-sync').textContent = 
+                    new Date(lastSync).toLocaleString()
+            }
+
+            // Update table status
+            updateTableStatus(data.sync_health.tables)
+            
+            // Update recent operations
+            updateRecentOperations(data.sync_health.recent_operations)
+        }
+
+        function updateTableStatus(tables) {
+            const tbody = document.getElementById('table-status')
+            tbody.innerHTML = ''
+
+            Object.entries(tables).forEach(([tableName, stats]) => {
+                const row = document.createElement('tr')
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ${tableName.charAt(0).toUpperCase() + tableName.slice(1)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${stats.total_records || 0}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${stats.success_rate || '0'}%
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(stats.status)}">
+                            ${stats.status || 'unknown'}
+                        </span>
+                    </td>
+                `
+                tbody.appendChild(row)
+            })
+        }
+
+        function updateRecentOperations(operations) {
+            const container = document.getElementById('recent-operations')
+            container.innerHTML = ''
+
+            if (!operations || operations.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm">No recent sync operations</p>'
+                return
+            }
+
+            operations.slice(0, 5).forEach(op => {
+                const div = document.createElement('div')
+                div.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-md'
+                
+                const status = op.webhook_status === 'success' ? '✅' : '❌'
+                const time = new Date(op.logged_at).toLocaleString()
+                
+                div.innerHTML = `
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">${op.event_type}</p>
+                        <p class="text-xs text-gray-500">${time}</p>
+                    </div>
+                    <span class="text-lg">${status}</span>
+                `
+                container.appendChild(div)
+            })
+        }
+
+        function getStatusClass(status) {
+            switch (status) {
+                case 'fully_synced': return 'bg-green-100 text-green-800'
+                case 'partial_success': return 'bg-yellow-100 text-yellow-800'
+                case 'mostly_failed': return 'bg-red-100 text-red-800'
+                case 'in_progress': return 'bg-blue-100 text-blue-800'
+                default: return 'bg-gray-100 text-gray-800'
+            }
+        }
+
+        // Sync control functions
+        async function runQuickSync(type) {
+            const configs = {
+                'all': {
+                    tables: ['all'],
+                    batchSize: 100,
+                    skipExisting: false
+                },
+                'incremental': {
+                    tables: ['bookings', 'contacts', 'orders'],
+                    batchSize: 100,
+                    skipExisting: true
+                },
+                'bookings': {
+                    tables: ['bookings'],
+                    batchSize: 100,
+                    skipExisting: true
+                }
+            }
+
+            await runSync(configs[type] || configs.all)
+        }
+
+        async function runCustomSync() {
+            const tables = Array.from(document.getElementById('sync-tables').selectedOptions)
+                .map(option => option.value)
+            
+            if (tables.length === 0) {
+                showError('Please select at least one table to sync')
+                return
+            }
+
+            const config = {
+                tables: tables,
+                batchSize: parseInt(document.getElementById('batch-size').value) || 100,
+                skipExisting: document.getElementById('skip-existing').checked
+            }
+
+            await runSync(config)
+        }
+
+        async function runSync(config) {
+            showProgress('Starting sync process...')
+            
+            try {
+                console.log('🚀 Starting sync with config:', config)
+                
+                const response = await fetch('/api/sync-all-wix-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                })
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+                }
+
+                const result = await response.json()
+                
+                hideProgress()
+                
+                if (result.success) {
+                    showSuccess('Sync completed successfully!')
+                    
+                    // Display results
+                    displaySyncResults(result.results)
+                    
+                    // Refresh status
+                    await loadSyncStatus()
+                } else {
+                    throw new Error(result.error || 'Sync failed')
+                }
+                
+            } catch (error) {
+                hideProgress()
+                showError(`Sync failed: ${error.message}`)
+                console.error('Sync error:', error)
+            }
+        }
+
+        function displaySyncResults(results) {
+            let message = 'Sync Results:\n\n'
+            
+            Object.entries(results).forEach(([table, stats]) => {
+                message += `${table.toUpperCase()}:\n`
+                message += `  ✅ Synced: ${stats.synced || 0}\n`
+                message += `  ❌ Errors: ${stats.errors || 0}\n\n`
+            })
+            
+            alert(message)
+        }
+
+        function showProgress(message) {
+            document.getElementById('progress-message').textContent = message
+            document.getElementById('progress-modal').style.display = 'flex'
+        }
+
+        function updateProgress(message, percentage) {
+            document.getElementById('progress-message').textContent = message
+            document.getElementById('progress-bar').style.width = `${percentage}%`
+        }
+
+        function hideProgress() {
+            document.getElementById('progress-modal').style.display = 'none'
+        }
+
+        function showSuccess(message) {
+            const alert = createAlert(message, 'success')
+            document.body.appendChild(alert)
+            setTimeout(() => alert.remove(), 5000)
+        }
+
+        function showError(message) {
+            const alert = createAlert(message, 'error')
+            document.body.appendChild(alert)
+            setTimeout(() => alert.remove(), 8000)
+        }
+
+        function createAlert(message, type) {
+            const div = document.createElement('div')
+            div.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg z-50 max-w-sm ${type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'}`
+            
+            div.innerHTML = `
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        ${type === 'success' ? '✅' : '❌'}
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">${message}</p>
+                    </div>
+                    <div class="ml-auto pl-3">
+                        <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+                            <span class="sr-only">Dismiss</span>
+                            ✕
+                        </button>
+                    </div>
+                </div>
+            `
+            
+            return div
+        }
+
+        // Additional utility functions
+        async function validateSync() {
+            showProgress('Running validation...')
+            
+            try {
+                const response = await fetch('/api/sync-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'validate' })
+                })
+
+                const result = await response.json()
+                hideProgress()
+                
+                if (result.success) {
+                    showValidationResults(result)
+                } else {
+                    showError('Validation failed')
+                }
+            } catch (error) {
+                hideProgress()
+                showError(`Validation failed: ${error.message}`)
+            }
+        }
+
+        function showValidationResults(results) {
+            // Show validation score
+            const score = results.validation_score || 0
+            let message = `Validation Score: ${score}/100\n\n`
+            
+            // Show recommendations
+            if (results.recommendations && results.recommendations.length > 0) {
+                message += 'Recommendations:\n'
+                results.recommendations.forEach(rec => {
+                    message += `• ${rec.action}: ${rec.description}\n`
+                })
+            } else {
+                message += 'No issues found! Your sync is in excellent condition.'
+            }
+            
+            alert(message)
+        }
+
+        async function resetSyncStatus(table = 'all') {
+            if (!confirm(`Are you sure you want to reset sync status for ${table}? This will mark all records as pending sync.`)) {
+                return
+            }
+            
+            showProgress('Resetting sync status...')
+            
+            try {
+                const response = await fetch(`/api/sync-status?table=${table}&confirm=true`, {
+                    method: 'DELETE'
+                })
+
+                const result = await response.json()
+                hideProgress()
+                
+                if (result.success) {
+                    showSuccess('Sync status reset successfully')
+                    await loadSyncStatus()
+                } else {
+                    showError('Failed to reset sync status')
+                }
+            } catch (error) {
+                hideProgress()
+                showError(`Reset failed: ${error.message}`)
+            }
+        }
+
+        // Auto-refresh indicator
+        let refreshTimer = null
+        function startAutoRefresh() {
+            if (refreshTimer) clearInterval(refreshTimer)
+            refreshTimer = setInterval(loadSyncStatus, 30000)
+        }
+
+        function stopAutoRefresh() {
+            if (refreshTimer) {
+                clearInterval(refreshTimer)
+                refreshTimer = null
+            }
+        }
+
+        // Initialize auto-refresh
+        startAutoRefresh()
+    </script>
+
+    <!-- Additional Control Buttons -->
+    <div class="fixed bottom-6 right-6 space-y-2">
+        <button onclick="validateSync()" 
+                class="bg-yellow-600 hover:bg-yellow-700 text-white p-3 rounded-full shadow-lg transition-colors"
+                title="Validate Sync">
+            🔍
+        </button>
+        <button onclick="resetSyncStatus()" 
+                class="bg-red-600 hover:bg-red-700 text-white p-3 rounded-full shadow-lg transition-colors"
+                title="Reset Sync Status">
+            🔄
+        </button>
+        <button onclick="loadSyncStatus()" 
+                class="bg-green-600 hover:bg-green-700 text-white p-3 rounded-full shadow-lg transition-colors"
+                title="Refresh Status">
+            ↻
+        </button>
+    </div>
+</body>
+</html>
