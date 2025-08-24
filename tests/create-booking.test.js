@@ -1,8 +1,11 @@
-const createInsert = (result) => {
+const createQuery = (result) => {
   const promise = Promise.resolve(result)
   promise.insert = jest.fn(() => promise)
   promise.select = jest.fn(() => promise)
   promise.single = jest.fn(() => promise)
+  promise.maybeSingle = jest.fn(() => promise)
+  promise.ilike = jest.fn(() => promise)
+  promise.or = jest.fn(() => promise)
   return promise
 }
 
@@ -25,11 +28,11 @@ afterEach(() => {
 
 describe('create-booking handler', () => {
   test('returns 405 on non-POST requests', async () => {
-    const from = jest.fn(() => createInsert({ data: {}, error: null }))
+    const from = jest.fn(() => createQuery({ data: {}, error: null }))
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/create-booking.js')
+    const { default: handler } = jest.requireActual('../api/create-booking.js')
 
     const req = { method: 'GET', body: {} }
     const res = createRes()
@@ -41,11 +44,11 @@ describe('create-booking handler', () => {
   })
 
   test('validates required fields', async () => {
-    const from = jest.fn(() => createInsert({ data: {}, error: null }))
+    const from = jest.fn(() => createQuery({ data: {}, error: null }))
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/create-booking.js')
+    const { default: handler } = jest.requireActual('../api/create-booking.js')
 
     const req = { method: 'POST', body: {} }
     const res = createRes()
@@ -61,19 +64,35 @@ describe('create-booking handler', () => {
   test('calls wix API and inserts booking', async () => {
     global.fetch.mockResolvedValue({
       ok: true,
-      json: jest.fn().mockResolvedValue({ booking: { id: '123' } })
+      json: jest.fn().mockResolvedValue({
+        booking: { id: '123', service: { name: 'Service A' } }
+      })
     })
 
-    const insertQuery = createInsert({ data: { id: '1' }, error: null })
-    const from = jest.fn(() => insertQuery)
+    const insertQuery = createQuery({ data: { id: '1' }, error: null })
+    const serviceQuery = createQuery({
+      data: { id: 'svc1', duration_minutes: 60, price: 50 },
+      error: null
+    })
+    const contactQuery = createQuery({ data: { id: 'contact1' }, error: null })
+
+    const from = jest.fn((table) => {
+      if (table === 'bookings') return insertQuery
+      if (table === 'salon_services') return serviceQuery
+      if (table === 'contacts') return contactQuery
+      return createQuery({ data: {}, error: null })
+    })
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/create-booking.js')
+    const { default: handler } = jest.requireActual('../api/create-booking.js')
 
     const reqBody = {
       serviceId: 'svc1',
-      slot: { startDate: '2024-01-01T10:00:00Z', endDate: '2024-01-01T11:00:00Z' },
+      slot: {
+        startDate: '2024-01-01T10:00:00Z',
+        endDate: '2024-01-01T11:00:00Z'
+      },
       contactDetails: { email: 'a@b.com', firstName: 'A', lastName: 'B' }
     }
     const req = { method: 'POST', body: reqBody }

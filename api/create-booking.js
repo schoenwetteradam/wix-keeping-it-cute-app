@@ -23,6 +23,20 @@ export default async function handler(req, res) {
       .json({ error: 'serviceId, slot and contactDetails are required' })
   }
 
+  if (
+    isNaN(Date.parse(slot.startDate)) ||
+    isNaN(Date.parse(slot.endDate))
+  ) {
+    return res.status(400).json({ error: 'appointment_date is invalid' })
+  }
+
+  if (
+    contactDetails.email &&
+    !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(contactDetails.email)
+  ) {
+    return res.status(400).json({ error: 'Invalid email format' })
+  }
+
   try {
     // Call Wix Bookings API to create the booking
     const wixRes = await fetch(
@@ -51,13 +65,19 @@ export default async function handler(req, res) {
 
     const bookingInfo = wixData.booking || wixData
 
+    const wix_contact_id =
+      contactDetails.wixContactId || bookingInfo?.buyer?.id
+
     const bookingRecord = {
-      wix_booking_id: bookingInfo.id || bookingInfo.bookingId,
-      service_id: serviceId,
+      wix_booking_id:
+        bookingInfo.id || bookingInfo.bookingId || `booking-${Date.now()}`,
       customer_email: contactDetails.email,
       customer_name: `${contactDetails.firstName || ''} ${
         contactDetails.lastName || ''
       }`.trim(),
+      customer_phone: contactDetails.phone,
+      service_name:
+        bookingInfo?.service?.name || bookingInfo?.bookedEntity?.title,
       appointment_date: slot.startDate,
       end_time: slot.endDate,
       payment_status: 'not_paid',
@@ -66,6 +86,65 @@ export default async function handler(req, res) {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
+
+    // Link service for duration and price
+    if (bookingRecord.service_name) {
+      const { data: serviceLookup } = await supabase
+        .from('salon_services')
+        .select('id, duration_minutes, price')
+        .ilike('name', bookingRecord.service_name)
+        .single()
+
+      if (!serviceLookup) {
+        return res
+          .status(400)
+          .json({ error: 'service_name does not exist in salon_services' })
+      }
+
+      bookingRecord.service_id = serviceLookup.id
+      bookingRecord.service_duration = serviceLookup.duration_minutes
+      bookingRecord.total_price = serviceLookup.price
+    }
+
+    // Link customer by email or wix_contact_id
+    if (bookingRecord.customer_email || wix_contact_id) {
+      const { data: contact } = await supabase
+        .from('contacts')
+        .select('id')
+        .or(
+          `wix_contact_id.eq.${wix_contact_id},email.eq.${bookingRecord.customer_email}`
+        )
+        .maybeSingle()
+
+      if (contact) {
+        bookingRecord.customer_id = contact.id
+      }
+    }
+
+    const staffMember =
+      rest.staff_member || bookingInfo?.staff_member || bookingInfo?.staffMember
+    if (staffMember) {
+      const { data: staff } = await supabase
+        .from('staff_profiles')
+        .select('id')
+        .ilike('full_name', staffMember)
+        .maybeSingle()
+
+      if (staff) {
+        bookingRecord.staff_id = staff.id
+      }
+    }
+
+    if (
+      bookingRecord.total_price !== undefined &&
+      Number(bookingRecord.total_price) <= 0
+    ) {
+      return res.status(400).json({ error: 'total_price must be positive' })
+    }
+
+    Object.keys(bookingRecord).forEach(
+      (key) => bookingRecord[key] === undefined && delete bookingRecord[key]
+    )
 
     const { data: booking, error } = await supabase
       .from('bookings')
