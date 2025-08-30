@@ -16,7 +16,7 @@ const publicPaths = [
   '/api/wix-health',
   '/api/import-all-wix-data',
   '/api/test-connection',
-  '/api/debug-services'
+  '/api/test-bookings-endpoints' 
 ]
   if (publicPaths.some((p) => pathname.startsWith(p))) {
     if (pathname.startsWith('/api/webhook-router')) {
