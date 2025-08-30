@@ -130,7 +130,6 @@ export default async function handler(req, res) {
   }
 }
 
-// Simplified import functions for testing
 async function importWixServices(wix, batchSize, skipExisting) {
   let imported = 0, errors = 0, skipped = 0
   
@@ -141,16 +140,33 @@ async function importWixServices(wix, batchSize, skipExisting) {
     if (wixResponse?.services) {
       for (const service of wixResponse.services.slice(0, Math.min(batchSize, 10))) {
         try {
+          // Check if already exists
+          if (skipExisting) {
+            const { data: existing } = await supabase
+              .from('salon_services')
+              .select('id')
+              .eq('wix_service_id', service.id)
+              .maybeSingle()
+            
+            if (existing) {
+              skipped++
+              continue
+            }
+          }
+
           const serviceRecord = {
             wix_service_id: service.id,
             name: service.info?.name || 'Unknown Service',
             description: service.info?.description || null,
-            duration: service.schedule?.duration || 60,
+            duration_minutes: service.schedule?.duration || 60,  // Fixed: duration_minutes not duration
             price: service.payment?.pricing?.price?.value || 0,
             is_active: !service.hidden,
-            category: 'beauty',
-            color: '#E91E63'
+            category: service.info?.category || 'beauty',
+            wix_sync_status: 'synced',
+            last_wix_sync: new Date().toISOString()
           }
+          
+          console.log('Inserting service:', serviceRecord.name)
           
           const { error } = await supabase
             .from('salon_services')
@@ -163,6 +179,7 @@ async function importWixServices(wix, batchSize, skipExisting) {
             imported++
           }
         } catch (err) {
+          console.log('Service processing error:', err)
           errors++
         }
       }
