@@ -1,105 +1,116 @@
 export class WixAPIManager {
   constructor() {
-    this.baseURL = 'https://www.wixapis.com'
-    this.token = process.env.WIX_API_TOKEN
+    this.apiToken = process.env.WIX_API_TOKEN
     this.siteId = process.env.WIX_SITE_ID
-    this.bookingsAppId = process.env.WIX_BOOKINGS_APP_ID
-    this.storesAppId = process.env.WIX_STORES_APP_ID
-    this.ecommerceAppId = process.env.WIX_ECOMMERCE_APP_ID
+    this.baseUrl = 'https://www.wixapis.com'
+    
+    if (!this.apiToken) {
+      throw new Error('WIX_API_TOKEN is required')
+    }
   }
 
-  getAppId(endpoint) {
-    if (endpoint.startsWith('/bookings') || endpoint.startsWith('/calendar')) {
-      return this.bookingsAppId
-    }
-    if (endpoint.startsWith('/stores')) {
-      return this.storesAppId
-    }
-    if (endpoint.startsWith('/ecom')) {
-      return this.ecommerceAppId
-    }
-    return null
-  }
-
-  async makeRequest(endpoint, method = 'GET', data = null) {
-    const url = `${this.baseURL}${endpoint}`
-    const headers = {
-      Authorization: `Bearer ${this.token}`,
-      'Content-Type': 'application/json'
+  async makeRequest(endpoint, options = {}) {
+    const url = `${this.baseUrl}${endpoint}`
+    
+    const defaultOptions = {
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json',
+        'wix-site-id': this.siteId,
+        ...options.headers
+      }
     }
 
-    const appId = this.getAppId(endpoint)
-    if (appId) headers['wix-app-id'] = appId
-    if (this.siteId) headers['wix-site-id'] = this.siteId
-
-    const options = { method, headers }
-
-    if (data) {
-      options.body = JSON.stringify(data)
+    const response = await fetch(url, { ...defaultOptions, ...options })
+    
+    if (!response.ok) {
+      throw new Error(`Wix API error: ${response.status} ${response.statusText}`)
     }
 
-    const res = await fetch(url, options)
-    if (!res.ok) {
-      const text = await res.text()
-      throw new Error(`Wix API Error: ${res.status} - ${text}`)
-    }
-    if (res.status === 204) return null
-    return res.json()
+    return response.json()
   }
 
-  async getServices() {
-    return this.makeRequest('/bookings/v2/services')
+  // Booking Methods
+  async getBookings(params = {}) {
+    const queryParams = new URLSearchParams({
+      limit: params.limit || 50,
+      cursor: params.cursor || '',
+      includeDetails: params.includeDetails || true
+    })
+
+    return this.makeRequest(`/bookings/v1/bookings?${queryParams}`)
   }
 
-  async getSchedule(scheduleId) {
-    return this.makeRequest(`/calendar/v3/schedules/${scheduleId}`)
-  }
-
-  async querySchedules(query = {}) {
-    return this.makeRequest('/calendar/v3/schedules/query', 'POST', { query })
-  }
-
-  async createSchedule(schedule, idempotencyKey) {
-    const body = { schedule }
-    if (idempotencyKey) {
-      body.idempotencyKey = idempotencyKey
-    }
-    return this.makeRequest('/calendar/v3/schedules', 'POST', body)
-  }
-
-  async updateSchedule(scheduleId, schedule, participantNotification) {
-    const body = { schedule }
-    if (participantNotification) {
-      body.participantNotification = participantNotification
-    }
-    return this.makeRequest(`/calendar/v3/schedules/${scheduleId}`, 'PATCH', body)
-  }
-
-  async cancelSchedule(scheduleId, preserveFutureEventsWithParticipants = false, participantNotification) {
-    const body = { preserveFutureEventsWithParticipants }
-    if (participantNotification) {
-      body.participantNotification = participantNotification
-    }
-    return this.makeRequest(`/calendar/v3/schedules/${scheduleId}/cancel`, 'POST', body)
-  }
-
-  // === Products ===
-  async createProduct(product) {
-    return this.makeRequest('/stores/v1/products', 'POST', { product })
-  }
-
-  async updateProduct(productId, product) {
-    return this.makeRequest(`/stores/v1/products/${productId}`, 'PATCH', { product })
-  }
-
-  async updateInventory(wixProductId, quantity) {
-    return this.makeRequest(`/stores/v1/inventoryItems/${wixProductId}`, 'PATCH', {
-      inventoryItem: { quantity }
+  async createBooking(bookingData) {
+    return this.makeRequest('/bookings/v1/bookings', {
+      method: 'POST',
+      body: JSON.stringify({ booking: bookingData })
     })
   }
 
-  // === Bookings ===
-  async updateBooking(bookingId, booking) {
-    return this.makeRequest(`/bookings/v1/bookings/${bookingId}`, 'PATCH', { booking })
+  async updateBooking(bookingId, updateData) {
+    return this.makeRequest(`/bookings/v1/bookings/${bookingId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ booking: updateData })
+    })
+  }
+
+  async cancelBooking(bookingId) {
+    return this.makeRequest(`/bookings/v1/bookings/${bookingId}/cancel`, {
+      method: 'POST'
+    })
+  }
+
+  // Contact Methods
+  async getContacts(params = {}) {
+    const queryParams = new URLSearchParams({
+      limit: params.limit || 50,
+      cursor: params.cursor || ''
+    })
+
+    return this.makeRequest(`/contacts/v4/contacts?${queryParams}`)
+  }
+
+  async createContact(contactData) {
+    return this.makeRequest('/contacts/v4/contacts', {
+      method: 'POST',
+      body: JSON.stringify({ contact: contactData })
+    })
+  }
+
+  async updateContact(contactId, updateData) {
+    return this.makeRequest(`/contacts/v4/contacts/${contactId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ contact: updateData })
+    })
+  }
+
+  // Order Methods
+  async getOrders(params = {}) {
+    const queryParams = new URLSearchParams({
+      limit: params.limit || 50,
+      cursor: params.cursor || '',
+      includeDetails: params.includeDetails || true
+    })
+
+    return this.makeRequest(`/ecom/v1/orders?${queryParams}`)
+  }
+
+  // Product Methods
+  async getProducts(params = {}) {
+    const queryParams = new URLSearchParams({
+      limit: params.limit || 50,
+      cursor: params.cursor || '',
+      includeVariants: params.includeVariants || false
+    })
+
+    return this.makeRequest(`/stores/v1/products?${queryParams}`)
+  }
+
+  // Services Methods
+  async getServices(params = {}) {
+    return this.makeRequest('/bookings/v1/services', {
+      method: 'GET'
+    })
   }
 }
