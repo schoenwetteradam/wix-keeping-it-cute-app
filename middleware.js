@@ -9,7 +9,14 @@ export async function middleware(req) {
   }
 
   // Allow unauthenticated access for certain public API routes
-  const publicPaths = ['/api/webhook-router', '/api/get-branding', '/api/health']
+const publicPaths = [
+  '/api/webhook-router', 
+  '/api/get-branding', 
+  '/api/health',
+  '/api/wix-health',
+  '/api/import-all-wix-data',
+  '/api/test-connection'
+]
   if (publicPaths.some((p) => pathname.startsWith(p))) {
     if (pathname.startsWith('/api/webhook-router')) {
       console.log('Bypassing middleware for webhook-router. Headers:', Object.fromEntries(req.headers))
