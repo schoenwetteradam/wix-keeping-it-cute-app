@@ -130,17 +130,20 @@ export default async function handler(req, res) {
   }
 }
 
+// UPDATED SERVICES IMPORT FUNCTION
 async function importWixServices(wix, batchSize, skipExisting) {
   let imported = 0, errors = 0, skipped = 0
   
   try {
     const wixResponse = await wix.getServices()
-    console.log('Services response:', JSON.stringify(wixResponse, null, 2))
+    console.log(`Found ${wixResponse?.services?.length || 0} services from Wix`)
     
     if (wixResponse?.services) {
       for (const service of wixResponse.services.slice(0, Math.min(batchSize, 10))) {
         try {
-          // Check if already exists
+          // Log the raw service data to understand structure
+          console.log('Processing service:', JSON.stringify(service, null, 2))
+          
           if (skipExisting) {
             const { data: existing } = await supabase
               .from('salon_services')
@@ -154,44 +157,82 @@ async function importWixServices(wix, batchSize, skipExisting) {
             }
           }
 
+          // Extract values with multiple fallback paths
+          const serviceName = service.info?.name || 
+                             service.name || 
+                             service.serviceName || 
+                             `Wix Service ${service.id.substring(0, 8)}`
+
+          const serviceDuration = service.schedule?.duration || 
+                                service.duration || 
+                                service.info?.duration || 
+                                60
+
+          const servicePrice = parseFloat(
+            service.payment?.pricing?.price?.value || 
+            service.price || 
+            service.info?.price || 
+            0
+          )
+
           const serviceRecord = {
             wix_service_id: service.id,
-            name: service.info?.name || 'Unknown Service',
-            description: service.info?.description || null,
-            duration_minutes: service.schedule?.duration || 60,  // Fixed: duration_minutes not duration
-            price: service.payment?.pricing?.price?.value || 0,
-            is_active: !service.hidden,
-            category: service.info?.category || 'beauty',
+            name: serviceName, // Required - never null
+            description: service.info?.description || service.description || null,
+            duration_minutes: parseInt(serviceDuration), // Required - never null, ensure integer
+            price: servicePrice, // Required - never null, ensure numeric
+            category: service.info?.category || service.category || 'beauty',
+            is_active: service.hidden !== true, // Default true unless explicitly hidden
             wix_sync_status: 'synced',
             last_wix_sync: new Date().toISOString()
           }
           
-          console.log('Inserting service:', serviceRecord.name)
+          // Final validation - ensure all required fields are present
+          if (!serviceRecord.name || 
+              serviceRecord.duration_minutes === null || 
+              isNaN(serviceRecord.duration_minutes) ||
+              serviceRecord.price === null || 
+              isNaN(serviceRecord.price)) {
+            
+            console.log(`Skipping service ${service.id} - invalid required fields:`, {
+              name: serviceRecord.name,
+              duration_minutes: serviceRecord.duration_minutes,
+              price: serviceRecord.price,
+              raw_service_structure: Object.keys(service)
+            })
+            errors++
+            continue
+          }
+          
+          console.log(`Inserting service: ${serviceRecord.name} (${serviceRecord.duration_minutes}min, $${serviceRecord.price})`)
           
           const { error } = await supabase
             .from('salon_services')
             .upsert(serviceRecord, { onConflict: 'wix_service_id' })
           
           if (error) {
-            console.log('Service insert error:', error)
+            console.log(`Database error for ${serviceRecord.name}:`, error.message)
             errors++
           } else {
+            console.log(`Successfully imported: ${serviceRecord.name}`)
             imported++
           }
+          
         } catch (err) {
-          console.log('Service processing error:', err)
+          console.log(`Service processing error:`, err.message)
           errors++
         }
       }
     }
   } catch (error) {
-    console.log('Services import error:', error)
+    console.log('Services import failed:', error)
     throw error
   }
   
   return { imported, errors, skipped }
 }
 
+// UPDATED BOOKINGS IMPORT FUNCTION
 async function importWixBookings(wix, batchSize, skipExisting) {
   let imported = 0, errors = 0, skipped = 0
   
@@ -201,8 +242,58 @@ async function importWixBookings(wix, batchSize, skipExisting) {
     
     if (wixResponse?.bookings) {
       console.log(`Processing ${wixResponse.bookings.length} bookings`)
-      // Process bookings here
-      imported = wixResponse.bookings.length
+      
+      for (const wixBooking of wixResponse.bookings) {
+        try {
+          if (skipExisting) {
+            const { data: existing } = await supabase
+              .from('bookings')
+              .select('id')
+              .eq('wix_primary_id', wixBooking.id)
+              .maybeSingle()
+            
+            if (existing) {
+              skipped++
+              continue
+            }
+          }
+
+          const bookingRecord = {
+            wix_primary_id: wixBooking.id,
+            wix_booking_id: wixBooking.id,
+            customer_name: wixBooking.bookedEntity?.contactDetails?.name || null,
+            customer_email: wixBooking.bookedEntity?.contactDetails?.email || null,
+            customer_phone: wixBooking.bookedEntity?.contactDetails?.phone || null,
+            service_name: wixBooking.bookedEntity?.serviceName || null,
+            appointment_date: wixBooking.bookedEntity?.schedule?.startDateTime || null,
+            end_time: wixBooking.bookedEntity?.schedule?.endDateTime || null,
+            status: wixBooking.status?.toLowerCase() || 'pending',
+            total_price: wixBooking.payment?.amount || 0,
+            payment_status: wixBooking.payment?.status?.toLowerCase() || 'pending',
+            notes: wixBooking.additionalFields?.notes || null,
+            location: 'Keeping It Cute Salon & Spa',
+            wix_sync_status: 'synced',
+            last_wix_sync: new Date().toISOString(),
+            raw_data: wixBooking
+          }
+          
+          const { error } = await supabase
+            .from('bookings')
+            .upsert(bookingRecord, { onConflict: 'wix_primary_id' })
+          
+          if (error) {
+            console.error(`Booking import error:`, error)
+            errors++
+          } else {
+            console.log(`Imported booking: ${wixBooking.id}`)
+            imported++
+          }
+
+        } catch (err) {
+          console.error(`Booking processing error:`, err)
+          errors++
+        }
+      }
     }
   } catch (error) {
     console.log('Bookings import error:', error)
@@ -212,6 +303,7 @@ async function importWixBookings(wix, batchSize, skipExisting) {
   return { imported, errors, skipped }
 }
 
+// UPDATED CONTACTS IMPORT FUNCTION
 async function importWixContacts(wix, batchSize, skipExisting) {
   let imported = 0, errors = 0, skipped = 0
   
@@ -221,8 +313,51 @@ async function importWixContacts(wix, batchSize, skipExisting) {
     
     if (wixResponse?.contacts) {
       console.log(`Processing ${wixResponse.contacts.length} contacts`)
-      // Process contacts here
-      imported = wixResponse.contacts.length
+      
+      for (const wixContact of wixResponse.contacts) {
+        try {
+          if (skipExisting) {
+            const { data: existing } = await supabase
+              .from('contacts')
+              .select('id')
+              .eq('wix_primary_id', wixContact.id)
+              .maybeSingle()
+            
+            if (existing) {
+              skipped++
+              continue
+            }
+          }
+
+          const contactRecord = {
+            wix_primary_id: wixContact.id,
+            wix_contact_id: wixContact.id,
+            first_name: wixContact.name?.first || null,
+            last_name: wixContact.name?.last || null,
+            email: wixContact.loginEmail || wixContact.primaryEmail?.email || null,
+            phone: wixContact.primaryPhone?.phone || null,
+            city: wixContact.addresses?.[0]?.city || null,
+            state: wixContact.addresses?.[0]?.subdivision || null,
+            source: 'wix',
+            wix_sync_status: 'synced',
+            last_wix_sync: new Date().toISOString(),
+            raw_data: wixContact
+          }
+          
+          const { error } = await supabase
+            .from('contacts')
+            .upsert(contactRecord, { onConflict: 'wix_primary_id' })
+          
+          if (error) {
+            errors++
+          } else {
+            imported++
+          }
+
+        } catch (err) {
+          errors++
+        }
+      }
     }
   } catch (error) {
     console.log('Contacts import error:', error)
