@@ -40,60 +40,21 @@ export class WixAPIManager {
     return data
   }
 
-  // Booking Methods - Try multiple API versions
+  // Booking Methods
   async getBookings(params = {}) {
     const limit = params.limit || 50
     const cursor = params.cursor || ''
-    
-    // Try different Wix Bookings API endpoints in order of preference
-    const attempts = [
-      // v2 with query parameters
-      () => {
-        const queryParams = new URLSearchParams({ limit, cursor })
-        return this.makeRequest(`/bookings/v2/bookings?${queryParams}`)
-      },
-      
-      // v1 with POST query
-      () => {
-        return this.makeRequest(`/bookings/v1/bookings/query`, {
-          method: 'POST',
-          body: JSON.stringify({
-            query: {},
-            paging: { limit, cursor }
-          })
-        })
-      },
-      
-      // v1 with query parameters
-      () => {
-        const queryParams = new URLSearchParams({ limit, cursor })
-        return this.makeRequest(`/bookings/v1/bookings?${queryParams}`)
-      },
-      
-      // Alternative booking services endpoint
-      () => {
-        return this.makeRequest(`/bookings-services/v1/bookings/query`, {
-          method: 'POST',
-          body: JSON.stringify({
-            query: {},
-            paging: { limit, cursor }
-          })
-        })
-      }
-    ]
 
-    for (let i = 0; i < attempts.length; i++) {
-      try {
-        console.log(`Trying bookings API attempt ${i + 1}...`)
-        const result = await attempts[i]()
-        console.log(`Bookings API attempt ${i + 1} succeeded`)
-        return result
-      } catch (error) {
-        console.log(`Bookings API attempt ${i + 1} failed:`, error.message)
-        if (i === attempts.length - 1) {
-          throw error // Re-throw the last error if all attempts failed
-        }
-      }
+    console.log(`Attempting to fetch bookings with limit: ${limit}`)
+
+    try {
+      const queryParams = new URLSearchParams({ limit, cursor })
+      const response = await this.makeRequest(`/bookings/v1/bookings?${queryParams}`)
+      console.log('Bookings API response:', JSON.stringify(response, null, 2))
+      return response
+    } catch (error) {
+      console.log('Bookings API failed, trying alternative endpoints...')
+      throw error
     }
   }
 
