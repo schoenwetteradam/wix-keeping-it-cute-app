@@ -48,9 +48,10 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-# Wix API Configuration  
+# Wix API Configuration
 WIX_API_TOKEN=your-wix-api-token
 WIX_SITE_ID=your-wix-site-id
+WIX_ACCOUNT_ID=your-wix-account-id
 WIX_WEBHOOK_SECRET=your-webhook-secret
 
 # Wix App IDs (from Wix Developer Center)
