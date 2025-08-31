@@ -1,21 +1,24 @@
-// api/test-bookings-endpoints.js
 import { setCorsHeaders } from '../utils/cors'
 
 export default async function handler(req, res) {
   setCorsHeaders(res, 'GET')
 
-  const apiToken = process.env.WIX_API_TOKEN
-  const siteId = process.env.WIX_SITE_ID
-  const accountId = process.env.WIX_ACCOUNT_ID // optional, add if you have it
-  const baseUrl = 'https://www.wixapis.com'
+  const apiToken  = process.env.WIX_API_TOKEN
+  const siteId    = process.env.WIX_SITE_ID
+  const accountId = process.env.WIX_ACCOUNT_ID
+  const baseUrl   = 'https://www.wixapis.com'
 
-  // We'll try both GET and POST /query variants across v1 + reader
+  // We try both GET (for comparison) and the correct POST /query variants,
+  // and we try multiple request-body shapes Wix has accepted across tenants.
   const tests = [
     { method: 'GET',  path: '/bookings/v1/bookings?limit=1' },
-    { method: 'POST', path: '/bookings/v1/bookings/query', body: { query: { paging: { limit: 1 } } } },
+
+    // Proper POST /query attempts
+    { method: 'POST', path: '/bookings/v1/bookings/query',        body: { query: { paging: { limit: 1 } } } },
+    { method: 'POST', path: '/bookings/v1/bookings/query',        body: { paging: { limit: 1 } } },                 // alt
     { method: 'POST', path: '/bookings-reader/v1/bookings/query', body: { query: { paging: { limit: 1 } } } },
-    // fallback experiment: some tenants only respond here
-    { method: 'POST', path: '/calendar/v1/bookings/query', body: { query: { paging: { limit: 1 } } } },
+    { method: 'POST', path: '/bookings-reader/v1/bookings/query', body: { paging: { limit: 1 } } },                 // alt
+    { method: 'POST', path: '/calendar/v1/bookings/query',        body: { query: { paging: { limit: 1 } } } },      // long shot
   ]
 
   const results = {}
@@ -26,7 +29,7 @@ export default async function handler(req, res) {
       const headers = {
         'Authorization': `Bearer ${apiToken}`,
         'Content-Type': 'application/json',
-        'wix-site-id': siteId,
+        'wix-site-id': siteId
       }
       if (accountId) headers['wix-account-id'] = accountId
 
@@ -37,20 +40,22 @@ export default async function handler(req, res) {
       })
 
       const info = { status: resp.status, statusText: resp.statusText, success: resp.ok }
-      if (resp.ok) {
-        const data = await resp.json()
-        info.dataKeys = Object.keys(data)
-        info.hasBookings = !!data.bookings
-        info.bookingsCount = Array.isArray(data.bookings) ? data.bookings.length : 0
-        info.sample = Array.isArray(data.bookings) && data.bookings[0] ? data.bookings[0].id || data.bookings[0]._id : null
-      } else {
-        info.body = await resp.text()
+      const text = await resp.text()
+      try {
+        const json = JSON.parse(text)
+        info.json = Object.keys(json)
+        info.hasBookings = !!json.bookings
+        info.bookingsCount = Array.isArray(json.bookings) ? json.bookings.length : 0
+        info.sample = Array.isArray(json.bookings) && json.bookings[0] ? (json.bookings[0].id || json.bookings[0]._id) : null
+      } catch {
+        info.body = text  // show exact error if not JSON
       }
+
       results[`${t.method} ${t.path}`] = info
     } catch (e) {
       results[`${t.method} ${t.path}`] = { success: false, error: e.message }
     }
   }
 
-  res.json({ message: 'Bookings API endpoint test (POST /query variants)', wix_site_id: siteId, results })
+  res.json({ message: 'Bookings API endpoint test (POST /query, multiple payloads)', wix_site_id: siteId, results })
 }
