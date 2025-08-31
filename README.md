@@ -261,6 +261,8 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 - `SUPABASE_CLIENT_UPLOADS_BUCKET` bucket for before/after service photos
 - `SUPABASE_RECEIPTS_BUCKET` bucket for uploaded receipts
 - `WIX_API_TOKEN` Wix API token used for booking operations
+- `WIX_SITE_ID` Wix site identifier
+- `WIX_ACCOUNT_ID` Wix account ID for the site owner
 - `WIX_WEBHOOK_SECRET` secret used to verify Wix webhooks
 - `WIX_PUBLIC_KEY` Wix public key used to verify webhook signatures
 - `WIX_API_AUTH` Authorization header value for Wix analytics requests

@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     try {
       const url = `${baseUrl}${t.path}`
       const headers = {
-        'Authorization': `Bearer ${apiToken}`,
+        'Authorization': apiToken,
         'Content-Type': 'application/json',
         'wix-site-id': siteId
       }

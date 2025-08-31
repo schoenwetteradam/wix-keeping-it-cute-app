@@ -2,6 +2,7 @@ export class WixAPIManager {
   constructor() {
     this.apiToken = process.env.WIX_API_TOKEN
     this.siteId = process.env.WIX_SITE_ID
+    this.accountId = process.env.WIX_ACCOUNT_ID
     this.baseUrl = 'https://www.wixapis.com'
     
     if (!this.apiToken) {
@@ -16,18 +17,19 @@ export class WixAPIManager {
   async makeRequest(endpoint, options = {}) {
     const url = `${this.baseUrl}${endpoint}`
     
-    const defaultOptions = {
-      headers: {
-        'Authorization': `Bearer ${this.apiToken}`,
-        'Content-Type': 'application/json',
-        'wix-site-id': this.siteId,
-        ...options.headers
-      }
+    const headers = {
+      'Authorization': this.apiToken,
+      'Content-Type': 'application/json',
+      'wix-site-id': this.siteId,
+      ...(options.headers || {})
+    }
+    if (this.accountId) {
+      headers['wix-account-id'] = this.accountId
     }
 
     console.log(`Making request to: ${endpoint}`)
-    
-    const response = await fetch(url, { ...defaultOptions, ...options })
+
+    const response = await fetch(url, { ...options, headers })
     
     if (!response.ok) {
       const errorText = await response.text()
@@ -43,18 +45,41 @@ export class WixAPIManager {
   // Booking Methods
   async getBookings(params = {}) {
     const limit = params.limit || 50
-    const cursor = params.cursor || ''
+    const cursor = params.cursor || undefined
 
-    console.log(`Attempting to fetch bookings with limit: ${limit}`)
+    const query = { filter: {}, paging: { limit } }
+    if (cursor) query.cursor = cursor
 
-    try {
-      const queryParams = new URLSearchParams({ limit, cursor })
-      const response = await this.makeRequest(`/bookings/v1/bookings?${queryParams}`)
-      console.log('Bookings API response:', JSON.stringify(response, null, 2))
-      return response
-    } catch (error) {
-      console.log('Bookings API failed, trying alternative endpoints...')
-      throw error
+    const headers = {}
+    if (this.accountId) headers['wix-account-id'] = this.accountId
+
+    const attempts = [
+      () => this.makeRequest('/bookings/v1/bookings/query', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ query })
+      }),
+      () => this.makeRequest('/bookings-reader/v1/bookings/query', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ query })
+      }),
+      () => {
+        const qs = new URLSearchParams({ limit: String(limit), ...(cursor ? { cursor } : {}) })
+        return this.makeRequest(`/bookings/v1/bookings?${qs}`, { headers })
+      }
+    ]
+
+    for (let i = 0; i < attempts.length; i++) {
+      try {
+        console.log(`Trying bookings API attempt ${i + 1}...`)
+        const resp = await attempts[i]()
+        console.log('Bookings API response keys:', Object.keys(resp))
+        return resp
+      } catch (e) {
+        console.log(`Bookings API attempt ${i + 1} failed: ${e.message}`)
+        if (i === attempts.length - 1) throw e
+      }
     }
   }
 

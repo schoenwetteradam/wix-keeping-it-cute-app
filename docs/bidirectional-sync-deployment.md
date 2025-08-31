@@ -12,6 +12,7 @@ WIX_API_TOKEN=your-wix-api-token
 
 # Sync configuration
 WIX_SITE_ID=your-wix-site-id
+WIX_ACCOUNT_ID=your-wix-account-id
 WIX_WEBHOOK_SECRET=your-wix-webhook-secret
 WEBHOOK_SECRET=your-supabase-webhook-auth-token
 
