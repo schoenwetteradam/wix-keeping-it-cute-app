@@ -1,74 +1,76 @@
-import React, { useEffect, useState } from 'react'
-import useRequireSupabaseAuth from '../utils/useRequireSupabaseAuth'
-import useRequireRole from '../utils/useRequireRole'
-import { fetchMetrics } from '../utils/fetchMetrics'
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/auth';
+import useSWR, { mutate } from 'swr';
+
+const fetcher = (url) => fetch(url).then((res) => res.json());
 
 export default function Dashboard() {
-  const { authError, loading: authLoading } = useRequireSupabaseAuth()
-  const unauthorized = useRequireRole(['admin'])
-  const [metrics, setMetrics] = useState(null)
-  const [errors, setErrors] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [user, setUser] = useState(null);
+  const { data: clients, error: clientsError } = useSWR('/api/clients', fetcher);
+  const { data: appointments, error: appointmentsError } = useSWR('/api/appointments', fetcher);
 
   useEffect(() => {
-    if (unauthorized || authLoading) return
-    setLoading(true)
-    fetchMetrics()
-      .then((res) => {
-        setMetrics(res.metrics)
-        setErrors(res.errors)
-      })
-      .catch((err) => {
-        console.error('Failed to fetch metrics', err)
-        setError('Failed to load metrics.')
-      })
-      .finally(() => setLoading(false))
-  }, [unauthorized, authLoading])
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
 
-  if (authError) return <div>{authError}</div>
-  if (authLoading)
-    return (
-      <div className="flex justify-center items-center p-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900 mr-2"></div>
-        Loading...
-      </div>
-    )
-  if (unauthorized) return <div>Not authorized</div>
-  if (loading)
-    return (
-      <div className="flex justify-center items-center p-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900 mr-2"></div>
-        Loading...
-      </div>
-    )
-  if (error) return <div className="p-4 text-red-600">{error}</div>
-  if (!metrics) return null
+  const handleSync = async () => {
+    try {
+      await fetch('/api/sync/clients', { method: 'POST' });
+      await fetch('/api/sync/bookings', { method: 'POST' });
+      mutate('/api/clients');
+      mutate('/api/appointments');
+    } catch (error) {
+      console.error('Sync failed:', error);
+    }
+  };
+
+  if (!user) return <div>Loading...</div>;
 
   return (
-    <div className="p-4">
-      {errors.length > 0 && (
-        <div className="mb-4 p-2 bg-yellow-100 text-yellow-800 border border-yellow-400 rounded">
-          Warning: Some metrics could not be loaded.
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white shadow rounded-lg p-6 mb-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold">Keeping It Cute - Staff Dashboard</h1>
+            <button 
+              onClick={handleSync}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              Sync with Wix
+            </button>
+          </div>
         </div>
-      )}
-      <h2 className="text-xl font-bold mb-4">📈 Metrics at a Glance</h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <MetricCard label="Upcoming Appointments" value={metrics.upcomingAppointments} icon="📅" />
-        <MetricCard label="Usage Forms Needed" value={metrics.usageFormsNeeded} icon="📝" />
-        <MetricCard label="Low Stock" value={metrics.lowStock} icon="🚨" />
-        <MetricCard label="Orders Today" value={metrics.ordersToday} icon="💳" />
-        <MetricCard label="Total Revenue" value={`$${Number(metrics.totalRevenue).toFixed(2)}`} icon="💰" />
-        <MetricCard label="Appointment Count" value={metrics.appointmentCount} icon="📋" />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Clients Section */}
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Recent Clients</h2>
+            {clients?.map((client) => (
+              <div key={client.id} className="border-b py-2">
+                <div className="font-medium">{client.name}</div>
+                <div className="text-sm text-gray-500">{client.email}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Appointments Section */}
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Today's Appointments</h2>
+            {appointments?.map((appointment) => (
+              <div key={appointment.id} className="border-b py-2">
+                <div className="font-medium">{appointment.client?.name}</div>
+                <div className="text-sm text-gray-500">
+                  {new Date(appointment.appointment_date).toLocaleTimeString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
-  )
+  );
 }
-
-const MetricCard = ({ label, value, icon }) => (
-  <div className="p-4 bg-white shadow rounded-lg text-center">
-    <div className="text-3xl">{icon}</div>
-    <div className="text-sm text-gray-500">{label}</div>
-    <div className="text-2xl font-semibold">{value}</div>
-  </div>
-)
