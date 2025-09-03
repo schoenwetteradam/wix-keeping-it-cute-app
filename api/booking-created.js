@@ -1,4 +1,4 @@
-// api/booking-created.js - FIXED VERSION FOR YOUR PAYLOAD STRUCTURE
+// api/booking-created.js - CORRECTED FOR YOUR ACTUAL WEBHOOK STRUCTURE
 import { createSupabaseClient } from '../utils/supabaseClient'
 import { setCorsHeaders } from '../utils/cors'
 
@@ -16,61 +16,66 @@ export default async function handler(req, res) {
   }
   
   try {
-    console.log('📅 Processing booking created webhook...');
+    console.log('📅 Processing booking webhook...');
     console.log('Raw payload:', JSON.stringify(req.body, null, 2));
     
     const webhookData = req.body;
     
-    // Extract the actual booking entity from nested structure
-    const booking = webhookData.createdEvent?.entity || webhookData;
+    // Extract the actual booking from the correct nested path
+    const booking = webhookData.actionEvent?.body?.booking || 
+                   webhookData.createdEvent?.entity || 
+                   webhookData;
     
     if (!booking) {
-      throw new Error('No booking entity found in webhook payload');
+      throw new Error('No booking data found in webhook payload');
     }
     
-    console.log('📋 Booking ID:', booking.id);
-    console.log('📋 Customer:', booking.contactDetails);
-    console.log('📋 Service:', booking.bookedEntity);
+    console.log('📋 Extracted booking:', {
+      id: booking.id,
+      customer: booking.contactDetails,
+      service: booking.bookedEntity?.title
+    });
     
-    // Build the booking record with proper nested extraction
+    // Build the booking record with correct data extraction
     const bookingRecord = {
-      wix_booking_id: booking.id,
+      // Use the entityId as the primary wix_booking_id (this is the actual booking ID)
+      wix_booking_id: webhookData.entityId || booking.id,
       
-      // Customer information - handle the nested contactDetails
-      customer_email: booking.contactDetails?.email,
-      customer_name: extractCustomerName(booking),
+      // Customer information - NOW ACCESSING CORRECT PATH
+      customer_email: booking.contactDetails?.email || null,
+      customer_name: extractCustomerName(booking.contactDetails),
       customer_phone: cleanPhoneNumber(booking.contactDetails?.phone),
-      wix_contact_id: booking.contactDetails?.id,
+      wix_contact_id: booking.contactDetails?.contactId,
       
-      // Service information - extract from bookedEntity
+      // Service information - NOW ACCESSING CORRECT PATH  
       service_name: booking.bookedEntity?.title || booking.bookedEntity?.titleTranslated || 'Unknown Service',
       
-      // Extract timing from slot if available, otherwise use top-level
+      // Extract timing from nested slot structure
       appointment_date: extractAppointmentDate(booking),
       end_time: extractEndTime(booking),
       service_duration: calculateServiceDuration(booking),
       
-      // Staff information - extract from nested resource
-      staff_member: extractStaffMember(booking),
+      // Staff information - extract from deeply nested resource
+      staff_member: booking.bookedEntity?.slot?.resource?.name || null,
       
       // Location
-      location: extractLocation(booking),
+      location: booking.bookedEntity?.slot?.location?.name || 'Keeping It Cute Salon & Spa',
       
       // Booking details
       number_of_participants: booking.numberOfParticipants || booking.totalParticipants || 1,
-      payment_status: (booking.paymentStatus || 'undefined').toLowerCase(),
+      payment_status: (booking.paymentStatus || 'NOT_PAID').toLowerCase().replace('not_paid', 'unpaid'),
       
-      // Additional fields from webhook
+      // Additional fields and notes
       notes: extractAdditionalFields(booking),
       
-      // Pricing (set to 0 for now - webhook doesn't contain price)
-      total_price: 0,
-      
       // System fields
-      status: (booking.status || 'CREATED').toLowerCase(),
+      status: (booking.status || 'CONFIRMED').toLowerCase(),
       revision: parseInt(booking.revision) || 1,
       
-      // Raw data preservation
+      // Pricing (webhook doesn't contain price info)
+      total_price: 0,
+      
+      // Raw data preservation for debugging
       payload: booking,
       raw_data: webhookData,
       
@@ -81,16 +86,23 @@ export default async function handler(req, res) {
       updated_date: booking.updatedDate
     };
     
-    // Remove undefined values to prevent database errors
+    // Remove undefined values
     Object.keys(bookingRecord).forEach(key => {
       if (bookingRecord[key] === undefined) {
         delete bookingRecord[key];
       }
     });
     
-    console.log('📝 Final booking record:', bookingRecord);
+    console.log('📝 Final booking record:', {
+      wix_booking_id: bookingRecord.wix_booking_id,
+      customer_name: bookingRecord.customer_name,
+      customer_email: bookingRecord.customer_email,
+      service_name: bookingRecord.service_name,
+      staff_member: bookingRecord.staff_member,
+      appointment_date: bookingRecord.appointment_date
+    });
     
-    // Insert or update booking using upsert to handle duplicates
+    // Insert or update booking using upsert
     const { data: savedBooking, error: bookingError } = await supabase
       .from('bookings')
       .upsert(bookingRecord, { 
@@ -105,7 +117,11 @@ export default async function handler(req, res) {
       throw new Error(`Database insert failed: ${bookingError.message}`);
     }
     
-    console.log('✅ Booking saved successfully:', savedBooking.id);
+    console.log('✅ Booking saved successfully:', {
+      id: savedBooking.id,
+      customer_name: savedBooking.customer_name,
+      service_name: savedBooking.service_name
+    });
     
     // Log successful webhook
     await supabase
@@ -113,10 +129,11 @@ export default async function handler(req, res) {
       .insert({
         event_type: 'booking_created',
         webhook_status: 'success',
-        wix_id: booking.id,
+        wix_id: savedBooking.wix_booking_id,
         data: {
           booking_id: savedBooking.id,
           customer_name: savedBooking.customer_name,
+          customer_email: savedBooking.customer_email,
           service_name: savedBooking.service_name,
           appointment_date: savedBooking.appointment_date
         }
@@ -124,9 +141,14 @@ export default async function handler(req, res) {
     
     return res.status(200).json({ 
       success: true,
-      message: 'Booking created successfully',
-      booking_id: savedBooking.id,
-      wix_booking_id: savedBooking.wix_booking_id
+      message: 'Booking processed successfully',
+      booking: {
+        id: savedBooking.id,
+        wix_booking_id: savedBooking.wix_booking_id,
+        customer_name: savedBooking.customer_name,
+        service_name: savedBooking.service_name,
+        appointment_date: savedBooking.appointment_date
+      }
     });
     
   } catch (error) {
@@ -161,14 +183,13 @@ export default async function handler(req, res) {
   }
 }
 
-// ===== HELPER FUNCTIONS FIXED FOR YOUR PAYLOAD STRUCTURE =====
+// ===== HELPER FUNCTIONS CORRECTED FOR YOUR DATA STRUCTURE =====
 
-function extractCustomerName(booking) {
-  const contact = booking.contactDetails;
-  if (!contact) return 'Unknown Customer';
+function extractCustomerName(contactDetails) {
+  if (!contactDetails) return 'Unknown Customer';
   
-  const firstName = (contact.firstName || '').trim();
-  const lastName = (contact.lastName || '').trim();
+  const firstName = (contactDetails.firstName || '').trim();
+  const lastName = (contactDetails.lastName || '').trim();
   
   if (firstName && lastName) {
     return `${firstName} ${lastName}`;
@@ -182,34 +203,33 @@ function extractCustomerName(booking) {
 }
 
 function extractAppointmentDate(booking) {
-  // Try slot timing first (more accurate with timezone)
+  // Try local timezone slot timing first (more accurate)
   const slot = booking.bookedEntity?.slot;
   if (slot?.startDate) {
     return slot.startDate;
   }
   
-  // Fallback to top-level timing
+  // Fallback to top-level UTC timing
   if (booking.startDate) {
     return booking.startDate;
   }
   
-  // Last resort
   return new Date().toISOString();
 }
 
 function extractEndTime(booking) {
-  // Try slot timing first
+  // Try local timezone slot timing first
   const slot = booking.bookedEntity?.slot;
   if (slot?.endDate) {
     return slot.endDate;
   }
   
-  // Fallback to top-level timing
+  // Fallback to top-level UTC timing
   if (booking.endDate) {
     return booking.endDate;
   }
   
-  // Calculate from start + 30 minutes default
+  // Calculate from start + default duration
   const startDate = extractAppointmentDate(booking);
   const endDate = new Date(startDate);
   endDate.setMinutes(endDate.getMinutes() + 30);
@@ -230,36 +250,6 @@ function calculateServiceDuration(booking) {
   return 30; // Default 30 minutes
 }
 
-function extractStaffMember(booking) {
-  // Extract from nested resource structure
-  const resource = booking.bookedEntity?.slot?.resource;
-  
-  if (resource?.name) {
-    return resource.name;
-  }
-  
-  // Fallback to resource email if name not available
-  if (resource?.email) {
-    return resource.email;
-  }
-  
-  return null;
-}
-
-function extractLocation(booking) {
-  const location = booking.bookedEntity?.slot?.location;
-  
-  if (location?.name) {
-    return location.name;
-  }
-  
-  if (location?.formattedAddress) {
-    return location.formattedAddress;
-  }
-  
-  return 'Keeping It Cute Salon & Spa'; // Default location
-}
-
 function extractAdditionalFields(booking) {
   const additionalFields = booking.additionalFields || [];
   
@@ -278,7 +268,6 @@ function extractAdditionalFields(booking) {
 function cleanPhoneNumber(phone) {
   if (!phone) return null;
   
-  // Remove common phone formatting
+  // Remove common phone formatting but keep the + for international
   return phone.replace(/[\s\-\(\)]/g, '');
 }
-  
