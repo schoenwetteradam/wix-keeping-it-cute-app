@@ -1,15 +1,14 @@
-import { SyncService } from '../../../lib/sync-service';
+import { SyncService } from '../../../lib/sync-service'
+import { withErrorHandler, APIError } from '../../../utils/errorHandler'
 
-export default async function handler(req, res) {
+const handler = async (req, res) => {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    throw new APIError('Method not allowed', 405, 'METHOD_NOT_ALLOWED')
   }
 
-  try {
-    const syncService = new SyncService();
-    const result = await syncService.syncClientsFromWix();
-    res.status(200).json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  const syncService = new SyncService()
+  const result = await syncService.syncClientsFromWix()
+  res.status(200).json(result)
 }
+
+export default withErrorHandler(handler)
