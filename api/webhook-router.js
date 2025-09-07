@@ -1,3 +1,12 @@
+import jwt from 'jsonwebtoken';
+import { createSupabaseClient } from '../utils/supabaseClient';
+import { setCorsHeaders } from '../utils/cors';
+
+const supabase = createSupabaseClient();
+
+// Wix public key - use the standard one from examples
+const WIX_PUBLIC_KEY = process.env.WIX_PUBLIC_KEY || `-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp1t69dN5qbUAS00eazDF\nMiI1Ek4Ehp78OyZxOkrFCmo8HQYJ1G9ZJOtKNF/zL+TTyAdlbNfvlBpcKVfLDc9U\nZWLnBb1HIVrXDTR68nn/xi9NNLZF6xd5M10sGqDgrLM/6STZlpBA4yafcjet3BPS\nHvGQo36RHMxgvmVTkZo/TysaUAlvV4kzuezHvpw7alKQl/TwctVNTpCIVlpBjJN2\n2qrhdGPk8kFwdgn1n9XwskzWP+fTiy542NGo/0d1fYOZSFSlwybh7ygi9BtFHfmt\noYciq9XsE/4PlRsA7kdl1aXlL6ZpwW3pti2HurEXGxiBlir9OTwkXR3do/KbTi02\newIDAQAB\n-----END PUBLIC KEY-----`;
+
 // === ALL MISSING EVENT HANDLERS ===
 
 // Product Events
@@ -106,25 +115,17 @@ async function processParticipationEvent(webhookData) {
           processed_at: new Date().toISOString()
         }
       });
-    
+
     return {
-      type: 'participation_event// api/webhook-router.js - COMPLETE FIXED VERSION
-import jwt from 'jsonwebtoken';
-import { createSupabaseClient } from '../utils/supabaseClient';
-import { setCorsHeaders } from '../utils/cors';
-
-const supabase = createSupabaseClient()
-
-// Wix public key - use the standard one from examples
-const WIX_PUBLIC_KEY = process.env.WIX_PUBLIC_KEY || `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp1t69dN5qbUAS00eazDF
-MiI1Ek4Ehp78OyZxOkrFCmo8HQYJ1G9ZJOtKNF/zL+TTyAdlbNfvlBpcKVfLDc9U
-ZWLnBb1HIVrXDTR68nn/xi9NNLZF6xd5M10sGqDgrLM/6STZlpBA4yafcjet3BPS
-HvGQo36RHMxgvmVTkZo/TysaUAlvV4kzuezHvpw7alKQl/TwctVNTpCIVlpBjJN2
-2qrhdGPk8kFwdgn1n9XwskzWP+fTiy542NGo/0d1fYOZSFSlwybh7ygi9BtFHfmt
-oYciq9XsE/4PlRsA7kdl1aXlL6ZpwW3pti2HurEXGxiBlir9OTwkXR3do/KbTi02
-ewIDAQAB
------END PUBLIC KEY-----`;
+      type: 'participation_event',
+      slug: webhookData.slug,
+      participation_id: participation.id
+    };
+  } catch (error) {
+    console.error('❌ Participation event processing failed:', error);
+    throw error;
+  }
+}
 
 // Product usage tracking function
 async function checkForProductUsagePrompt(bookingId, customerEmail) {
