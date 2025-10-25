@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import ErrorBoundary from '../components/ErrorBoundary'
 import Layout from '../components/Layout'
 import { getBrowserSupabaseClient } from '../utils/supabaseBrowserClient'
+import { SupabaseTriggers } from '../utils/supabaseTriggers'
 import '../styles/globals.css'
 
 export default function MyApp({ Component, pageProps }) {
@@ -28,6 +29,12 @@ export default function MyApp({ Component, pageProps }) {
       // Missing env vars, ignore
     }
   }, [router])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const cleanup = SupabaseTriggers.setupRealTimeSync()
+    return cleanup
+  }, [])
 
   return (
     <ErrorBoundary>
