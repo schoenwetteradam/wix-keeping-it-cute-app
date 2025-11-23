@@ -48,12 +48,22 @@ export default async function handler(req, res) {
     // === FIND OR CREATE CUSTOMER ===
     let customerId = null;
     if (customerEmail) {
-      // Try to find existing customer by email or Wix contact ID
+      // Try to find existing customer by email first
       let { data: existingCustomer } = await supabase
         .from('contacts')
         .select('id')
-        .or(`email.eq.${customerEmail},wix_contact_id.eq.${wixContactId}`)
-        .single();
+        .eq('email', customerEmail)
+        .maybeSingle();
+
+      // If not found by email, try Wix contact ID
+      if (!existingCustomer && wixContactId) {
+        const { data: customerByWixId } = await supabase
+          .from('contacts')
+          .select('id')
+          .eq('wix_contact_id', wixContactId)
+          .maybeSingle();
+        existingCustomer = customerByWixId;
+      }
       
       if (existingCustomer) {
         customerId = existingCustomer.id;
@@ -85,12 +95,22 @@ export default async function handler(req, res) {
     // === FIND SERVICE ===
     let serviceId = null;
     if (serviceName) {
-      // Try exact match first
+      // Try exact match by name first
       let { data: existingService } = await supabase
         .from('salon_services')
         .select('id')
-        .or(`name.eq.${serviceName},wix_service_id.eq.${wixServiceId}`)
-        .single();
+        .eq('name', serviceName)
+        .maybeSingle();
+
+      // If not found by name, try Wix service ID
+      if (!existingService && wixServiceId) {
+        const { data: serviceByWixId } = await supabase
+          .from('salon_services')
+          .select('id')
+          .eq('wix_service_id', wixServiceId)
+          .maybeSingle();
+        existingService = serviceByWixId;
+      }
       
       if (!existingService && serviceName) {
         // Try fuzzy matching on service name
@@ -115,12 +135,27 @@ export default async function handler(req, res) {
     // === FIND STAFF ===
     let staffId = null;
     if (staffName) {
-      // Try to find staff by name or Wix resource ID
-      let { data: existingStaff } = await supabase
-        .from('staff')
-        .select('id')
-        .or(`name.ilike.%${staffName}%,wix_staff_resource_id.eq.${wixStaffResourceId}`)
-        .single();
+      // Try to find staff by Wix resource ID first (most reliable)
+      let existingStaff = null;
+
+      if (wixStaffResourceId) {
+        const { data: staffByWixId } = await supabase
+          .from('staff')
+          .select('id')
+          .eq('wix_staff_resource_id', wixStaffResourceId)
+          .maybeSingle();
+        existingStaff = staffByWixId;
+      }
+
+      // If not found by Wix ID, try name with ilike (safely parameterized)
+      if (!existingStaff && staffName) {
+        const { data: staffByName } = await supabase
+          .from('staff')
+          .select('id')
+          .ilike('name', `%${staffName}%`)
+          .maybeSingle();
+        existingStaff = staffByName;
+      }
       
       if (!existingStaff && staffName) {
         // Try fuzzy matching on staff name
