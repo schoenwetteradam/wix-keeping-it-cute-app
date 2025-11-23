@@ -33,6 +33,10 @@ logs/
 dist/
 build/
 
+# Next.js
+.next/
+out/
+
 # Temporary files
 tmp/
 temp/

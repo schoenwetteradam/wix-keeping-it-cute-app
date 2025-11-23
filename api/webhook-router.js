@@ -1,11 +1,44 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { createSupabaseClient } from '../utils/supabaseClient';
-import { setCorsHeaders } from '../utils/cors';
+import { setWebhookCorsHeaders } from '../utils/cors';
 
 const supabase = createSupabaseClient();
 
-// Wix public key - use the standard one from examples
-const WIX_PUBLIC_KEY = process.env.WIX_PUBLIC_KEY || `-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp1t69dN5qbUAS00eazDF\nMiI1Ek4Ehp78OyZxOkrFCmo8HQYJ1G9ZJOtKNF/zL+TTyAdlbNfvlBpcKVfLDc9U\nZWLnBb1HIVrXDTR68nn/xi9NNLZF6xd5M10sGqDgrLM/6STZlpBA4yafcjet3BPS\nHvGQo36RHMxgvmVTkZo/TysaUAlvV4kzuezHvpw7alKQl/TwctVNTpCIVlpBjJN2\n2qrhdGPk8kFwdgn1n9XwskzWP+fTiy542NGo/0d1fYOZSFSlwybh7ygi9BtFHfmt\noYciq9XsE/4PlRsA7kdl1aXlL6ZpwW3pti2HurEXGxiBlir9OTwkXR3do/KbTi02\newIDAQAB\n-----END PUBLIC KEY-----`;
+// Wix public key - MUST be set in production environment
+const WIX_PUBLIC_KEY = process.env.WIX_PUBLIC_KEY;
+const WIX_WEBHOOK_SECRET = process.env.WIX_WEBHOOK_SECRET;
+
+// Strict mode: In production, reject unverified webhooks
+const STRICT_VERIFICATION = process.env.NODE_ENV === 'production';
+
+// Validate webhook signature using HMAC-SHA256
+function verifyWebhookSignature(payload, signature) {
+  if (!WIX_WEBHOOK_SECRET) {
+    console.warn('⚠️ WIX_WEBHOOK_SECRET not configured - signature verification skipped');
+    return !STRICT_VERIFICATION; // Allow in dev, reject in prod
+  }
+
+  if (!signature) {
+    console.warn('⚠️ No signature provided in webhook request');
+    return false;
+  }
+
+  try {
+    const expectedSignature = crypto
+      .createHmac('sha256', WIX_WEBHOOK_SECRET)
+      .update(typeof payload === 'string' ? payload : JSON.stringify(payload))
+      .digest('hex');
+
+    return crypto.timingSafeEquals(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    );
+  } catch (error) {
+    console.error('❌ Signature verification error:', error.message);
+    return false;
+  }
+}
 
 // === ALL MISSING EVENT HANDLERS ===
 
@@ -165,35 +198,55 @@ export default async function handler(req, res) {
   console.log('Method:', req.method);
   console.log('Content-Type:', req.headers['content-type']);
   console.log('Body type:', typeof req.body);
-  console.log('Body preview:', JSON.stringify(req.body).substring(0, 500));
-  
-  // Set CORS headers
-  setCorsHeaders(res, 'POST');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-wix-webhook-signature');
-  
+
+  // Set CORS headers for webhooks (allows all origins for Wix)
+  setWebhookCorsHeaders(res);
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // Log webhook attempt
+    const webhookData = req.body;
+    const signature = req.headers['x-wix-webhook-signature'] || req.headers['x-wix-signature'];
+
+    // Verify webhook signature for non-JWT payloads
+    if (typeof webhookData === 'object' && !STRICT_VERIFICATION) {
+      // In development, log but don't block
+      if (!verifyWebhookSignature(req.body, signature)) {
+        console.warn('⚠️ Webhook signature verification failed (dev mode - continuing)');
+      }
+    } else if (typeof webhookData === 'object' && STRICT_VERIFICATION) {
+      // In production, verify signature for object payloads
+      if (!verifyWebhookSignature(req.body, signature)) {
+        console.error('❌ Webhook signature verification failed - rejecting');
+        await logFailedWebhook(new Error('Signature verification failed'), req.body);
+        return res.status(200).json({
+          success: false,
+          error: 'Signature verification failed',
+          timestamp: new Date().toISOString()
+        });
+      }
+      console.log('✅ Webhook signature verified');
+    }
+
+    // Log webhook attempt (sanitized - no sensitive data)
     await supabase
       .from('webhook_logs')
       .insert({
         event_type: 'webhook_received',
         webhook_status: 'processing',
         data: {
-          headers: req.headers,
-          body_preview: JSON.stringify(req.body).substring(0, 1000),
+          content_type: req.headers['content-type'],
+          has_signature: !!signature,
+          body_type: typeof webhookData,
           timestamp: new Date().toISOString()
         }
       });
-
-    const webhookData = req.body;
     
     // === FORMAT DETECTION AND ROUTING ===
     
@@ -251,28 +304,47 @@ export default async function handler(req, res) {
       let rawPayload, event, eventData;
 
       try {
-        // Try to verify JWT first if we have a public key
+        // Verify JWT with public key
         if (WIX_PUBLIC_KEY) {
           console.log('🔒 Attempting JWT verification...');
           rawPayload = jwt.verify(webhookData, WIX_PUBLIC_KEY, {
             algorithms: ['RS256']
           });
           console.log('✅ JWT verified successfully');
+        } else if (STRICT_VERIFICATION) {
+          // In production, reject if no public key configured
+          throw new Error('WIX_PUBLIC_KEY not configured - cannot verify JWT webhooks');
         } else {
-          throw new Error('Missing WIX_PUBLIC_KEY');
+          // In development, decode without verification but log warning
+          console.warn('⚠️ WIX_PUBLIC_KEY not configured - decoding JWT without verification (dev mode)');
+          const decoded = jwt.decode(webhookData, { complete: true });
+          if (!decoded || !decoded.payload) {
+            throw new Error('Failed to decode JWT token');
+          }
+          rawPayload = decoded.payload;
         }
 
       } catch (jwtError) {
-        console.log('⚠️ JWT Verification failed:', jwtError.message);
-        console.log('🔄 Attempting to decode without verification...');
+        console.error('❌ JWT Verification failed:', jwtError.message);
 
-        // Decode without verification for processing
+        if (STRICT_VERIFICATION) {
+          // In production, reject unverified JWTs
+          await logFailedWebhook(new Error(`JWT verification failed: ${jwtError.message}`), webhookData);
+          return res.status(200).json({
+            success: false,
+            error: 'JWT verification failed',
+            timestamp: new Date().toISOString()
+          });
+        }
+
+        // In development, decode without verification but log warning
+        console.warn('🔄 Decoding JWT without verification (dev mode)...');
         const decoded = jwt.decode(webhookData, { complete: true });
         if (!decoded || !decoded.payload) {
           throw new Error('Failed to decode JWT token');
         }
         rawPayload = decoded.payload;
-        console.log('✅ JWT decoded without verification');
+        console.warn('⚠️ Processing unverified JWT - this would be rejected in production');
       }
       
       console.log('📋 Raw JWT payload keys:', Object.keys(rawPayload));

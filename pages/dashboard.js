@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
-import { supabase } from '../lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import {
   LineChart,
   Line,
@@ -32,6 +32,19 @@ import {
   CheckCircle
 } from 'lucide-react'
 
+// Lazy initialization to prevent build errors
+let supabase = null
+function getSupabase() {
+  if (!supabase && typeof window !== 'undefined') {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (url && key) {
+      supabase = createClient(url, key)
+    }
+  }
+  return supabase
+}
+
 export default function Dashboard() {
   const [toolChanges, setToolChanges] = useState([])
   const [operators, setOperators] = useState([])
@@ -59,26 +72,33 @@ export default function Dashboard() {
   const loadDashboardData = async () => {
     setIsLoading(true)
     try {
+      const client = getSupabase()
+      if (!client) {
+        console.error('Supabase client not available')
+        setIsLoading(false)
+        return
+      }
+
       // Calculate date range
       const endDate = new Date()
       const startDate = new Date()
       startDate.setDate(startDate.getDate() - selectedDateRange)
-      
+
       const startDateStr = startDate.toISOString().split('T')[0]
       const todayStr = new Date().toISOString().split('T')[0]
 
       // Fetch all data
       const [toolChangesResponse, operatorsResponse, equipmentResponse] = await Promise.all([
-        supabase
+        client
           .from('tool_changes')
           .select('*')
           .gte('date', startDateStr)
           .order('created_at', { ascending: false }),
-        supabase
+        client
           .from('operators')
           .select('*')
           .eq('active', true),
-        supabase
+        client
           .from('equipment')
           .select('*')
           .eq('active', true)
