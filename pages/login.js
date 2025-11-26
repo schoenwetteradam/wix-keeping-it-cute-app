@@ -89,20 +89,7 @@ export default function Login() {
     setWixLoading(true)
     setWixError(null)
 
-    try {
-      const response = await fetch('/api/wix-auth/login')
-      const data = await response.json()
-
-      if (!response.ok || !data?.success || !data?.authUrl) {
-        throw new Error(data?.message || 'Unable to start Wix login')
-      }
-
-      window.location.href = data.authUrl
-    } catch (err) {
-      console.error('Failed to start Wix OAuth', err)
-      setWixError(err.message)
-      setWixLoading(false)
-    }
+    window.location.href = '/api/wix-auth/login'
   }
 
   return (
