@@ -14,6 +14,28 @@ export default function MyApp({ Component, pageProps }) {
   const router = useRouter()
 
   useEffect(() => {
+    const originalWarn = console.warn
+
+    console.warn = (...args) => {
+      const [message] = args || []
+      if (
+        typeof message === 'string' &&
+        message.includes(
+          'react-i18next:: It seems you are still using the old wait option'
+        )
+      ) {
+        return
+      }
+
+      originalWarn(...args)
+    }
+
+    return () => {
+      console.warn = originalWarn
+    }
+  }, [])
+
+  useEffect(() => {
     if (typeof window === 'undefined') return
 
     let supabase
