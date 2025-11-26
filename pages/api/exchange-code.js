@@ -5,7 +5,18 @@ const handler = async (req, res) => {
     throw new APIError('Method not allowed', 405, 'METHOD_NOT_ALLOWED')
   }
 
-  const { code } = req.body
+  const { code } = req.body || {}
+  const clientId = process.env.WIX_CLIENT_ID
+  const clientSecret = process.env.WIX_CLIENT_SECRET
+  const redirectUri = process.env.WIX_REDIRECT_URI || process.env.NEXT_PUBLIC_WIX_REDIRECT_URI
+
+  if (!code) {
+    throw new APIError('Authorization code is required', 400, 'MISSING_CODE')
+  }
+
+  if (!clientId || !clientSecret || !redirectUri) {
+    throw new APIError('Missing Wix OAuth configuration', 500, 'WIX_CONFIG_ERROR')
+  }
 
   const response = await fetch('https://www.wixapis.com/oauth/access', {
     method: 'POST',
@@ -14,15 +25,24 @@ const handler = async (req, res) => {
     },
     body: JSON.stringify({
       grant_type: 'authorization_code',
-      client_id: process.env.WIX_CLIENT_ID,
-      client_secret: process.env.WIX_CLIENT_SECRET,
+      client_id: clientId,
+      client_secret: clientSecret,
       code,
-      redirect_uri: process.env.NEXT_PUBLIC_WIX_REDIRECT_URI
+      redirect_uri: redirectUri
     })
   })
 
   if (!response.ok) {
-    throw new APIError('Failed to exchange code', response.status, 'WIX_OAUTH_ERROR')
+    let details = 'Failed to exchange code'
+    try {
+      const errorBody = await response.json()
+      details = errorBody.error_description || errorBody.message || details
+    } catch (parseError) {
+      const fallback = await response.text()
+      details = fallback || details
+    }
+
+    throw new APIError(details, response.status, 'WIX_OAUTH_ERROR')
   }
 
   const data = await response.json()
