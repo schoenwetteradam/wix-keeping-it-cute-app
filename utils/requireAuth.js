@@ -1,8 +1,20 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+let supabase = null;
+function getSupabaseClient() {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) return null;
+  if (!supabase) {
+    supabase = createClient(supabaseUrl, supabaseKey);
+  }
+  return supabase;
+}
+
+const ALLOWED_STAFF_DOMAINS = (process.env.ALLOWED_STAFF_DOMAINS || 'keepingitcute.com,wix.com')
+  .split(',')
+  .map((d) => d.trim().toLowerCase())
+  .filter(Boolean);
 
 async function requireAuth(req, res) {
   const authHeader = req.headers['authorization'];
@@ -18,6 +30,7 @@ async function requireAuth(req, res) {
     return null;
   }
   const token = tokenMatch[1];
+  const supabase = getSupabaseClient();
   if (!supabase) {
     throw new Error('Supabase client not configured');
   }
@@ -27,6 +40,15 @@ async function requireAuth(req, res) {
     res.end('Unauthorized');
     return null;
   }
+
+  const userEmail = data.user.email?.toLowerCase() || '';
+  const domain = userEmail.split('@')[1];
+  if (!domain || !ALLOWED_STAFF_DOMAINS.includes(domain)) {
+    res.statusCode = 403;
+    res.end('Staff access required');
+    return null;
+  }
+
   let role = null;
   try {
     const { data: profile } = await supabase
@@ -38,7 +60,17 @@ async function requireAuth(req, res) {
   } catch (e) {
     role = null;
   }
-  req.user = { ...data.user, role };
+
+  const normalizedRole = role?.toLowerCase();
+  const isStaff = normalizedRole === 'staff' || normalizedRole === 'admin';
+
+  if (!isStaff) {
+    res.statusCode = 403;
+    res.end('Staff access required');
+    return null;
+  }
+
+  req.user = { ...data.user, role: normalizedRole };
   return req.user;
 }
 
