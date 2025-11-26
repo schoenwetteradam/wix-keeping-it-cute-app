@@ -14,6 +14,7 @@ export async function middleware(req) {
     '/api/get-branding',
     '/api/health',
     '/api/wix-health',
+    '/api/wix-auth',
     '/api/import-all-wix-data',
     '/api/test-connection',
     '/api/test-bookings-endpoints'
