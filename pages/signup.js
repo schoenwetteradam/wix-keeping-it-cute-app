@@ -76,6 +76,7 @@ export default function Signup() {
             <label style={{ display: 'block', marginBottom: '5px' }}>Email</label>
             <input
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -93,6 +94,7 @@ export default function Signup() {
             </label>
             <input
               type="password"
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
