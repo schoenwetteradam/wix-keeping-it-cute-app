@@ -15,7 +15,7 @@ describe('get-inventory-alerts handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ rpc }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/get-inventory-alerts.js')
+    const { default: handler } = require('../api/get-inventory-alerts.js')
 
     const req = { method: 'POST' }
     const res = createRes()
@@ -38,7 +38,7 @@ describe('get-inventory-alerts handler', () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
     jest.doMock('../utils/notifications', () => ({ addNotification, loadNotifications }))
 
-    const { default: handler } = await import('../api/get-inventory-alerts.js')
+    const { default: handler } = require('../api/get-inventory-alerts.js')
 
     const req = { method: 'GET' }
     const res = createRes()

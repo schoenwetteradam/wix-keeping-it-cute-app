@@ -21,7 +21,7 @@ test('includes Authorization header when session token available', async () => {
       }
     })
   }))
-  const { fetchWithAuth } = await import('../utils/api')
+  const { fetchWithAuth } = require('../utils/api')
   await fetchWithAuth('/api/test')
   expect(fetch).toHaveBeenCalledWith('/api/test', expect.objectContaining({
     headers: expect.objectContaining({ Authorization: 'Bearer token' })
@@ -33,7 +33,7 @@ test('redirects to login on 401 response', async () => {
   jest.doMock('@supabase/supabase-js', () => ({
     createClient: () => ({ auth: { getSession: jest.fn().mockResolvedValue({ data: { session: null } }) } })
   }))
-  const { fetchWithAuth } = await import('../utils/api')
+  const { fetchWithAuth } = require('../utils/api')
   await fetchWithAuth('/api/test')
-  expect(global.window.location.href).toBe('/login')
+  expect(global.window.location.href).toBe('/login?reason=unauthorized')
 })

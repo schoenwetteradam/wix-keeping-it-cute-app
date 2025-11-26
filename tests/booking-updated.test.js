@@ -3,8 +3,11 @@ const createUpdateQuery = (result) => {
   const promise = Promise.resolve(result);
   promise.update = jest.fn(() => promise);
   promise.eq = jest.fn(() => promise);
+  promise.or = jest.fn(() => promise);
   promise.select = jest.fn(() => promise);
   promise.single = jest.fn(() => promise);
+  promise.maybeSingle = jest.fn(() => promise);
+  promise.ilike = jest.fn(() => promise);
   return promise;
 };
 
@@ -30,7 +33,7 @@ describe('booking-updated handler', () => {
     });
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
 
-    const { default: handler } = await import('../api/booking-updated.js');
+    const { default: handler } = require('../api/booking-updated.js');
 
     const req = {
       method: 'POST',

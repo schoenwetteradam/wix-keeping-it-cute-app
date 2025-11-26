@@ -29,7 +29,7 @@ describe('create-product handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/create-product.js')
+    const { default: handler } = require('../api/create-product.js')
 
     const req = { method: 'GET', body: {} }
     const res = createRes()
@@ -45,7 +45,7 @@ describe('create-product handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/create-product.js')
+    const { default: handler } = require('../api/create-product.js')
 
     const req = { method: 'POST', body: {} }
     const res = createRes()
@@ -69,7 +69,7 @@ describe('create-product handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/create-product.js')
+    const { default: handler } = require('../api/create-product.js')
 
     const reqBody = { product_name: 'T-shirt', brand: 'Nice', category: 'Apparel' }
     const req = { method: 'POST', body: reqBody }

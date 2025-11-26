@@ -26,7 +26,7 @@ describe('get-orders handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
 
-    const { default: handler } = await import('../api/get-orders.js');
+    const { default: handler } = require('../api/get-orders.js');
 
     const req = { method: 'POST', query: {} };
     const res = createRes();
@@ -42,7 +42,7 @@ describe('get-orders handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
 
-    const { default: handler } = await import('../api/get-orders.js');
+    const { default: handler } = require('../api/get-orders.js');
 
     const req = { method: 'GET', query: { page: '0', limit: 'abc' } };
     const res = createRes();
@@ -60,7 +60,7 @@ describe('get-orders handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
 
-    const { default: handler } = await import('../api/get-orders.js');
+    const { default: handler } = require('../api/get-orders.js');
 
     const req = {
       method: 'GET',

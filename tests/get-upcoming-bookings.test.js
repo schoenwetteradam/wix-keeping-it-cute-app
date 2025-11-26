@@ -27,7 +27,7 @@ describe('get-upcoming-bookings handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/get-upcoming-bookings.js')
+    const { default: handler } = require('../api/get-upcoming-bookings.js')
 
     const req = { method: 'POST', query: {} }
     const res = createRes()
@@ -43,7 +43,7 @@ describe('get-upcoming-bookings handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/get-upcoming-bookings.js')
+    const { default: handler } = require('../api/get-upcoming-bookings.js')
 
     const req = { method: 'GET', query: { limit: '0' } }
     const res = createRes()
@@ -61,7 +61,7 @@ describe('get-upcoming-bookings handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/get-upcoming-bookings.js')
+    const { default: handler } = require('../api/get-upcoming-bookings.js')
 
     const req = { method: 'GET', query: { limit: '3' } }
     const res = createRes()

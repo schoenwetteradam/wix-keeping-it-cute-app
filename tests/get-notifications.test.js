@@ -13,7 +13,7 @@ describe('get-notifications handler', () => {
     jest.doMock('../utils/notifications', () => ({ loadNotifications: jest.fn(() => Promise.resolve(fakeNotifs)) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/get-notifications.js')
+    const { default: handler } = require('../api/get-notifications.js')
 
     const req = { method: 'GET' }
     const res = createRes()

@@ -5,6 +5,106 @@ import { setWebhookCorsHeaders } from '../utils/cors';
 
 const supabase = createSupabaseClient();
 
+// Log failed webhooks so they can be inspected later
+async function logFailedWebhook(error, payload) {
+  try {
+    await supabase
+      .from('webhook_logs')
+      .insert({
+        event_type: 'webhook_failure',
+        webhook_status: 'failed',
+        data: {
+          error: error.message,
+          payload,
+          timestamp: new Date().toISOString()
+        }
+      });
+  } catch (logError) {
+    console.error('Failed to log webhook error:', logError.message);
+  }
+}
+
+// Basic contact handling
+async function processContactEvent(webhookData) {
+  const contact =
+    webhookData.updatedEvent?.currentEntity ||
+    webhookData.createdEvent?.entity ||
+    webhookData;
+
+  const record = {
+    wix_contact_id: contact.id,
+    email: contact.info?.emails?.items?.[0]?.email || contact.email,
+    first_name: contact.info?.name?.first || contact.firstName,
+    last_name: contact.info?.name?.last || contact.lastName
+  };
+
+  await supabase.from('contacts').upsert(record, {
+    onConflict: 'email',
+    ignoreDuplicates: false
+  });
+
+  return { type: 'contact_event', contact_id: record.wix_contact_id };
+}
+
+async function processContactEventJWT(event, eventData) {
+  const contact = eventData?.event?.data?.contact || eventData;
+  return processContactEvent(contact || {});
+}
+
+// Loyalty handling
+async function processLoyaltyEvent(webhookData) {
+  const loyalty =
+    webhookData.updatedEvent?.currentEntity ||
+    webhookData.createdEvent?.entity ||
+    webhookData;
+
+  const record = {
+    loyalty_id: loyalty.id,
+    contact_id: loyalty.contactId || loyalty.contact_id,
+    points_balance: loyalty.pointsBalance || loyalty.points_balance || loyalty.points?.balance,
+    redeemed_points: loyalty.points?.redeemed,
+    tier: loyalty.tier?.name || loyalty.tier
+  };
+
+  await supabase.from('loyalty').upsert(record, {
+    onConflict: 'loyalty_id',
+    ignoreDuplicates: false
+  });
+
+  return { type: 'loyalty_event', loyalty_id: record.loyalty_id };
+}
+
+async function processLoyaltyEventJWT(event, eventData) {
+  const loyalty = eventData?.event?.data?.loyalty || eventData;
+  return processLoyaltyEvent(loyalty || {});
+}
+
+// Booking handling (new format)
+async function processBookingEventNewFormat(webhookData) {
+  const booking =
+    webhookData.updatedEvent?.currentEntity ||
+    webhookData.createdEvent?.entity ||
+    webhookData;
+
+  const update = {
+    status: booking.status,
+    customer_email: booking.contactDetails?.email,
+    customer_name: `${booking.contactDetails?.firstName || ''} ${booking.contactDetails?.lastName || ''}`.trim()
+  };
+
+  await supabase
+    .from('bookings')
+    .update(update)
+    .eq('wix_booking_id', booking.id || booking.bookingId);
+
+  return { type: 'booking_event', booking_id: booking.id || booking.bookingId };
+}
+
+async function processBookingEventJWT(event, eventData) {
+  const booking = eventData?.event?.data?.booking || eventData;
+  return processBookingEventNewFormat(booking || {});
+}
+
 // Wix public key - MUST be set in production environment
 const WIX_PUBLIC_KEY = process.env.WIX_PUBLIC_KEY;
 const WIX_WEBHOOK_SECRET = process.env.WIX_WEBHOOK_SECRET;
@@ -81,6 +181,74 @@ async function processProductEvent(webhookData) {
     console.error('❌ Product event processing failed:', error);
     throw error;
   }
+}
+
+// Order events
+async function processOrderEvent(webhookData) {
+  const order =
+    webhookData.updatedEvent?.currentEntity ||
+    webhookData.createdEvent?.entity ||
+    webhookData;
+
+  await supabase.from('orders').upsert({
+    wix_order_id: order?.id,
+    payment_status: webhookData.actionEvent?.body?.order?.paymentStatus || order?.paymentStatus || order?.payment_status,
+    previous_payment_status: webhookData.actionEvent?.body?.previousPaymentStatus || order?.previousPaymentStatus || order?.previous_payment_status,
+    customer_email: order?.buyerInfo?.email,
+    total_price: order?.priceSummary?.subtotal?.amount || order?.totals?.subtotal
+  }, {
+    onConflict: 'wix_order_id',
+    ignoreDuplicates: false
+  });
+
+  await supabase.from('webhook_logs').insert({
+    event_type: 'wix.ecom.v1.order.' + (webhookData.slug || 'unknown'),
+    webhook_status: 'logged',
+    wix_id: order?.id,
+    data: {
+      order_preview: order,
+      processed_at: new Date().toISOString()
+    }
+  });
+
+  return {
+    type: 'order_event',
+    order_id: order?.id,
+    slug: webhookData.slug,
+    status: 'logged'
+  };
+}
+
+async function processOrderEventJWT(event, eventData) {
+  const order = eventData?.event?.data?.order || eventData || {};
+
+  await supabase.from('orders').upsert({
+    wix_order_id: order?.id || event?.entityId,
+    payment_status: order?.paymentStatus || order?.payment_status,
+    previous_payment_status: order?.previousPaymentStatus || order?.previous_payment_status,
+    customer_email: order?.buyerInfo?.email,
+    total_price: order?.priceSummary?.subtotal?.amount || order?.totals?.subtotal
+  }, {
+    onConflict: 'wix_order_id',
+    ignoreDuplicates: false
+  });
+
+  await supabase.from('webhook_logs').insert({
+    event_type: (event?.entityFqdn || 'wix.ecom.v1.order') + '.' + (event?.slug || 'unknown'),
+    webhook_status: 'logged',
+    wix_id: order?.id || event?.entityId,
+    data: {
+      order_preview: order,
+      processed_at: new Date().toISOString()
+    }
+  });
+
+  return {
+    type: 'order_event_jwt',
+    order_id: order?.id || event?.entityId,
+    slug: event?.slug,
+    status: 'logged'
+  };
 }
 
 // Schedule Events

@@ -36,6 +36,7 @@ export default async function handler(req, res) {
           name: product_name,
           productType: 'physical',
           brand,
+          category,
           ...rest
         }
       })

@@ -24,7 +24,7 @@ describe('services handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/services.js')
+    const { default: handler } = require('../api/services.js')
 
     const req = { method: 'POST', query: {} }
     const res = createRes()
@@ -41,7 +41,7 @@ describe('services handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/services.js')
+    const { default: handler } = require('../api/services.js')
 
     const req = { method: 'GET', query: {} }
     const res = createRes()
@@ -63,7 +63,7 @@ describe('services handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/services.js')
+    const { default: handler } = require('../api/services.js')
 
     const req = { method: 'GET', query: {} }
     const res = createRes()
