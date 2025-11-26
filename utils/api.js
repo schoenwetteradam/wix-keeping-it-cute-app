@@ -19,8 +19,9 @@ export async function fetchWithAuth(url, options = {}) {
     }
   }
   const res = await fetch(url, opts)
-  if (res.status === 401 && typeof window !== 'undefined') {
-    window.location.href = '/login'
+  if ((res.status === 401 || res.status === 403) && typeof window !== 'undefined') {
+    const reason = res.status === 403 ? 'staff_only' : 'unauthorized'
+    window.location.href = `/login${reason ? `?reason=${reason}` : ''}`
   }
   return res
 }
