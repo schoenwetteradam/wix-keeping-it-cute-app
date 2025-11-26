@@ -24,6 +24,8 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [wixLoading, setWixLoading] = useState(false)
+  const [wixError, setWixError] = useState(null)
 
   useEffect(() => {
     router.prefetch('/dashboard')
@@ -83,6 +85,26 @@ export default function Login() {
     setLoading(false)
   }
 
+  const startWixOAuth = async () => {
+    setWixLoading(true)
+    setWixError(null)
+
+    try {
+      const response = await fetch('/api/wix-auth/login')
+      const data = await response.json()
+
+      if (!response.ok || !data?.success || !data?.authUrl) {
+        throw new Error(data?.message || 'Unable to start Wix login')
+      }
+
+      window.location.href = data.authUrl
+    } catch (err) {
+      console.error('Failed to start Wix OAuth', err)
+      setWixError(err.message)
+      setWixLoading(false)
+    }
+  }
+
   return (
     <>
       <Head>
@@ -115,10 +137,14 @@ export default function Login() {
           {error && (
             <p style={{ color: 'red', marginBottom: '15px' }}>❌ {error}</p>
           )}
+          {wixError && (
+            <p style={{ color: 'red', marginBottom: '15px' }}>❌ {wixError}</p>
+          )}
           <div style={{ marginBottom: '15px' }}>
             <label style={{ display: 'block', marginBottom: '5px' }}>Email</label>
             <input
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -136,6 +162,7 @@ export default function Login() {
             </label>
             <input
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -162,6 +189,27 @@ export default function Login() {
           >
             {loading ? 'Signing in...' : 'Login'}
           </button>
+          <div style={{ margin: '15px 0', textAlign: 'center' }}>
+            <span style={{ display: 'inline-block', margin: '10px 0', color: '#666' }}>
+              or
+            </span>
+            <button
+              type="button"
+              onClick={startWixOAuth}
+              disabled={wixLoading}
+              style={{
+                width: '100%',
+                padding: '10px',
+                backgroundColor: '#654321',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              {wixLoading ? 'Redirecting…' : 'Login with Wix OAuth'}
+            </button>
+          </div>
           <p style={{ marginTop: '15px', textAlign: 'center' }}>
             No account? <a href="/signup">Sign up</a>
           </p>
