@@ -30,7 +30,7 @@ describe('update-product handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/update-product.js')
+    const { default: handler } = require('../api/update-product.js')
 
     const req = { method: 'GET', body: {} }
     const res = createRes()
@@ -46,7 +46,7 @@ describe('update-product handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/update-product.js')
+    const { default: handler } = require('../api/update-product.js')
 
     const req = { method: 'PATCH', body: {} }
     const res = createRes()
@@ -70,7 +70,7 @@ describe('update-product handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/update-product.js')
+    const { default: handler } = require('../api/update-product.js')
 
     const reqBody = { productId: 'p1', product: { name: 'New' } }
     const req = { method: 'PATCH', body: reqBody }

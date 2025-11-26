@@ -41,7 +41,7 @@ describe('get-appointments handler', () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' })));
 
-    const { default: handler } = await import('../api/get-appointments.js');
+    const { default: handler } = require('../api/get-appointments.js');
 
     const req = { method: 'GET', query: { page: '0', limit: '-1' } };
     const res = createRes();
@@ -60,7 +60,7 @@ describe('get-appointments handler', () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' })));
 
-    const { default: handler } = await import('../api/get-appointments.js');
+    const { default: handler } = require('../api/get-appointments.js');
 
     const req = { method: 'GET', query: { page: 'abc', limit: 'ten' } };
     const res = createRes();
@@ -79,7 +79,7 @@ describe('get-appointments handler', () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' }))); 
 
-    const { default: handler } = await import('../api/get-appointments.js');
+    const { default: handler } = require('../api/get-appointments.js');
 
     const req = { method: 'GET', query: { page: '2', limit: '10' } };
     const res = createRes();
@@ -99,7 +99,7 @@ describe('get-appointments handler', () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' }))); 
 
-    const { default: handler } = await import('../api/get-appointments.js');
+    const { default: handler } = require('../api/get-appointments.js');
 
     const req = { method: 'GET', query: { page: '1', limit: '10' } };
     const res = createRes();
@@ -117,7 +117,7 @@ describe('get-appointments handler', () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' })));
 
-    const { default: handler } = await import('../api/get-appointments.js');
+    const { default: handler } = require('../api/get-appointments.js');
 
     const req = { method: 'GET', query: { page: '1', limit: '10' } };
     const res = createRes();
@@ -135,7 +135,7 @@ describe('get-appointments handler', () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1' })));
 
-    const { default: handler } = await import('../api/get-appointments.js');
+    const { default: handler } = require('../api/get-appointments.js');
 
     const req = { method: 'GET', query: { page: '1', limit: '10', scope: 'all' } };
     const res = createRes();
@@ -153,7 +153,7 @@ describe('get-appointments handler', () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'admin1' })));
 
-    const { default: handler } = await import('../api/get-appointments.js');
+    const { default: handler } = require('../api/get-appointments.js');
 
     const req = { method: 'GET', query: { page: '1', limit: '10', scope: 'mine' } };
     const res = createRes();
@@ -172,7 +172,7 @@ describe('get-appointments handler', () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'user1', email: 'boss@example.com' })));
 
-    const { default: handler } = await import('../api/get-appointments.js');
+    const { default: handler } = require('../api/get-appointments.js');
 
     const req = { method: 'GET', query: { page: '1', limit: '10', scope: 'all' } };
     const res = createRes();

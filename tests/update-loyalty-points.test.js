@@ -26,7 +26,7 @@ describe('update-loyalty-points handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/update-loyalty-points.js')
+    const { default: handler } = require('../api/update-loyalty-points.js')
 
     const req = { method: 'GET', body: {} }
     const res = createRes()
@@ -47,7 +47,7 @@ describe('update-loyalty-points handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/update-loyalty-points.js')
+    const { default: handler } = require('../api/update-loyalty-points.js')
 
     const req = { method: 'POST', body: { loyalty_id: '1', points: 5, action: 'add' } }
     const res = createRes()

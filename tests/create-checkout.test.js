@@ -16,7 +16,7 @@ afterEach(() => {
 describe('create-checkout handler', () => {
   test('returns 405 on non-POST requests', async () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
-    const { default: handler } = await import('../api/create-checkout.js')
+    const { default: handler } = require('../api/create-checkout.js')
 
     const req = { method: 'GET' }
     const res = createRes()
@@ -29,7 +29,7 @@ describe('create-checkout handler', () => {
 
   test('validates lineItems', async () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
-    const { default: handler } = await import('../api/create-checkout.js')
+    const { default: handler } = require('../api/create-checkout.js')
 
     const req = { method: 'POST', body: {} }
     const res = createRes()
@@ -49,7 +49,7 @@ describe('create-checkout handler', () => {
     })
 
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
-    const { default: handler } = await import('../api/create-checkout.js')
+    const { default: handler } = require('../api/create-checkout.js')
 
     const reqBody = { lineItems: [{ catalogReference: { id: '1' } }] }
     const req = { method: 'POST', body: reqBody }

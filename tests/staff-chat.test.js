@@ -26,7 +26,7 @@ describe('staff-chat handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/staff-chat.js')
+    const { default: handler } = require('../api/staff-chat.js')
 
     const req = { method: 'PUT' }
     const res = createRes()
@@ -43,7 +43,7 @@ describe('staff-chat handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/staff-chat.js')
+    const { default: handler } = require('../api/staff-chat.js')
 
     const req = { method: 'GET' }
     const res = createRes()
@@ -66,7 +66,7 @@ describe('staff-chat handler', () => {
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
     jest.doMock('../utils/requireAuth', () => jest.fn(() => Promise.resolve({ id: 'u1' })))
 
-    const { default: handler } = await import('../api/staff-chat.js')
+    const { default: handler } = require('../api/staff-chat.js')
 
     const req = { method: 'POST', body: { content: 'hi', username: 'me', avatar_url: 'a' } }
     const res = createRes()

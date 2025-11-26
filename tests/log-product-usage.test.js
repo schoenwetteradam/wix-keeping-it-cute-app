@@ -22,7 +22,7 @@ describe('log-product-usage handler', () => {
     const from = jest.fn(() => createInsertQuery({ data: [], error: null }))
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
 
-    const { default: handler } = await import('../api/log-product-usage.js')
+    const { default: handler } = require('../api/log-product-usage.js')
 
     const req = { method: 'GET', body: {} }
     const res = createRes()
@@ -43,7 +43,7 @@ describe('log-product-usage handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/notifications', () => ({ addNotification }))
 
-    const { default: handler } = await import('../api/log-product-usage.js')
+    const { default: handler } = require('../api/log-product-usage.js')
 
     const req = {
       method: 'POST',

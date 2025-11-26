@@ -25,7 +25,7 @@ describe('record-stock-adjustment handler', () => {
     const from = jest.fn(() => createQuery({ data: [], error: null }))
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
 
-    const { default: handler } = await import('../api/record-stock-adjustment.js')
+    const { default: handler } = require('../api/record-stock-adjustment.js')
 
     const req = { method: 'GET' }
     const res = createRes()
@@ -47,7 +47,7 @@ describe('record-stock-adjustment handler', () => {
 
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
 
-    const { default: handler } = await import('../api/record-stock-adjustment.js')
+    const { default: handler } = require('../api/record-stock-adjustment.js')
 
     const req = { method: 'POST', body: { product_id: 'p1', quantity_change: 2, reason: 'fix', staff_id: 's1' } }
     const res = createRes()

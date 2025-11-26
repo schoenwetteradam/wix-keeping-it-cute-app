@@ -26,7 +26,7 @@ describe('get-customers handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
 
-    const { default: handler } = await import('../api/get-customers.js');
+    const { default: handler } = require('../api/get-customers.js');
 
     const req = { method: 'POST', query: {} };
     const res = createRes();
@@ -44,7 +44,7 @@ describe('get-customers handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }));
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }));
 
-    const { default: handler } = await import('../api/get-customers.js');
+    const { default: handler } = require('../api/get-customers.js');
 
     const req = {
       method: 'GET',

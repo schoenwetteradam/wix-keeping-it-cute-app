@@ -30,9 +30,12 @@ describe('webhook-router contact updated', () => {
       return createQuery({ data: {}, error: null })
     })
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
-    jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
+    jest.doMock('../utils/cors', () => ({
+      setCorsHeaders: jest.fn(),
+      setWebhookCorsHeaders: jest.fn()
+    }))
 
-    const { default: handler } = await import('../api/webhook-router.js')
+    const { default: handler } = require('../api/webhook-router.js')
 
     const req = {
       method: 'POST',

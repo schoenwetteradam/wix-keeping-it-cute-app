@@ -1,6 +1,7 @@
 // tests for api/query-availability.js
 
 const createRes = () => ({
+  setHeader: jest.fn(),
   status: jest.fn(function () { return this }),
   json: jest.fn(function () { return this }),
   end: jest.fn(function () { return this })
@@ -17,7 +18,7 @@ afterEach(() => {
 
 describe('query-availability handler', () => {
   test('returns 405 on non-POST requests', async () => {
-    const { default: handler } = await import('../api/query-availability.js')
+    const { default: handler } = require('../api/query-availability.js')
 
     const req = { method: 'GET', body: {} }
     const res = createRes()
@@ -29,7 +30,7 @@ describe('query-availability handler', () => {
   })
 
   test('validates serviceId in request body', async () => {
-    const { default: handler } = await import('../api/query-availability.js')
+    const { default: handler } = require('../api/query-availability.js')
 
     const req = { method: 'POST', body: { query: { filter: {} } } }
     const res = createRes()
@@ -48,7 +49,7 @@ describe('query-availability handler', () => {
       json: jest.fn().mockResolvedValue({ ok: true })
     })
 
-    const { default: handler } = await import('../api/query-availability.js')
+    const { default: handler } = require('../api/query-availability.js')
 
     const reqBody = { query: { filter: { serviceId: '123' } } }
     const req = { method: 'POST', body: reqBody }

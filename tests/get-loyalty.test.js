@@ -26,7 +26,7 @@ describe('get-loyalty handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/get-loyalty.js')
+    const { default: handler } = require('../api/get-loyalty.js')
 
     const req = { method: 'POST', query: {} }
     const res = createRes()
@@ -44,7 +44,7 @@ describe('get-loyalty handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/get-loyalty.js')
+    const { default: handler } = require('../api/get-loyalty.js')
 
     const req = { method: 'GET', query: { limit: '5' } }
     const res = createRes()
@@ -72,7 +72,7 @@ describe('get-loyalty handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/get-loyalty.js')
+    const { default: handler } = require('../api/get-loyalty.js')
 
     const req = { method: 'GET', query: { email: 'a@example.com' } }
     const res = createRes()

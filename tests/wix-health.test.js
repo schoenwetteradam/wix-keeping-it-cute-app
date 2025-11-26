@@ -25,7 +25,7 @@ describe('wix integration health handler', () => {
     jest.doMock('../utils/wixApiManager', () => ({ WixAPIManager: jest.fn(() => ({ getServices: jest.fn() })) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/health/wix-integration.js')
+    const { default: handler } = require('../api/health/wix-integration.js')
 
     const req = { method: 'POST' }
     const res = createRes()
@@ -43,7 +43,7 @@ describe('wix integration health handler', () => {
     jest.doMock('../utils/wixApiManager', () => ({ WixAPIManager: jest.fn(() => wixManager) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/health/wix-integration.js')
+    const { default: handler } = require('../api/health/wix-integration.js')
 
     const req = { method: 'GET' }
     const res = createRes()

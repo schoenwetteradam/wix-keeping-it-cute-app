@@ -24,7 +24,7 @@ describe('service detail handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/services/[id].js')
+    const { default: handler } = require('../api/services/[id].js')
 
     const req = { method: 'POST', query: { id: '1' } }
     const res = createRes()
@@ -40,7 +40,7 @@ describe('service detail handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/services/[id].js')
+    const { default: handler } = require('../api/services/[id].js')
 
     const req = { method: 'GET', query: {} }
     const res = createRes()
@@ -61,7 +61,7 @@ describe('service detail handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/services/[id].js')
+    const { default: handler } = require('../api/services/[id].js')
 
     const req = { method: 'GET', query: { id: '1' } }
     const res = createRes()
@@ -78,7 +78,7 @@ describe('service detail handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/services/[id].js')
+    const { default: handler } = require('../api/services/[id].js')
 
     const req = { method: 'GET', query: { id: '1' } }
     const res = createRes()
@@ -112,7 +112,7 @@ describe('service detail handler', () => {
     jest.doMock('../utils/supabaseClient', () => ({ createSupabaseClient: () => ({ from }) }))
     jest.doMock('../utils/cors', () => ({ setCorsHeaders: jest.fn() }))
 
-    const { default: handler } = await import('../api/services/[id].js')
+    const { default: handler } = require('../api/services/[id].js')
 
     const req = { method: 'GET', query: { id: '1' } }
     const res = createRes()

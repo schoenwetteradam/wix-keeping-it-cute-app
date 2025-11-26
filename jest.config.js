@@ -1,26 +1,6 @@
-module.exports = {
-  testEnvironment: 'node',
-  // Add support for different test environments per file
-  projects: [
-    {
-      displayName: 'node',
-      testEnvironment: 'node',
-      testMatch: ['<rootDir>/tests/**/!(*.browser).test.js']
-    },
-    {
-      displayName: 'jsdom',
-      testEnvironment: 'jsdom',
-      testMatch: ['<rootDir>/tests/**/*.browser.test.js', '<rootDir>/tests/dashboard.test.js'],
-      setupFilesAfterEnv: ['<rootDir>/jest.setup.js']
-    }
-  ],
-  // Handle ESM modules
+const baseConfig = {
+  // Handle ESM modules and absolute imports
   extensionsToTreatAsEsm: ['.jsx'],
-  globals: {
-    'ts-jest': {
-      useESM: true
-    }
-  },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1'
   },
@@ -31,5 +11,29 @@ module.exports = {
         ['@babel/preset-react', { runtime: 'automatic' }]
       ]
     }]
+  }
+};
+
+module.exports = {
+  // Add support for different test environments per file
+  projects: [
+    {
+      ...baseConfig,
+      displayName: 'node',
+      testEnvironment: 'node',
+      testMatch: ['<rootDir>/tests/**/!(*.browser).test.js']
+    },
+    {
+      ...baseConfig,
+      displayName: 'jsdom',
+      testEnvironment: 'jsdom',
+      testMatch: ['<rootDir>/tests/**/*.browser.test.js', '<rootDir>/tests/dashboard.test.js'],
+      setupFilesAfterEnv: ['<rootDir>/jest.setup.js']
+    }
+  ],
+  globals: {
+    'ts-jest': {
+      useESM: true
+    }
   }
 };
