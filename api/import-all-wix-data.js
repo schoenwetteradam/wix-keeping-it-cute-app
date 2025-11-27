@@ -122,6 +122,10 @@ export default async function handler(req, res) {
       details: error.message,
       debug_info: {
         wix_api_token_present: !!process.env.WIX_API_TOKEN,
+        wix_app_credentials_present:
+          !!(process.env.WIX_APP_ID || process.env.WIX_CLIENT_ID) &&
+          !!(process.env.WIX_APP_SECRET || process.env.WIX_CLIENT_SECRET) &&
+          !!(process.env.WIX_APP_INSTANCE_ID || process.env.WIX_INSTANCE_ID),
         wix_site_id: process.env.WIX_SITE_ID,
         error_stack: error.stack
       },

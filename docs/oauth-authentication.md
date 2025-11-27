@@ -46,3 +46,8 @@ This guide summarizes the two authentication approaches for Wix app API calls an
   - Authenticate and authorize requests based on roles or attributes.
   - Audit or personalize responses.
   - Support usage-based billing tied to the caller.
+
+## How this repo implements OAuth
+- `utils/wixAccessToken.js` requests client-credentials tokens from `https://www.wixapis.com/oauth2/token` using `WIX_APP_ID`/`WIX_APP_SECRET`/`WIX_APP_INSTANCE_ID` (or their `WIX_CLIENT_*` aliases) and caches them until shortly before expiry.
+- All API routes now use `getWixRequestHeaders()` to populate `Authorization`, `wix-site-id`, and `wix-account-id` headers, falling back to `WIX_API_TOKEN` if you prefer API keys.
+- Make sure your Wix app’s redirect URLs point to this project’s callback (for example, `/api/wix-oauth-callback`) instead of any legacy automation endpoints such as Integromat/Make to prevent unexpected redirects.

@@ -1,5 +1,6 @@
 import { createSupabaseClient } from '../utils/supabaseClient'
 import { setCorsHeaders } from '../utils/cors'
+import { getWixRequestHeaders } from '../utils/wixAccessToken'
 
 const supabase = createSupabaseClient()
 
@@ -27,10 +28,9 @@ export default async function handler(req, res) {
     // Create product in Wix Stores
     const wixRes = await fetch('https://www.wixapis.com/stores/v1/products', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: process.env.WIX_API_TOKEN
-      },
+      headers: await getWixRequestHeaders({
+        'Content-Type': 'application/json'
+      }),
       body: JSON.stringify({
         product: {
           name: product_name,

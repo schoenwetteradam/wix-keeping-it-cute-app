@@ -260,7 +260,10 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 - `NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET` (same as above for the browser)
 - `SUPABASE_CLIENT_UPLOADS_BUCKET` bucket for before/after service photos
 - `SUPABASE_RECEIPTS_BUCKET` bucket for uploaded receipts
-- `WIX_API_TOKEN` Wix API token used for booking operations
+- `WIX_API_TOKEN` Wix API token used for booking operations (optional when OAuth is configured)
+- `WIX_APP_ID` / `WIX_CLIENT_ID` Wix app ID for OAuth client-credentials
+- `WIX_APP_SECRET` / `WIX_CLIENT_SECRET` Wix app secret for OAuth client-credentials
+- `WIX_APP_INSTANCE_ID` / `WIX_INSTANCE_ID` Wix app instance ID (from installation webhook)
 - `WIX_SITE_ID` Wix site identifier
 - `WIX_ACCOUNT_ID` Wix account ID for the site owner
 - `WIX_WEBHOOK_SECRET` secret used to verify Wix webhooks
@@ -270,10 +273,13 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 
 Generate these values in the **Wix Developer Center** by creating (or selecting)
 an app and navigating to **API Keys**. Create a new API key for server-to-server
-calls and copy it into `WIX_API_TOKEN`. Add a webhook secret and place its value
-in `WIX_WEBHOOK_SECRET`. Put both variables in `.env.local` during development or
-set them as environment variables in your deployment platform. The webhook
-secret is currently unused unless you implement request verification.
+calls and copy it into `WIX_API_TOKEN` **or** supply OAuth client credentials
+(`WIX_APP_ID`/`WIX_APP_SECRET`/`WIX_APP_INSTANCE_ID`) to let the app request
+short-lived access tokens automatically. Add a webhook secret and place its
+value in `WIX_WEBHOOK_SECRET`. Put both variables in `.env.local` during
+development or set them as environment variables in your deployment platform.
+The webhook secret is currently unused unless you implement request
+verification.
 
 These values are required to build and run the API routes. Variables prefixed
 with `NEXT_PUBLIC_` are exposed to the browser, while server-side handlers rely

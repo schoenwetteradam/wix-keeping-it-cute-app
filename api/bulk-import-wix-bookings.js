@@ -3,6 +3,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import Papa from 'papaparse';
+import { getWixRequestHeaders } from '../utils/wixAccessToken';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -197,11 +198,9 @@ async function fetchAllWixBookings() {
       
       const response = await fetch('https://www.wixapis.com/bookings/v2/bookings/query', {
         method: 'POST',
-        headers: {
-          'Authorization': process.env.WIX_API_TOKEN,
-          'wix-site-id': process.env.WIX_SITE_ID,
+        headers: await getWixRequestHeaders({
           'Content-Type': 'application/json'
-        },
+        }),
         body: JSON.stringify({
           query: {
             sort: [{ fieldName: 'created_date', order: 'ASC' }],

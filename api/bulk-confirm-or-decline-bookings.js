@@ -1,3 +1,5 @@
+import { getWixRequestHeaders } from '../utils/wixAccessToken'
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' })
@@ -13,10 +15,9 @@ export default async function handler(req, res) {
       'https://www.wixapis.com/bookings/v2/bulk/bookings/confirmOrDecline',
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: process.env.WIX_API_TOKEN
-        },
+        headers: await getWixRequestHeaders({
+          'Content-Type': 'application/json'
+        }),
         body: JSON.stringify({ details, returnEntity })
       }
     )
