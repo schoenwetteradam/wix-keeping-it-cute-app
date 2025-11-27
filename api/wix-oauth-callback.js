@@ -9,10 +9,30 @@ export default async function handler(req, res) {
 
   const clientId = process.env.WIX_CLIENT_ID
   const clientSecret = process.env.WIX_CLIENT_SECRET
-  const redirectUri = process.env.NEXT_PUBLIC_WIX_REDIRECT_URI
+
+  const protocolHeader = req.headers['x-forwarded-proto']
+  const protocol = Array.isArray(protocolHeader)
+    ? protocolHeader[0]
+    : protocolHeader || 'https'
+  const host = req.headers.host
+
+  const fallbackRedirectUri = host
+    ? `${protocol}://${host}/api/wix-oauth-callback`
+    : null
+  const redirectUri =
+    process.env.WIX_REDIRECT_URI ||
+    process.env.NEXT_PUBLIC_WIX_REDIRECT_URI ||
+    fallbackRedirectUri
+
+  if (!clientId || !clientSecret || !redirectUri) {
+    return res.status(500).json({
+      error: 'Missing Wix OAuth configuration',
+      details: 'Set WIX_CLIENT_ID, WIX_CLIENT_SECRET, and WIX_REDIRECT_URI (or provide NEXT_PUBLIC_WIX_REDIRECT_URI).'
+    })
+  }
 
   try {
-    const tokenRes = await fetch('https://www.wix.com/oauth/access', {
+    const tokenRes = await fetch('https://www.wixapis.com/oauth/access', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
