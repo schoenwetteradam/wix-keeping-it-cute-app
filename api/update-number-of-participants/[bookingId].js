@@ -1,4 +1,5 @@
 import { createSupabaseClient } from '../../utils/supabaseClient'
+import { getWixRequestHeaders } from '../../utils/wixAccessToken'
 
 const supabase = createSupabaseClient()
 
@@ -23,10 +24,9 @@ export default async function handler(req, res) {
       `https://www.wixapis.com/_api/bookings-service/v2/bookings/${bookingId}/update_number_of_participants`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: process.env.WIX_API_TOKEN
-        },
+        headers: await getWixRequestHeaders({
+          'Content-Type': 'application/json'
+        }),
         body: JSON.stringify(body)
       }
     )

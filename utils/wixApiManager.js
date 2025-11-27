@@ -1,31 +1,36 @@
+import { getWixRequestHeaders } from './wixAccessToken'
+
 export class WixAPIManager {
   constructor() {
-    this.apiToken = process.env.WIX_API_TOKEN
     this.siteId = process.env.WIX_SITE_ID
     this.accountId = process.env.WIX_ACCOUNT_ID
     this.baseUrl = 'https://www.wixapis.com'
-    
-    if (!this.apiToken) {
-      throw new Error('WIX_API_TOKEN is required')
-    }
-    
+
+    const hasApiToken = !!process.env.WIX_API_TOKEN
+    const hasOAuthCredentials =
+      !!(process.env.WIX_APP_ID || process.env.WIX_CLIENT_ID) &&
+      !!(process.env.WIX_APP_SECRET || process.env.WIX_CLIENT_SECRET) &&
+      !!(process.env.WIX_APP_INSTANCE_ID || process.env.WIX_INSTANCE_ID)
+
     if (!this.siteId) {
       throw new Error('WIX_SITE_ID is required')
+    }
+
+    if (!hasApiToken && !hasOAuthCredentials) {
+      throw new Error(
+        'Missing Wix credentials. Provide WIX_API_TOKEN or client credentials (WIX_APP_ID/WIX_CLIENT_ID, WIX_APP_SECRET/WIX_CLIENT_SECRET, WIX_APP_INSTANCE_ID/WIX_INSTANCE_ID).'
+      )
     }
   }
 
   async makeRequest(endpoint, options = {}) {
     const url = `${this.baseUrl}${endpoint}`
-    
-    const headers = {
-      'Authorization': this.apiToken,
+
+    const headers = await getWixRequestHeaders({
       'Content-Type': 'application/json',
       'wix-site-id': this.siteId,
-      ...(options.headers || {})
-    }
-    if (this.accountId) {
-      headers['wix-account-id'] = this.accountId
-    }
+      ...(options.headers || {}),
+    })
 
     console.log(`Making request to: ${endpoint}`)
 

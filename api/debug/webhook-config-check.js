@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { getWixRequestHeaders } from '../../utils/wixAccessToken';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -79,15 +80,13 @@ export default async function handler(req, res) {
     // Check 3: Test Wix API connectivity
     console.log('🔗 Testing Wix API connectivity...');
     
-    if (process.env.WIX_API_TOKEN && process.env.WIX_SITE_ID) {
+    if ((process.env.WIX_API_TOKEN || process.env.WIX_APP_ID) && process.env.WIX_SITE_ID) {
       try {
         const wixTestResponse = await fetch('https://www.wixapis.com/bookings/v2/bookings/query', {
           method: 'POST',
-          headers: {
-            'Authorization': process.env.WIX_API_TOKEN,
-            'wix-site-id': process.env.WIX_SITE_ID,
+          headers: await getWixRequestHeaders({
             'Content-Type': 'application/json'
-          },
+          }),
           body: JSON.stringify({
             query: {
               paging: { limit: 1 }
@@ -115,7 +114,7 @@ export default async function handler(req, res) {
     } else {
       diagnostics.wix_config.api_connectivity = {
         status: 'MISCONFIGURED',
-        error: 'Missing WIX_API_TOKEN or WIX_SITE_ID'
+        error: 'Missing Wix credentials (WIX_API_TOKEN or OAuth app vars) or WIX_SITE_ID'
       };
     }
 

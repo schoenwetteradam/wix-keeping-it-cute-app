@@ -1,4 +1,5 @@
 import { setCorsHeaders } from '../utils/cors'
+import { getWixRequestHeaders } from '../utils/wixAccessToken'
 
 export default async function handler(req, res) {
   setCorsHeaders(res, 'POST')
@@ -23,10 +24,9 @@ export default async function handler(req, res) {
       'https://www.wixapis.com/ecom/v1/checkout',
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: process.env.WIX_API_TOKEN
-        },
+        headers: await getWixRequestHeaders({
+          'Content-Type': 'application/json'
+        }),
         body: JSON.stringify({ lineItems, ...rest })
       }
     )

@@ -1,12 +1,12 @@
 import { setCorsHeaders } from '../utils/cors'
+import { getWixRequestHeaders } from '../utils/wixAccessToken'
 
 export default async function handler(req, res) {
   setCorsHeaders(res, 'GET')
 
-  const apiToken  = process.env.WIX_API_TOKEN
   const siteId    = process.env.WIX_SITE_ID
-  const accountId = process.env.WIX_ACCOUNT_ID
   const baseUrl   = 'https://www.wixapis.com'
+  const baseHeaders = await getWixRequestHeaders({ 'Content-Type': 'application/json' })
 
   // We try both GET (for comparison) and the correct POST /query variants,
   // and we try multiple request-body shapes Wix has accepted across tenants.
@@ -26,13 +26,7 @@ export default async function handler(req, res) {
   for (const t of tests) {
     try {
       const url = `${baseUrl}${t.path}`
-      const headers = {
-        'Authorization': apiToken,
-        'Content-Type': 'application/json',
-        'wix-site-id': siteId
-      }
-      if (accountId) headers['wix-account-id'] = accountId
-
+      const headers = { ...baseHeaders }
       const resp = await fetch(url, {
         method: t.method,
         headers,
