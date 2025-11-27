@@ -14,6 +14,7 @@ This guide summarizes the two authentication approaches for Wix app API calls an
   - Use instanceId included in webhook payloads, service plugin metadata, or the `appInstance` query parameter on external/iframe pages.
 - Requesting a token (REST): send a POST request to `https://www.wixapis.com/oauth2/token` with `grant_type=client_credentials`, app ID, app secret, and instanceId. The returned `access_token` lasts 4 hours.
 - SDK usage: create a client with `AppStrategy` and the app credentials; the SDK fetches and sends the access token automatically.
+- Redirect handling: `/api/wix-oauth-callback` accepts `WIX_REDIRECT_URI`/`NEXT_PUBLIC_WIX_REDIRECT_URI` and falls back to the current host (via `x-forwarded-proto` and `Host`) to build the redirect URI, preventing misconfigured callback URLs.
 
 ## Custom Authentication (Legacy)
 - Implements the OAuth 2.0 authorization code flow with redirects.
