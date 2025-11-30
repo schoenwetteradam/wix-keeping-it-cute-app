@@ -15,6 +15,7 @@ export default function MyApp({ Component, pageProps }) {
 
   useEffect(() => {
     const originalWarn = console.warn
+    let i18nWarningLogged = false
 
     console.warn = (...args) => {
       const [message] = args || []
@@ -24,6 +25,12 @@ export default function MyApp({ Component, pageProps }) {
           'react-i18next:: It seems you are still using the old wait option'
         )
       ) {
+        if (!i18nWarningLogged) {
+          originalWarn(
+            'react-i18next is reporting the legacy "wait" option. Update i18n config to use the "useSuspense" flag to avoid this warning.'
+          )
+          i18nWarningLogged = true
+        }
         return
       }
 
