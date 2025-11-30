@@ -5,6 +5,12 @@ const EXPIRY_BUFFER_MS = 5 * 60 * 1000 // refresh 5 minutes before expiry
 let cachedAuthorizationHeader = null
 let cachedExpiresAt = 0
 
+function getTestAuthorizationHeader() {
+  if (process.env.NODE_ENV !== 'test') return null
+
+  return process.env.WIX_API_TOKEN || 'Bearer test-token'
+}
+
 function getAppCredentials() {
   return {
     appId: process.env.WIX_APP_ID || process.env.WIX_CLIENT_ID,
@@ -67,9 +73,10 @@ async function fetchClientCredentialsToken() {
 }
 
 export async function getWixAuthorizationHeader() {
-  if (process.env.WIX_API_TOKEN) {
-    return process.env.WIX_API_TOKEN
-  }
+  const testHeader = getTestAuthorizationHeader()
+  if (testHeader) return testHeader
+
+  if (process.env.WIX_API_TOKEN) return process.env.WIX_API_TOKEN
 
   if (hasValidCache()) {
     return cachedAuthorizationHeader
