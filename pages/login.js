@@ -1,96 +1,38 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
-import { getBrowserSupabaseClient } from '../utils/supabaseBrowserClient'
+import useWixAuth from '../hooks/useWixAuth'
 
 export default function Login() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const wixClientId = process.env.NEXT_PUBLIC_WIX_CLIENT_ID
+  const wixRedirectUri = process.env.NEXT_PUBLIC_WIX_REDIRECT_URI
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!wixClientId || !wixRedirectUri) {
     return (
       <p style={{ padding: '2rem', textAlign: 'center' }}>
-        Missing Supabase environment variables. Copy <code>.env.example</code> to{' '}
-        <code>.env.local</code> and set <code>NEXT_PUBLIC_SUPABASE_URL</code> and{' '}
-        <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>.
+        Missing Wix OAuth configuration. Set <code>NEXT_PUBLIC_WIX_CLIENT_ID</code> and{' '}
+        <code>NEXT_PUBLIC_WIX_REDIRECT_URI</code> in <code>.env.local</code> to enable staff login.
       </p>
     )
   }
 
-  const supabase = getBrowserSupabaseClient()
-
   const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [wixLoading, setWixLoading] = useState(false)
-  const [wixError, setWixError] = useState(null)
+  const { isConnected, isLoading, memberData, error, login, checkStatus } = useWixAuth()
 
   useEffect(() => {
     router.prefetch('/dashboard')
     router.prefetch('/staff')
   }, [router])
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    })
-
-    if (signInError) {
-      setError(
-        `${signInError.message}${
-          signInError.status ? ` (status ${signInError.status})` : ''
-        }`
-      )
-      setLoading(false)
-      return
+  useEffect(() => {
+    if (!isLoading && isConnected) {
+      router.replace('/staff')
     }
+  }, [isConnected, isLoading, router])
 
-    const {
-      data: { user },
-      error: userError
-    } = await supabase.auth.getUser()
-
-    if (userError) {
-      setError(
-        `${userError.message}${
-          userError.status ? ` (status ${userError.status})` : ''
-        }`
-      )
-      setLoading(false)
-      return
-    }
-
-    let redirect = '/staff'
-    if (user) {
-      const { data, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle()
-      if (profileError) {
-        console.error('Profile fetch error:', profileError)
-      } else if (data?.role === 'admin') {
-        redirect = '/dashboard'
-      }
-    }
-
-    await router.push(redirect)
-    setLoading(false)
-  }
-
-  const startWixOAuth = async () => {
-    setWixLoading(true)
-    setWixError(null)
-
-    window.location.href = '/api/wix-auth/login'
-  }
+  useEffect(() => {
+    checkStatus()
+  }, [checkStatus])
 
   return (
     <>
@@ -108,7 +50,6 @@ export default function Login() {
         }}
       >
         <form
-          onSubmit={handleSubmit}
           style={{
             background: 'white',
             padding: '30px',
@@ -119,86 +60,39 @@ export default function Login() {
           }}
         >
           <h1 style={{ marginTop: 0, marginBottom: '20px', textAlign: 'center' }}>
-            Login
+            Staff Login
           </h1>
+          <p style={{ marginBottom: '15px', color: '#333' }}>
+            Sign in with your Wix staff account for keepingitcute.net. Only team members added
+            to the Wix dashboard can access this app.
+          </p>
           {error && (
             <p style={{ color: 'red', marginBottom: '15px' }}>❌ {error}</p>
           )}
-          {wixError && (
-            <p style={{ color: 'red', marginBottom: '15px' }}>❌ {wixError}</p>
+          {memberData?.member?.contactId && (
+            <p style={{ color: '#0f5132', background: '#d1e7dd', padding: '10px', borderRadius: '4px' }}>
+              Connected as {memberData.member.profile?.nickname || memberData.member.loginEmail}
+            </p>
           )}
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px' }}>Email</label>
-            <input
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '4px'
-              }}
-            />
-          </div>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '5px' }}>
-              Password
-            </label>
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '4px'
-              }}
-            />
-          </div>
           <button
-            type="submit"
-            disabled={loading}
+            type="button"
+            onClick={() => login('/staff')}
+            disabled={isLoading}
             style={{
               width: '100%',
               padding: '10px',
-              backgroundColor: '#e0cdbb',
+              backgroundColor: '#654321',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer'
             }}
           >
-            {loading ? 'Signing in...' : 'Login'}
+            {isLoading ? 'Connecting to Wix…' : 'Login with Wix Staff Account'}
           </button>
-          <div style={{ margin: '15px 0', textAlign: 'center' }}>
-            <span style={{ display: 'inline-block', margin: '10px 0', color: '#666' }}>
-              or
-            </span>
-            <button
-              type="button"
-              onClick={startWixOAuth}
-              disabled={wixLoading}
-              style={{
-                width: '100%',
-                padding: '10px',
-                backgroundColor: '#654321',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              {wixLoading ? 'Redirecting…' : 'Login with Wix OAuth'}
-            </button>
-          </div>
-          <p style={{ marginTop: '15px', textAlign: 'center' }}>
-            No account? <a href="/signup">Sign up</a>
+          <p style={{ marginTop: '15px', textAlign: 'center', color: '#666' }}>
+            Need access? Invite the staff member from your Wix dashboard for keepingitcute.net
+            and then sign in here.
           </p>
         </form>
       </div>
