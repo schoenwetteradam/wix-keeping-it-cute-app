@@ -5,13 +5,12 @@ import useWixAuth from '../hooks/useWixAuth'
 
 export default function Login() {
   const wixClientId = process.env.NEXT_PUBLIC_WIX_CLIENT_ID
-  const wixRedirectUri = process.env.NEXT_PUBLIC_WIX_REDIRECT_URI
 
-  if (!wixClientId || !wixRedirectUri) {
+  if (!wixClientId) {
     return (
       <p style={{ padding: '2rem', textAlign: 'center' }}>
-        Missing Wix OAuth configuration. Set <code>NEXT_PUBLIC_WIX_CLIENT_ID</code> and{' '}
-        <code>NEXT_PUBLIC_WIX_REDIRECT_URI</code> in <code>.env.local</code> to enable staff login.
+        Missing Wix OAuth configuration. Set <code>NEXT_PUBLIC_WIX_CLIENT_ID</code> in <code>.env.local</code>{' '}
+        to enable staff login.
       </p>
     )
   }

@@ -1,5 +1,5 @@
 import cookie from 'cookie'
-import { resolveWixRedirectUri } from '../lib/wix-auth'
+import { buildRedirectUriFromRequest, resolveWixRedirectUri } from '../lib/wix-auth'
 
 export default async function handler(req, res) {
   const { code } = req.query
@@ -11,15 +11,7 @@ export default async function handler(req, res) {
   const clientId = process.env.WIX_CLIENT_ID
   const clientSecret = process.env.WIX_CLIENT_SECRET
 
-  const protocolHeader = req.headers['x-forwarded-proto']
-  const protocol = Array.isArray(protocolHeader)
-    ? protocolHeader[0]
-    : protocolHeader || 'https'
-  const host = req.headers.host
-
-  const fallbackRedirectUri = host
-    ? `${protocol}://${host}/api/wix-oauth-callback`
-    : null
+  const fallbackRedirectUri = buildRedirectUriFromRequest(req)
 
   let redirectUri
   try {
