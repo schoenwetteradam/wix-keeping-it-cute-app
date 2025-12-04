@@ -1,5 +1,5 @@
 import { withErrorHandler, APIError } from '../../../utils/errorHandler';
-import { getWixAuthUrl } from '../../../lib/wix-auth';
+import { buildRedirectUriFromRequest, getWixAuthUrl } from '../../../lib/wix-auth';
 
 const handler = (req, res) => {
   if (req.method !== 'GET' && req.method !== 'POST') {
@@ -10,16 +10,17 @@ const handler = (req, res) => {
     req.body?.returnUrl || req.query?.returnUrl || req.headers.referer || '/dashboard';
   const state = Buffer.from(JSON.stringify({ returnUrl })).toString('base64');
 
-  if (!process.env.NEXT_PUBLIC_WIX_CLIENT_ID || !process.env.NEXT_PUBLIC_WIX_REDIRECT_URI) {
+  if (!process.env.NEXT_PUBLIC_WIX_CLIENT_ID) {
     throw new APIError(
       'Missing Wix OAuth configuration',
       500,
       'WIX_CONFIG_ERROR',
-      'Set NEXT_PUBLIC_WIX_CLIENT_ID and NEXT_PUBLIC_WIX_REDIRECT_URI env vars.'
+      'Set NEXT_PUBLIC_WIX_CLIENT_ID env var.'
     );
   }
 
-  const authUrl = getWixAuthUrl(state);
+  const fallbackRedirectUri = buildRedirectUriFromRequest(req);
+  const authUrl = getWixAuthUrl(state, fallbackRedirectUri);
 
   if (req.method === 'GET') {
     return res.redirect(authUrl);
