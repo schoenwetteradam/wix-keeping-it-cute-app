@@ -1,4 +1,5 @@
 import cookie from 'cookie'
+import { resolveWixRedirectUri } from '../lib/wix-auth'
 
 export default async function handler(req, res) {
   const { code } = req.query
@@ -19,12 +20,18 @@ export default async function handler(req, res) {
   const fallbackRedirectUri = host
     ? `${protocol}://${host}/api/wix-oauth-callback`
     : null
-  const redirectUri =
-    process.env.WIX_REDIRECT_URI ||
-    process.env.NEXT_PUBLIC_WIX_REDIRECT_URI ||
-    fallbackRedirectUri
 
-  if (!clientId || !clientSecret || !redirectUri) {
+  let redirectUri
+  try {
+    redirectUri = resolveWixRedirectUri(fallbackRedirectUri)
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Missing Wix OAuth configuration',
+      details: error.message,
+    })
+  }
+
+  if (!clientId || !clientSecret) {
     return res.status(500).json({
       error: 'Missing Wix OAuth configuration',
       details: 'Set WIX_CLIENT_ID, WIX_CLIENT_SECRET, and WIX_REDIRECT_URI (or provide NEXT_PUBLIC_WIX_REDIRECT_URI).'

@@ -45,7 +45,16 @@ const handler = async (req, res) => {
 
     // Exchange code for tokens
     console.log('Exchanging authorization code for tokens...');
-    const tokens = await exchangeCodeForTokens(code);
+    const protocolHeader = req.headers['x-forwarded-proto'];
+    const protocol = Array.isArray(protocolHeader)
+      ? protocolHeader[0]
+      : protocolHeader || 'https';
+    const host = req.headers.host;
+    const fallbackRedirectUri = host
+      ? `${protocol}://${host}/api/wix-auth/callback`
+      : null;
+
+    const tokens = await exchangeCodeForTokens(code, fallbackRedirectUri);
 
     // Fetch member data
     console.log('Fetching Wix member data...');
