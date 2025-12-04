@@ -1,4 +1,5 @@
 import { withErrorHandler, APIError } from '../../utils/errorHandler'
+import { resolveWixRedirectUri } from '../../lib/wix-auth'
 
 const handler = async (req, res) => {
   if (req.method !== 'POST') {
@@ -8,7 +9,17 @@ const handler = async (req, res) => {
   const { code } = req.body || {}
   const clientId = process.env.WIX_CLIENT_ID
   const clientSecret = process.env.WIX_CLIENT_SECRET
-  const redirectUri = process.env.WIX_REDIRECT_URI || process.env.NEXT_PUBLIC_WIX_REDIRECT_URI
+  const protocolHeader = req.headers['x-forwarded-proto']
+  const protocol = Array.isArray(protocolHeader) ? protocolHeader[0] : protocolHeader || 'https'
+  const host = req.headers.host
+  const fallbackRedirectUri = host ? `${protocol}://${host}/api/exchange-code` : null
+  let redirectUri
+
+  try {
+    redirectUri = resolveWixRedirectUri(fallbackRedirectUri)
+  } catch (error) {
+    throw new APIError(error.message, 500, 'WIX_CONFIG_ERROR')
+  }
 
   if (!code) {
     throw new APIError('Authorization code is required', 400, 'MISSING_CODE')
