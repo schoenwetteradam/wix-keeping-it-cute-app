@@ -42,6 +42,13 @@ const handler = async (req, res) => {
       details = fallback || details
     }
 
+    const requestId =
+      response.headers.get('x-wix-request-id') || response.headers.get('x-request-id')
+
+    if (requestId) {
+      details = `${details} (Request ID: ${requestId})`
+    }
+
     throw new APIError(details, response.status, 'WIX_OAUTH_ERROR')
   }
 
