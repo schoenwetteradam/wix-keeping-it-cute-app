@@ -25,7 +25,7 @@ const handler = (req, res) => {
     return res.redirect(authUrl);
   }
 
-  return res.status(200).json({ redirectUrl: authUrl });
+  return res.status(200).json({ success: true, redirectUrl: authUrl });
 };
 
 export default withErrorHandler(handler);
