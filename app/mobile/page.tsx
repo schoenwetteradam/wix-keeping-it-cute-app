@@ -1,11 +1,26 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { useState, useEffect, useCallback } from 'react';
+import { getSharedBrowserSupabaseClient } from '../../utils/supabaseBrowserClientShared';
 import ScheduleView from '../components/ScheduleView';
 import InventoryView from '../components/InventoryView';
 import OrdersView from '../components/OrdersView';
 import CustomersView from '../components/CustomersView';
+
+// Singleton Supabase client - shared across all components
+let supabaseClient = null;
+function getSupabaseClient() {
+  if (typeof window === 'undefined') return null;
+  if (!supabaseClient) {
+    try {
+      supabaseClient = getSharedBrowserSupabaseClient();
+    } catch (error) {
+      console.error('Failed to initialize Supabase client:', error);
+      return null;
+    }
+  }
+  return supabaseClient;
+}
 
 export default function SalonApp() {
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -15,18 +30,7 @@ export default function SalonApp() {
   const [activeTab, setActiveTab] = useState('schedule');
   const [loading, setLoading] = useState(true);
 
-  // Create Supabase client
-  const supabase = useMemo(() => {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    
-    if (!url || !key) {
-      console.error('Missing Supabase environment variables');
-      return null;
-    }
-    
-    return createClient(url, key);
-  }, []);
+  const supabase = getSupabaseClient();
 
   const fetchAppointments = useCallback(async () => {
     if (!supabase) return;

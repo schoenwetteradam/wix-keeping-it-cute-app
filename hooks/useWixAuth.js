@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import { createBrowserSupabaseClient } from '../utils/supabaseClient';
+import { getBrowserSupabaseClient } from '../utils/supabaseBrowserClient';
 
 export function useWixAuth() {
   const router = useRouter();
@@ -20,7 +20,7 @@ export function useWixAuth() {
     setError(null);
 
     try {
-      const supabase = createBrowserSupabaseClient();
+      const supabase = getBrowserSupabaseClient();
       const { data: { session } } = await supabase.auth.getSession();
 
       const response = await fetch('/api/wix-auth/status', {
@@ -92,7 +92,7 @@ export function useWixAuth() {
     setError(null);
 
     try {
-      const supabase = createBrowserSupabaseClient();
+      const supabase = getBrowserSupabaseClient();
       const { data: { session } } = await supabase.auth.getSession();
 
       await fetch('/api/wix-auth/logout', {
