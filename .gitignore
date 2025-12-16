@@ -37,6 +37,11 @@ build/
 .next/
 out/
 
+# PWA
+public/sw.js
+public/workbox-*.js
+public/fallback-*.js
+
 # Temporary files
 tmp/
 temp/

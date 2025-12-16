@@ -17,7 +17,8 @@ export async function middleware(req) {
     '/api/wix-auth',
     '/api/import-all-wix-data',
     '/api/test-connection',
-    '/api/test-bookings-endpoints'
+    '/api/test-bookings-endpoints',
+    '/api/wix-webhook' // Mobile app webhook handler
   ]
   if (publicPaths.some((p) => pathname.startsWith(p))) {
     if (pathname.startsWith('/api/webhook-router')) {
