@@ -1,11 +1,28 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { useState, useEffect, useCallback } from 'react';
+import { getSharedBrowserSupabaseClient } from '../../utils/supabaseBrowserClientShared';
 import ScheduleView from '../components/ScheduleView';
 import InventoryView from '../components/InventoryView';
 import OrdersView from '../components/OrdersView';
 import CustomersView from '../components/CustomersView';
+
+// Singleton Supabase client - shared across all components
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+let supabaseClient: SupabaseClient | null = null;
+function getSupabaseClient(): SupabaseClient | null {
+  if (typeof window === 'undefined') return null;
+  if (!supabaseClient) {
+    try {
+      supabaseClient = getSharedBrowserSupabaseClient();
+    } catch (error) {
+      console.error('Failed to initialize Supabase client:', error);
+      return null;
+    }
+  }
+  return supabaseClient;
+}
 
 export default function SalonApp() {
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -15,23 +32,14 @@ export default function SalonApp() {
   const [activeTab, setActiveTab] = useState('schedule');
   const [loading, setLoading] = useState(true);
 
-  // Create Supabase client
-  const supabase = useMemo(() => {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    
-    if (!url || !key) {
-      console.error('Missing Supabase environment variables');
-      return null;
-    }
-    
-    return createClient(url, key);
-  }, []);
+  // Get Supabase client - use useMemo to ensure singleton
+  const supabase = typeof window !== 'undefined' ? getSupabaseClient() : null;
 
   const fetchAppointments = useCallback(async () => {
-    if (!supabase) return;
+    const client = typeof window !== 'undefined' ? getSupabaseClient() : null;
+    if (!client) return;
     const today = new Date().toISOString().split('T')[0];
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('appointments')
       .select(`
         *,
@@ -42,22 +50,24 @@ export default function SalonApp() {
     
     if (data) setAppointments(data);
     if (error) console.error('Error fetching appointments:', error);
-  }, [supabase]);
+  }, []);
 
   const fetchInventory = useCallback(async () => {
-    if (!supabase) return;
-    const { data, error } = await supabase
+    const client = typeof window !== 'undefined' ? getSupabaseClient() : null;
+    if (!client) return;
+    const { data, error } = await client
       .from('inventory')
       .select('*')
       .order('product_name');
     
     if (data) setInventory(data);
     if (error) console.error('Error fetching inventory:', error);
-  }, [supabase]);
+  }, []);
 
   const fetchOrders = useCallback(async () => {
-    if (!supabase) return;
-    const { data, error } = await supabase
+    const client = typeof window !== 'undefined' ? getSupabaseClient() : null;
+    if (!client) return;
+    const { data, error } = await client
       .from('orders')
       .select(`
         *,
@@ -68,11 +78,12 @@ export default function SalonApp() {
     
     if (data) setOrders(data);
     if (error) console.error('Error fetching orders:', error);
-  }, [supabase]);
+  }, []);
 
   const fetchCustomers = useCallback(async () => {
-    if (!supabase) return;
-    const { data, error } = await supabase
+    const client = typeof window !== 'undefined' ? getSupabaseClient() : null;
+    if (!client) return;
+    const { data, error } = await client
       .from('customers')
       .select('*')
       .order('name')
@@ -83,7 +94,8 @@ export default function SalonApp() {
   }, [supabase]);
 
   useEffect(() => {
-    if (!supabase) {
+    const client = typeof window !== 'undefined' ? getSupabaseClient() : null;
+    if (!client) {
       setLoading(false);
       return;
     }
@@ -94,7 +106,7 @@ export default function SalonApp() {
     fetchCustomers();
     
     // Set up real-time subscriptions
-    const appointmentsChannel = supabase
+    const appointmentsChannel = client
       .channel('appointments-changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'appointments' },
@@ -105,7 +117,7 @@ export default function SalonApp() {
       )
       .subscribe();
 
-    const inventoryChannel = supabase
+    const inventoryChannel = client
       .channel('inventory-changes')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'inventory' },
@@ -119,21 +131,22 @@ export default function SalonApp() {
     setLoading(false);
 
     return () => {
-      if (supabase) {
-        supabase.removeChannel(appointmentsChannel);
-        supabase.removeChannel(inventoryChannel);
+      if (client) {
+        client.removeChannel(appointmentsChannel);
+        client.removeChannel(inventoryChannel);
       }
     };
-  }, [supabase, fetchAppointments, fetchInventory, fetchOrders, fetchCustomers]);
+  }, [fetchAppointments, fetchInventory, fetchOrders, fetchCustomers]);
 
   const performInventoryAudit = async (itemId: string, newQuantity: number) => {
-    if (!supabase) return;
+    const client = typeof window !== 'undefined' ? getSupabaseClient() : null;
+    if (!client) return;
     const item = inventory.find(i => i.id === itemId);
     if (!item) return;
     
     try {
       // Create audit record
-      const { error: auditError } = await supabase.from('inventory_audits').insert({
+      const { error: auditError } = await client.from('inventory_audits').insert({
         inventory_id: itemId,
         previous_quantity: item.current_quantity,
         new_quantity: newQuantity,
@@ -144,7 +157,7 @@ export default function SalonApp() {
       if (auditError) throw auditError;
       
       // Update inventory
-      const { error: updateError } = await supabase
+      const { error: updateError } = await client
         .from('inventory')
         .update({ current_quantity: newQuantity, last_updated: new Date().toISOString() })
         .eq('id', itemId);
