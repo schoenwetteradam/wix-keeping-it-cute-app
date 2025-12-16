@@ -19,7 +19,7 @@ const handler = (req, res) => {
     );
   }
 
-  const fallbackRedirectUri = buildRedirectUriFromRequest(req);
+  const fallbackRedirectUri = buildRedirectUriFromRequest(req, '/api/wix-auth/callback');
   const authUrl = getWixAuthUrl(state, fallbackRedirectUri);
 
   if (req.method === 'GET') {
