@@ -2,10 +2,27 @@ import cookie from 'cookie'
 import { buildRedirectUriFromRequest, resolveWixRedirectUri } from '../lib/wix-auth'
 
 export default async function handler(req, res) {
-  const { code } = req.query
+  const { code, state, error: oauthError } = req.query
+
+  // Handle OAuth errors from Wix
+  if (oauthError) {
+    console.error('Wix OAuth error:', oauthError)
+    return res.redirect(`/login?error=${encodeURIComponent(oauthError)}`)
+  }
 
   if (!code) {
     return res.status(400).json({ error: 'Missing authorization code' })
+  }
+
+  // Parse state parameter for return URL
+  let returnUrl = '/staff' // Default fallback
+  if (state) {
+    try {
+      const stateData = JSON.parse(Buffer.from(state, 'base64').toString())
+      returnUrl = stateData.returnUrl || '/staff'
+    } catch (parseError) {
+      console.warn('Could not parse state parameter, using default return URL:', parseError.message)
+    }
   }
 
   const clientId = process.env.WIX_CLIENT_ID
@@ -47,22 +64,26 @@ export default async function handler(req, res) {
 
     if (!tokenRes.ok) {
       const err = await tokenRes.text()
-      return res.status(500).json({ error: 'Failed to fetch access token', details: err })
+      console.error('Failed to exchange code for token:', err)
+      return res.redirect(`/login?error=${encodeURIComponent('Failed to authenticate with Wix')}`)
     }
 
     const tokenData = await tokenRes.json()
     const token = tokenData.access_token
 
+    // Set cookie with access token
     res.setHeader('Set-Cookie', cookie.serialize('wix_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      path: '/'
+      path: '/',
+      maxAge: tokenData.expires_in || 3600
     }))
 
-    res.redirect('/staff')
+    // Redirect to the return URL from state parameter
+    return res.redirect(returnUrl)
   } catch (error) {
     console.error('Wix OAuth Error:', error)
-    res.status(500).json({ error: 'OAuth error', details: error.message })
+    return res.redirect(`/login?error=${encodeURIComponent('Authentication failed')}`)
   }
 }
