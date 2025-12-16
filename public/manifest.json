@@ -5,8 +5,8 @@
   "theme_color": "#9333ea",
   "background_color": "#ffffff",
   "display": "standalone",
-  "scope": "/",
-  "start_url": "/",
+  "scope": "/mobile",
+  "start_url": "/mobile",
   "orientation": "portrait",
   "icons": [
     {
@@ -29,14 +29,14 @@
       "name": "Schedule",
       "short_name": "Schedule",
       "description": "View today's appointments",
-      "url": "/?tab=schedule",
+      "url": "/mobile?tab=schedule",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Inventory",
       "short_name": "Inventory",
       "description": "Manage inventory",
-      "url": "/?tab=inventory",
+      "url": "/mobile?tab=inventory",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]

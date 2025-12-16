@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!
-);
+function getSupabaseClient() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+  
+  if (!url || !key) {
+    throw new Error('Missing Supabase configuration');
+  }
+  
+  return createClient(url, key);
+}
 
 // Verify Wix webhook signature
 function verifyWixWebhook(body: string, signature: string | null): boolean {
@@ -71,6 +77,8 @@ async function handleBookingUpdate(data: any) {
     return;
   }
 
+  const supabase = getSupabaseClient();
+
   // First, ensure customer exists
   let customerId = null;
   if (entity.contactId || entity.contactDetails) {
@@ -127,6 +135,7 @@ async function handleContactUpdate(data: any) {
     return;
   }
 
+  const supabase = getSupabaseClient();
   const { error } = await supabase
     .from('customers')
     .upsert({
@@ -152,6 +161,8 @@ async function handleOrderUpdate(data: any) {
     console.error('No entity data in order webhook');
     return;
   }
+
+  const supabase = getSupabaseClient();
 
   // First, ensure customer exists
   let customerId = null;

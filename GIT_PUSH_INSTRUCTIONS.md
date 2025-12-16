@@ -5,8 +5,8 @@
 First, tell Git who you are:
 
 ```bash
-git config --global user.email "your-email@example.com"
-git config --global user.name "Your Name"
+git config --global user.email "adamschoenwetter@outlook.com"
+git config --global user.name "Adam Schoenwetter"
 ```
 
 **Or** if you only want to set it for this repository:

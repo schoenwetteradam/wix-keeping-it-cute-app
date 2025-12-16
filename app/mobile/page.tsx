@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import ScheduleView from './components/ScheduleView';
-import InventoryView from './components/InventoryView';
-import OrdersView from './components/OrdersView';
-import CustomersView from './components/CustomersView';
+import ScheduleView from '../components/ScheduleView';
+import InventoryView from '../components/InventoryView';
+import OrdersView from '../components/OrdersView';
+import CustomersView from '../components/CustomersView';
 
 export default function SalonApp() {
   const [appointments, setAppointments] = useState<any[]>([]);
