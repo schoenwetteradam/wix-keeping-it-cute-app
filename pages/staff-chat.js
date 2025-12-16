@@ -18,8 +18,6 @@ export default function StaffChat() {
     )
   }
 
-  const supabase = getBrowserSupabaseClient()
-
   const [branding, setBranding] = useState(null)
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
@@ -27,6 +25,33 @@ export default function StaffChat() {
   const bottomRef = useRef(null)
 
   useEffect(() => {
+    const supabase = getBrowserSupabaseClient()
+    if (!supabase) return
+
+    const loadBranding = async () => {
+      try {
+        const res = await fetchWithAuth('/api/get-branding')
+        if (res.ok) {
+          const data = await res.json()
+          setBranding(data.branding)
+        }
+      } catch (err) {
+        console.error('Failed to load branding', err)
+      }
+    }
+
+    const fetchMessages = async () => {
+      try {
+        const res = await fetchWithAuth('/api/staff-chat')
+        if (res.ok) {
+          const data = await res.json()
+          setMessages(data.messages || [])
+        }
+      } catch (err) {
+        console.error('Failed to load messages', err)
+      }
+    }
+
     loadBranding()
     fetchMessages()
     fetchWithAuth('/api/profile')
@@ -50,29 +75,6 @@ export default function StaffChat() {
     }
   }, [])
 
-  const loadBranding = async () => {
-    try {
-      const res = await fetchWithAuth('/api/get-branding')
-      if (res.ok) {
-        const data = await res.json()
-        setBranding(data.branding)
-      }
-    } catch (err) {
-      console.error('Failed to load branding', err)
-    }
-  }
-
-  const fetchMessages = async () => {
-    try {
-      const res = await fetchWithAuth('/api/staff-chat')
-      if (res.ok) {
-        const data = await res.json()
-        setMessages(data.messages || [])
-      }
-    } catch (err) {
-      console.error('Failed to load messages', err)
-    }
-  }
 
   const sendMessage = async () => {
     if (!newMessage.trim()) return

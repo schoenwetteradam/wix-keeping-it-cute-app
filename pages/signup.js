@@ -17,8 +17,6 @@ export default function Signup() {
     )
   }
 
-  const supabase = getBrowserSupabaseClient()
-
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -29,6 +27,13 @@ export default function Signup() {
     e.preventDefault()
     setLoading(true)
     setError(null)
+
+    const supabase = getBrowserSupabaseClient()
+    if (!supabase) {
+      setError('Browser not available')
+      setLoading(false)
+      return
+    }
 
     const { error } = await supabase.auth.signUp({ email, password })
     if (error) {

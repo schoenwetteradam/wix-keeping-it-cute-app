@@ -4,7 +4,9 @@ let client = null
 
 export function getBrowserSupabaseClient() {
   if (typeof window === 'undefined') {
-    throw new Error('getBrowserSupabaseClient can only be called in the browser')
+    // Return null during SSR instead of throwing
+    // Components should check for null or call this inside useEffect
+    return null
   }
 
   if (!client) {
