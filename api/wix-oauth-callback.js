@@ -48,7 +48,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const tokenRes = await fetch('https://www.wixapis.com/oauth/access', {
+    // CRITICAL: Must use wix.com/oauth/access, not wixapis.com
+    const tokenRes = await fetch('https://www.wix.com/oauth/access', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -63,9 +64,27 @@ export default async function handler(req, res) {
     })
 
     if (!tokenRes.ok) {
-      const err = await tokenRes.text()
-      console.error('Failed to exchange code for token:', err)
-      return res.redirect(`/login?error=${encodeURIComponent('Failed to authenticate with Wix')}`)
+      const errorText = await tokenRes.text()
+      let errorDetails = errorText
+      try {
+        const errorJson = JSON.parse(errorText)
+        errorDetails = errorJson.error_description || errorJson.error || errorText
+      } catch {
+        // Keep text as-is if not JSON
+      }
+      
+      const requestId = tokenRes.headers.get('x-wix-request-id') || tokenRes.headers.get('x-request-id')
+      console.error('Token exchange failed:', {
+        status: tokenRes.status,
+        statusText: tokenRes.statusText,
+        error: errorDetails,
+        requestId,
+        redirectUri,
+        hasClientId: !!clientId,
+        hasClientSecret: !!clientSecret
+      })
+      
+      return res.redirect(`/login?error=${encodeURIComponent(`Authentication failed: ${errorDetails}`)}`)
     }
 
     const tokenData = await tokenRes.json()

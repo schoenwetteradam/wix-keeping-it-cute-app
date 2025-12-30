@@ -29,7 +29,8 @@ const handler = async (req, res) => {
     throw new APIError('Missing Wix OAuth configuration', 500, 'WIX_CONFIG_ERROR')
   }
 
-  const response = await fetch('https://www.wixapis.com/oauth/access', {
+  // CRITICAL: Must use wix.com/oauth/access, not wixapis.com
+  const response = await fetch('https://www.wix.com/oauth/access', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
