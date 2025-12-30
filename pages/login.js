@@ -29,8 +29,17 @@ export default function Login() {
     }
   }, [isConnected, isLoading, router])
 
+  // Only check status if we have a session - avoid unnecessary API calls
   useEffect(() => {
-    checkStatus()
+    // Small delay to ensure component is fully mounted
+    const timer = setTimeout(() => {
+      checkStatus().catch(err => {
+        // Silently handle errors - status check is not critical for login page
+        console.warn('Status check failed (non-critical):', err.message);
+      });
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [checkStatus])
 
   return (

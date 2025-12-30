@@ -64,6 +64,16 @@ const handler = async (req, res) => {
       ? `${protocol}://${host}/api/wix-auth/callback`
       : null;
 
+    // Log OAuth callback details for debugging
+    console.log('OAuth callback received:', {
+      hasCode: !!code,
+      hasState: !!state,
+      host,
+      protocol,
+      fallbackRedirectUri,
+      userAgent: req.headers['user-agent']?.substring(0, 50)
+    });
+
     const tokens = await exchangeCodeForTokens(code, fallbackRedirectUri);
 
     // Fetch member data
@@ -142,8 +152,22 @@ const handler = async (req, res) => {
     return res.redirect(returnUrl);
 
   } catch (error) {
-    console.error('Wix OAuth callback error:', error);
-    return res.redirect(`/login?error=${encodeURIComponent('Authentication failed')}`);
+    console.error('Wix OAuth callback error:', {
+      message: error.message,
+      stack: error.stack,
+      code: req.query.code ? 'present' : 'missing',
+      state: req.query.state || 'missing',
+      host: req.headers.host
+    });
+    
+    // Provide more specific error messages
+    const errorMessage = error.message.includes('redirect URI') 
+      ? 'Redirect URI mismatch - verify configuration'
+      : error.message.includes('Missing Wix OAuth')
+      ? 'OAuth configuration error - check environment variables'
+      : 'Authentication failed';
+      
+    return res.redirect(`/login?error=${encodeURIComponent(errorMessage)}`);
   }
 };
 

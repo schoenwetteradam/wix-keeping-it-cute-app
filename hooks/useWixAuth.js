@@ -21,13 +21,36 @@ export function useWixAuth() {
 
     try {
       const supabase = getBrowserSupabaseClient();
+      if (!supabase) {
+        setIsConnected(false);
+        setIsLoading(false);
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
 
+      // If no session, user is not authenticated - this is normal
+      if (!session) {
+        setIsConnected(false);
+        setMemberData(null);
+        setIsLoading(false);
+        return;
+      }
+
       const response = await fetch('/api/wix-auth/status', {
-        headers: session?.access_token
-          ? { 'Authorization': `Bearer ${session.access_token}` }
-          : {}
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
       });
+
+      if (!response.ok) {
+        // If status check fails, don't throw - just mark as not connected
+        console.warn('Wix status check failed:', response.status);
+        setIsConnected(false);
+        setMemberData(null);
+        setIsLoading(false);
+        return;
+      }
 
       const data = await response.json();
 
@@ -39,9 +62,10 @@ export function useWixAuth() {
         setMemberData(null);
       }
     } catch (err) {
-      console.error('Error checking Wix status:', err);
-      setError(err.message);
+      // Silently handle errors - don't show error state for status checks
+      console.warn('Error checking Wix status (non-critical):', err.message);
       setIsConnected(false);
+      setMemberData(null);
     } finally {
       setIsLoading(false);
     }

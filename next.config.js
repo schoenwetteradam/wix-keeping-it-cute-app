@@ -3,6 +3,14 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  buildExcludes: [/app-build-manifest\.json$/],
+  exclude: [
+    // Don't precache app-build-manifest.json (not generated in App Router)
+    /app-build-manifest\.json$/,
+    // Don't precache build stats
+    /build-manifest\.json$/,
+    /react-loadable-manifest\.json$/,
+  ],
   runtimeCaching: [
     {
       urlPattern: /^https?.*/,

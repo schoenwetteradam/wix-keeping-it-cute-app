@@ -48,18 +48,28 @@ export default function MyApp({ Component, pageProps }) {
     let supabase
     try {
       supabase = getBrowserSupabaseClient()
-    } catch {
+    } catch (err) {
+      console.warn('Supabase client initialization failed:', err.message)
+      // Only redirect if we're not already on login/signup
+      if (!['/login', '/signup'].includes(router.pathname)) {
+        router.replace('/login')
+      }
       return
     }
-    const openRoutes = ['/login', '/signup']
+    
+    const openRoutes = ['/login', '/signup', '/mobile']
 
     const enforceStaffAccess = async () => {
+      // Don't enforce auth on open routes or mobile app route
       if (openRoutes.includes(router.pathname)) return
 
       try {
         const { data, error } = await supabase.auth.getSession()
         if (error || !data.session) {
-          router.replace('/login')
+          // Only redirect if not already going to login
+          if (router.pathname !== '/login') {
+            router.replace('/login')
+          }
           return
         }
 
@@ -87,11 +97,19 @@ export default function MyApp({ Component, pageProps }) {
         }
       } catch (err) {
         console.error('Auth enforcement failed:', err)
-        router.replace('/login')
+        // Only redirect if not already going to login
+        if (router.pathname !== '/login') {
+          router.replace('/login')
+        }
       }
     }
 
-    enforceStaffAccess()
+    // Small delay to avoid race conditions
+    const timer = setTimeout(() => {
+      enforceStaffAccess()
+    }, 100)
+
+    return () => clearTimeout(timer)
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
