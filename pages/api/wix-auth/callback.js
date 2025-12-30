@@ -1,3 +1,13 @@
+export async function GET(req) {
+  console.log("ENV CHECK", {
+    hasClientId: !!process.env.WIX_CLIENT_ID,
+    hasSecret: !!process.env.WIX_CLIENT_SECRET,
+    redirect: process.env.WIX_REDIRECT_URI,
+  });
+
+  return new Response("env check", { status: 200 });
+}
+
 /**
  * Wix OAuth Callback Handler
  * Handles the OAuth callback, exchanges code for tokens, and stores session
